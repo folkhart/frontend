@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Package, ShoppingBag, Plus, Trash2 } from 'lucide-react';
+import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
+import AdminNewsTab from './AdminNewsTab';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -56,7 +57,7 @@ const adminApi = {
 export default function AdminTab() {
   const queryClient = useQueryClient();
   const { player } = useGameStore();
-  const [activeTab, setActiveTab] = useState<'players' | 'items' | 'shop'>('players');
+  const [activeTab, setActiveTab] = useState<'players' | 'items' | 'shop' | 'news'>('players');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [price, setPrice] = useState('100');
@@ -174,6 +175,24 @@ export default function AdminTab() {
         >
           <ShoppingBag size={16} className="inline mr-1" />
           Shop
+        </button>
+        <button
+          onClick={() => setActiveTab('news')}
+          className={`flex-1 py-2 font-bold transition relative overflow-hidden ${
+            activeTab === 'news'
+              ? 'bg-green-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #15803d',
+            borderRadius: '0',
+            boxShadow: activeTab === 'news' ? '0 2px 0 #166534, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeTab === 'news' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <Newspaper size={16} className="inline mr-1" />
+          News
         </button>
       </div>
 
@@ -343,6 +362,9 @@ export default function AdminTab() {
           </div>
         </div>
       )}
+
+      {/* News Tab */}
+      {activeTab === 'news' && <AdminNewsTab />}
     </div>
   );
 }

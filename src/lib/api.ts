@@ -151,3 +151,14 @@ export const messageApi = {
   getUnread: () => api.get('/messages/unread'),
   markAsRead: (senderId: string) => api.post(`/messages/read/${senderId}`),
 };
+
+// News API
+export const newsApi = {
+  getPublished: (limit?: number, offset?: number) => api.get('/news/published', { params: { limit, offset } }),
+  getPost: (postId: string) => api.get(`/news/${postId}`),
+  getAll: (limit?: number, offset?: number) => api.get('/news', { params: { limit, offset } }),
+  create: (data: { title: string; content: string; excerpt?: string; category?: string; imageUrl?: string }) =>
+    api.post('/news', data),
+  update: (postId: string, data: any) => api.put(`/news/${postId}`, data),
+  delete: (postId: string) => api.delete(`/news/${postId}`),
+};

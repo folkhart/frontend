@@ -12,6 +12,7 @@ import GuildTab from '@/components/tabs/GuildTab';
 import ShopTab from '@/components/tabs/ShopTab';
 import LeaderboardTab from '@/components/tabs/LeaderboardTab';
 import FriendsTab from '@/components/tabs/FriendsTab';
+import NewsTab from '@/components/tabs/NewsTab';
 import AdminTab from '@/components/tabs/AdminTab';
 import SettingsTab from '@/components/tabs/SettingsTab';
 import NotificationToast from '@/components/NotificationToast';
@@ -149,6 +150,7 @@ export default function GamePage() {
         {activeTab === 'shop' && <ShopTab />}
         {activeTab === 'leaderboard' && <LeaderboardTab />}
         {activeTab === 'friends' && <FriendsTab />}
+        {activeTab === 'news' && <NewsTab />}
         {activeTab === 'admin' && <AdminTab />}
         {activeTab === 'settings' && <SettingsTab />}
       </div>

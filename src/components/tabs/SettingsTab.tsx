@@ -1,4 +1,4 @@
-import { LogOut, Info, User, Users } from 'lucide-react';
+import { LogOut, Info, User, Users, Newspaper } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/store/gameStore';
 import { disconnectSocket } from '@/lib/socket';
@@ -56,6 +56,24 @@ export default function SettingsTab() {
         <Users size={20} />
         <span className="relative z-10">FRIENDS & MESSAGES</span>
         <div className="absolute inset-0 bg-gradient-to-b from-blue-400/20 to-transparent"></div>
+      </button>
+
+      {/* News Button */}
+      <button
+        onClick={() => setActiveTab('news')}
+        className="w-full py-3 bg-purple-700 hover:bg-purple-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: '3px solid #6b21a8',
+          borderRadius: '0',
+          boxShadow: '0 3px 0 #7e22ce, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+          textShadow: '1px 1px 0 #000',
+          fontFamily: 'monospace',
+          letterSpacing: '1px'
+        }}
+      >
+        <Newspaper size={20} />
+        <span className="relative z-10">NEWS & UPDATES</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-400/20 to-transparent"></div>
       </button>
 
       {/* Leaderboard Button */}
