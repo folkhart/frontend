@@ -3,6 +3,7 @@ import { craftingApi, inventoryApi } from '@/lib/api';
 import { getRarityColor } from '@/utils/format';
 import { Hammer, Check } from 'lucide-react';
 import { useState } from 'react';
+import { useGameStore } from '@/store/gameStore';
 import anvilIcon from '@/assets/ui/craft/anvil.png';
 import anvilHitIcon from '@/assets/ui/craft/anvil_hit.png';
 import anvilSuccessIcon from '@/assets/ui/craft/anvil_successful.png';
@@ -13,6 +14,7 @@ import recipeHighGrade from '@/assets/ui/craft/craftRecipeHighGrade.png';
 
 export default function CraftingTab() {
   const queryClient = useQueryClient();
+  const { character } = useGameStore();
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
   const [craftingAnimation, setCraftingAnimation] = useState<'idle' | 'crafting' | 'success' | 'fail'>('idle');
 
@@ -27,6 +29,14 @@ export default function CraftingTab() {
     if (craftingAnimation === 'fail') return anvilFailIcon;
     if (craftingAnimation === 'crafting') return anvilHitIcon;
     return anvilIcon;
+  };
+
+  const canCraftRecipe = (recipe: any) => {
+    // Check class restriction
+    if (recipe.resultItem.classRestriction && character?.class !== recipe.resultItem.classRestriction) {
+      return false;
+    }
+    return true;
   };
 
   const { data: recipes, isLoading } = useQuery({
@@ -149,7 +159,9 @@ export default function CraftingTab() {
       </div>
 
       <div className="space-y-3">
-        {recipes.map((recipe: any) => {
+        {recipes
+          .filter((recipe: any) => canCraftRecipe(recipe))
+          .map((recipe: any) => {
           const canCraft = hasEnoughMaterials(recipe);
           
           return (
