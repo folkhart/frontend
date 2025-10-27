@@ -120,10 +120,10 @@ export default function GamePage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-stone-900">
+    <div className="h-screen bg-stone-900">
       <TopBar />
       
-      <div className="flex-1 overflow-y-auto">
+      <div className="overflow-y-auto" style={{ paddingTop: '72px', paddingBottom: '80px', height: '100vh' }}>
         {activeTab === 'village' && <VillageTab />}
         {activeTab === 'adventure' && <AdventureTab />}
         {activeTab === 'guild' && <GuildTab />}
