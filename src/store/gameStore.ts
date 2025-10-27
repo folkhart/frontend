@@ -10,6 +10,7 @@ interface Player {
   energy: number;
   maxEnergy: number;
   energyUpdatedAt?: string;
+  isAdmin?: boolean;
 }
 
 interface Character {

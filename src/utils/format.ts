@@ -1,4 +1,4 @@
-import { formatDistanceToNow, formatDuration, intervalToDuration } from 'date-fns';
+import { formatDistanceToNow, intervalToDuration } from 'date-fns';
 
 export function formatGold(amount: number): string {
   if (amount >= 1000000) {

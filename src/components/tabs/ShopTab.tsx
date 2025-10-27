@@ -5,19 +5,7 @@ import { shopApi } from '@/lib/api';
 import { ShoppingBag, RefreshCw, Coins, Gem } from 'lucide-react';
 import { getRarityColor, getRarityBorder } from '@/utils/format';
 
-interface ShopItem {
-  id: string;
-  name: string;
-  description: string;
-  spriteId: string;
-  type: string;
-  rarity: string;
-  attackBonus?: number;
-  defenseBonus?: number;
-  healthBonus?: number;
-  price: number;
-  currency: 'gold' | 'gems';
-}
+// Shop item interface removed - using 'any' type for flexibility
 
 export default function ShopTab() {
   const queryClient = useQueryClient();

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Package, ShoppingBag, Plus, Trash2, Edit } from 'lucide-react';
+import { Users, Package, ShoppingBag, Plus, Trash2 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
 
