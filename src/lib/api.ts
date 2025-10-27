@@ -99,8 +99,15 @@ export const inventoryApi = {
 // Leaderboard API
 export const leaderboardApi = {
   getByLevel: (limit = 100) => api.get(`/leaderboard/level?limit=${limit}`),
-  getByCombatPower: (limit = 100) => api.get(`/leaderboard/combat-power?limit=${limit}`),
+  getByCP: (limit = 100) => api.get(`/leaderboard/cp?limit=${limit}`),
   getGuilds: (limit = 50) => api.get(`/leaderboard/guilds?limit=${limit}`),
+};
+
+// Crafting API
+export const craftingApi = {
+  getRecipes: () => api.get('/crafting/recipes'),
+  craft: (recipeId: string) => api.post('/crafting/craft', { recipeId }),
+  sell: (inventorySlotId: string, quantity: number) => api.post('/crafting/sell', { inventorySlotId, quantity }),
 };
 
 // Shop API

@@ -1,8 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryApi, characterApi } from '@/lib/api';
+import { inventoryApi, characterApi, craftingApi } from '@/lib/api';
 import { useGameStore } from '@/store/gameStore';
-import { getRarityColor, getRarityBorder } from '@/utils/format';
+import { getRarityColor, getRarityBorder, formatGold } from '@/utils/format';
 import { Package, Check } from 'lucide-react';
+import sellItemIcon from '@/assets/ui/sellItemIcon.png';
 
 export default function InventoryTab() {
   const queryClient = useQueryClient();
@@ -77,6 +78,19 @@ export default function InventoryTab() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['character'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    },
+  });
+
+  const sellItemMutation = useMutation({
+    mutationFn: ({ inventorySlotId, quantity }: { inventorySlotId: string; quantity: number }) => 
+      craftingApi.sell(inventorySlotId, quantity),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['character'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      (window as any).showToast?.(
+        `Sold for ${formatGold(data.data.goldEarned)} gold!`,
+        'success'
+      );
     },
   });
 
@@ -176,6 +190,14 @@ export default function InventoryTab() {
                 {slot.item.healthBonus > 0 && <span className="text-red-400">HP +{slot.item.healthBonus}</span>}
               </div>
 
+              {/* Sell Price */}
+              <div className="flex items-center gap-1 mb-2 text-xs">
+                <img src={sellItemIcon} alt="Sell" className="w-3 h-3" style={{ imageRendering: 'pixelated' }} />
+                <span className="text-yellow-400" style={{ fontFamily: 'monospace' }}>
+                  {formatGold(slot.item.baseValue * (slot.quantity || 1))}
+                </span>
+              </div>
+
               {(slot.item.type === 'Consumable' || slot.item.type === 'Potion') ? (
                 <button
                   onClick={() => useItemMutation.mutate(slot.item.id)}
@@ -193,40 +215,78 @@ export default function InventoryTab() {
                   <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>
                 </button>
               ) : equipped ? (
-                <div 
-                  className="w-full py-2 bg-green-700 text-white text-xs font-bold text-center flex items-center justify-center gap-1"
-                  style={{
-                    border: '2px solid #15803d',
-                    borderRadius: '0',
-                    boxShadow: '0 2px 0 #166534, inset 0 1px 0 rgba(255,255,255,0.2)',
-                    textShadow: '1px 1px 0 #000',
-                    fontFamily: 'monospace'
-                  }}
-                >
-                  <Check size={12} />
-                  EQUIPPED
+                <div className="space-y-1">
+                  <div 
+                    className="w-full py-2 bg-green-700 text-white text-xs font-bold text-center flex items-center justify-center gap-1"
+                    style={{
+                      border: '2px solid #15803d',
+                      borderRadius: '0',
+                      boxShadow: '0 2px 0 #166534, inset 0 1px 0 rgba(255,255,255,0.2)',
+                      textShadow: '1px 1px 0 #000',
+                      fontFamily: 'monospace'
+                    }}
+                  >
+                    <Check size={12} />
+                    EQUIPPED
+                  </div>
+                  <button
+                    onClick={() => sellItemMutation.mutate({ inventorySlotId: slot.id, quantity: slot.quantity })}
+                    disabled={sellItemMutation.isPending}
+                    className="w-full py-1 bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
+                    style={{
+                      border: '2px solid #a16207',
+                      borderRadius: '0',
+                      boxShadow: '0 2px 0 #ca8a04, inset 0 1px 0 rgba(255,255,255,0.2)',
+                      textShadow: '1px 1px 0 #000',
+                      fontFamily: 'monospace'
+                    }}
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-1">
+                      <img src={sellItemIcon} alt="Sell" className="w-3 h-3" style={{ imageRendering: 'pixelated' }} />
+                      SELL
+                    </span>
+                  </button>
                 </div>
               ) : (
-                <button
-                  onClick={() => {
-                    const slotType = getSlotForType(slot.item.type);
-                    if (slotType) {
-                      equipMutation.mutate({ itemId: slot.item.id, slot: slotType });
-                    }
-                  }}
-                  disabled={equipMutation.isPending}
-                  className="w-full py-2 bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
-                  style={{
-                    border: '2px solid #92400e',
-                    borderRadius: '0',
-                    boxShadow: '0 2px 0 #b45309, 0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-                    textShadow: '1px 1px 0 #000',
-                    fontFamily: 'monospace'
-                  }}
-                >
-                  <span className="relative z-10">⚔️ EQUIP</span>
-                  <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
-                </button>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => {
+                      const slotType = getSlotForType(slot.item.type);
+                      if (slotType) {
+                        equipMutation.mutate({ itemId: slot.item.id, slot: slotType });
+                      }
+                    }}
+                    disabled={equipMutation.isPending}
+                    className="w-full py-2 bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
+                    style={{
+                      border: '2px solid #92400e',
+                      borderRadius: '0',
+                      boxShadow: '0 2px 0 #b45309, 0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                      textShadow: '1px 1px 0 #000',
+                      fontFamily: 'monospace'
+                    }}
+                  >
+                    <span className="relative z-10">⚔️ EQUIP</span>
+                    <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+                  </button>
+                  <button
+                    onClick={() => sellItemMutation.mutate({ inventorySlotId: slot.id, quantity: slot.quantity })}
+                    disabled={sellItemMutation.isPending}
+                    className="w-full py-1 bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
+                    style={{
+                      border: '2px solid #a16207',
+                      borderRadius: '0',
+                      boxShadow: '0 2px 0 #ca8a04, inset 0 1px 0 rgba(255,255,255,0.2)',
+                      textShadow: '1px 1px 0 #000',
+                      fontFamily: 'monospace'
+                    }}
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-1">
+                      <img src={sellItemIcon} alt="Sell" className="w-3 h-3" style={{ imageRendering: 'pixelated' }} />
+                      SELL
+                    </span>
+                  </button>
+                </div>
               )}
             </div>
           );
