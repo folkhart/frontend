@@ -28,6 +28,9 @@ interface Character {
   spriteId: string;
   weapon?: any;
   armor?: any;
+  helmet?: any;
+  gloves?: any;
+  shoes?: any;
   accessory?: any;
   companion?: any;
   currentActivityType?: string;

@@ -169,7 +169,7 @@ export default function AdventureTab() {
   }, [idleStatus]);
 
   const startIdleMutation = useMutation({
-    mutationFn: () => idleApi.start(),
+    mutationFn: (durationHours: number = 1) => idleApi.start(undefined, durationHours),
     onSuccess: async () => {
       refetchIdle();
       // Refresh player data to update energy
@@ -522,24 +522,63 @@ export default function AdventureTab() {
           <p className="text-sm text-gray-300 mb-3" style={{ fontFamily: 'monospace' }}>
             Let your character farm resources while you're away. Earn gold, exp, and items!
           </p>
-          <button
-            onClick={() => startIdleMutation.mutate()}
-            disabled={startIdleMutation.isPending}
-            className="w-full px-4 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
-            style={{
-              border: '3px solid #92400e',
-              borderRadius: '0',
-              boxShadow: '0 3px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)',
-              textShadow: '1px 1px 0 #000',
-              fontFamily: 'monospace',
-              letterSpacing: '1px'
-            }}
-          >
-            <span className="relative z-10">
-              {startIdleMutation.isPending ? "STARTING..." : "START IDLE FARMING (1 HOUR)"}
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
-          </button>
+          {character && character.level >= 10 ? (
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => startIdleMutation.mutate(1)}
+                disabled={startIdleMutation.isPending}
+                className="px-4 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+                style={{
+                  border: '3px solid #92400e',
+                  borderRadius: '0',
+                  boxShadow: '0 3px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)',
+                  textShadow: '1px 1px 0 #000',
+                  fontFamily: 'monospace',
+                  letterSpacing: '1px'
+                }}
+              >
+                <span className="relative z-10 text-sm">
+                  {startIdleMutation.isPending ? "STARTING..." : "1 HOUR"}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+              </button>
+              <button
+                onClick={() => startIdleMutation.mutate(3)}
+                disabled={startIdleMutation.isPending}
+                className="px-4 py-3 bg-purple-700 hover:bg-purple-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+                style={{
+                  border: '3px solid #581c87',
+                  borderRadius: '0',
+                  boxShadow: '0 3px 0 #7e22ce, inset 0 1px 0 rgba(255,255,255,0.2)',
+                  textShadow: '1px 1px 0 #000',
+                  fontFamily: 'monospace',
+                  letterSpacing: '1px'
+                }}
+              >
+                <span className="relative z-10 text-sm">3 HOURS</span>
+                <div className="absolute inset-0 bg-gradient-to-b from-purple-400/20 to-transparent"></div>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => startIdleMutation.mutate(1)}
+              disabled={startIdleMutation.isPending}
+              className="w-full px-4 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+              style={{
+                border: '3px solid #92400e',
+                borderRadius: '0',
+                boxShadow: '0 3px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)',
+                textShadow: '1px 1px 0 #000',
+                fontFamily: 'monospace',
+                letterSpacing: '1px'
+              }}
+            >
+              <span className="relative z-10">
+                {startIdleMutation.isPending ? "STARTING..." : "START IDLE FARMING (1 HOUR)"}
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+            </button>
+          )}
         </div>
       )}
 

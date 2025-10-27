@@ -73,7 +73,7 @@ export const characterApi = {
 
 // Idle API
 export const idleApi = {
-  start: (zoneId?: string) => api.post('/idle/start', { zoneId }),
+  start: (zoneId?: string, durationHours?: number) => api.post('/idle/start', { zoneId, durationHours }),
   claim: () => api.post('/idle/claim'),
   getStatus: () => api.get('/idle/status'),
 };

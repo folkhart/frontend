@@ -18,6 +18,7 @@ import SettingsTab from '@/components/tabs/SettingsTab';
 import NotificationToast from '@/components/NotificationToast';
 import Toast from '@/components/Toast';
 import Onboarding from '@/components/Onboarding';
+import LevelUpModal from '@/components/modals/LevelUpModal';
 
 export default function GamePage() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function GamePage() {
   const [notification, setNotification] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [levelUpData, setLevelUpData] = useState<{ newLevel: number; unlocks?: string[] } | null>(null);
 
   useEffect(() => {
     loadPlayerData();
@@ -108,11 +110,13 @@ export default function GamePage() {
     });
 
     onLevelUp((data) => {
-      setNotification({
-        type: 'success',
-        title: '🎉 Level Up!',
-        message: `Congratulations! You reached level ${data.newLevel}`,
+      // Show level-up modal instead of toast
+      setLevelUpData({
+        newLevel: data.newLevel,
+        unlocks: data.unlocks || [],
       });
+      // Refresh character data
+      loadPlayerData();
     });
   };
 
@@ -174,6 +178,15 @@ export default function GamePage() {
 
       {showOnboarding && (
         <Onboarding onComplete={handleOnboardingComplete} />
+      )}
+
+      {levelUpData && (
+        <LevelUpModal
+          isOpen={true}
+          onClose={() => setLevelUpData(null)}
+          newLevel={levelUpData.newLevel}
+          unlocks={levelUpData.unlocks}
+        />
       )}
     </div>
   );
