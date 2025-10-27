@@ -7,14 +7,16 @@ import { getRarityColor, getRarityBorder, getClassIcon } from '@/utils/format';
 import inventoryIcon from '@/assets/ui/inventory.png';
 import equipmentIcon from '@/assets/ui/equipment.png';
 import anvilIcon from '@/assets/ui/craft/anvil.png';
+import hammerIcon from '@/assets/ui/craft/hammer.png';
 import CraftingTab from './CraftingTab';
 import InventoryTab from './InventoryTab';
+import BlacksmithTab from './BlacksmithTab';
 
 export default function VillageTab() {
   const queryClient = useQueryClient();
   const { character, setCharacter } = useGameStore();
   const [selectedSlot, setSelectedSlot] = useState<'weapon' | 'armor' | 'ring' | 'necklace' | 'belt' | 'earring' | null>(null);
-  const [activeView, setActiveView] = useState<'equipment' | 'inventory' | 'crafting'>('equipment');
+  const [activeView, setActiveView] = useState<'equipment' | 'inventory' | 'crafting' | 'blacksmith'>('equipment');
 
   const { data: inventory } = useQuery({
     queryKey: ['inventory'],
@@ -225,6 +227,25 @@ export default function VillageTab() {
           <span className="relative z-10">Crafting</span>
           {activeView === 'crafting' && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
         </button>
+        <button
+          onClick={() => setActiveView('blacksmith')}
+          className={`flex-1 py-2 font-bold transition flex items-center justify-center gap-1 relative overflow-hidden ${
+            activeView === 'blacksmith'
+              ? 'bg-amber-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #92400e',
+            borderRadius: '0',
+            boxShadow: activeView === 'blacksmith' ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeView === 'blacksmith' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <img src={hammerIcon} alt="Blacksmith" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+          <span className="relative z-10">Blacksmith</span>
+          {activeView === 'blacksmith' && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
+        </button>
       </div>
 
       {activeView === 'equipment' ? (
@@ -341,8 +362,10 @@ export default function VillageTab() {
       </div>
       ) : activeView === 'inventory' ? (
         <InventoryTab />
-      ) : (
+      ) : activeView === 'crafting' ? (
         <CraftingTab />
+      ) : (
+        <BlacksmithTab />
       )}
     </div>
   );

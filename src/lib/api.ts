@@ -162,3 +162,19 @@ export const newsApi = {
   update: (postId: string, data: any) => api.put(`/news/${postId}`, data),
   delete: (postId: string) => api.delete(`/news/${postId}`),
 };
+
+// Blacksmith API
+export const blacksmithApi = {
+  enhance: (inventorySlotId: string, useProtectionScroll: boolean = false) =>
+    api.post('/blacksmith/enhance', { inventorySlotId, useProtectionScroll }),
+  refine: (inventorySlotId: string) =>
+    api.post('/blacksmith/refine', { inventorySlotId }),
+  addSocketSlot: (inventorySlotId: string) =>
+    api.post('/blacksmith/socket/add', { inventorySlotId }),
+  insertGem: (inventorySlotId: string, gemItemId: string) =>
+    api.post('/blacksmith/socket/insert', { inventorySlotId, gemItemId }),
+  removeGem: (inventorySlotId: string, gemIndex: number) =>
+    api.post('/blacksmith/socket/remove', { inventorySlotId, gemIndex }),
+  getHistory: (limit?: number) =>
+    api.get('/blacksmith/history', { params: { limit } }),
+};
