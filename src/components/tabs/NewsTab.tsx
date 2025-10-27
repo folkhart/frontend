@@ -1,7 +1,17 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { newsApi } from '@/lib/api';
-import { Newspaper, Calendar, User, Pin } from 'lucide-react';
+import { Calendar, User, Pin } from 'lucide-react';
+import newsIcon from '@/assets/ui/news/news.png';
+import redGem from '@/assets/ui/news/red_gem.png';
+import blueGem from '@/assets/ui/news/blue_gem.png';
+import greenGem from '@/assets/ui/news/green_gem.png';
+import goldAnchor from '@/assets/ui/news/goldanchor.png';
+import silverAnchor from '@/assets/ui/news/silveranchor.png';
+import bronzeAnchor from '@/assets/ui/news/bronzeanchor.png';
+import bulletPoint1 from '@/assets/ui/news/bulletpoint1.png';
+import bulletPoint2 from '@/assets/ui/news/bulletpoint2.png';
+import bulletPoint3 from '@/assets/ui/news/bulletpoint3.png';
 
 export default function NewsTab() {
   const [selectedPost, setSelectedPost] = useState<any>(null);
@@ -21,6 +31,22 @@ export default function NewsTab() {
       case 'Maintenance': return 'text-red-400 border-red-600';
       default: return 'text-amber-400 border-amber-600';
     }
+  };
+
+  const getCategoryGem = (category: string) => {
+    switch (category) {
+      case 'Update': return blueGem;
+      case 'Event': return greenGem;
+      case 'Maintenance': return redGem;
+      default: return goldAnchor;
+    }
+  };
+
+  const getRankIcon = (index: number) => {
+    if (index === 0) return goldAnchor;
+    if (index === 1) return silverAnchor;
+    if (index === 2) return bronzeAnchor;
+    return bulletPoint1;
   };
 
   const formatDate = (dateString: string) => {
@@ -50,10 +76,18 @@ export default function NewsTab() {
           }}
         >
           {/* Category Badge */}
-          <div className={`inline-block px-3 py-1 mb-3 border-2 font-bold text-xs ${getCategoryColor(selectedPost.category)}`}
-            style={{ fontFamily: 'monospace' }}
-          >
-            {selectedPost.category.toUpperCase()}
+          <div className="flex items-center gap-2 mb-3">
+            <img 
+              src={getCategoryGem(selectedPost.category)} 
+              alt={selectedPost.category}
+              className="w-6 h-6"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <div className={`inline-block px-3 py-1 border-2 font-bold text-xs ${getCategoryColor(selectedPost.category)}`}
+              style={{ fontFamily: 'monospace' }}
+            >
+              {selectedPost.category.toUpperCase()}
+            </div>
           </div>
 
           {/* Title */}
@@ -92,7 +126,12 @@ export default function NewsTab() {
       <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2"
         style={{ textShadow: '2px 2px 0 #000', fontFamily: 'monospace' }}
       >
-        <Newspaper size={20} className="text-amber-400" />
+        <img 
+          src={newsIcon} 
+          alt="News"
+          className="w-6 h-6"
+          style={{ imageRendering: 'pixelated' }}
+        />
         📰 NEWS & UPDATES
       </h2>
 
@@ -100,7 +139,12 @@ export default function NewsTab() {
       <div className="space-y-3">
         {!newsData || newsData.posts.length === 0 ? (
           <div className="bg-stone-800 border-2 border-stone-700 p-8 text-center">
-            <Newspaper size={48} className="mx-auto mb-2 text-gray-600" />
+            <img 
+              src={newsIcon} 
+              alt="News"
+              className="w-12 h-12 mx-auto mb-2 opacity-50"
+              style={{ imageRendering: 'pixelated' }}
+            />
             <p className="text-gray-400">No news posts yet. Check back soon!</p>
           </div>
         ) : (
@@ -121,10 +165,18 @@ export default function NewsTab() {
               )}
 
               {/* Category */}
-              <div className={`inline-block px-2 py-1 mb-2 border-2 font-bold text-xs ${getCategoryColor(post.category)}`}
-                style={{ fontFamily: 'monospace' }}
-              >
-                {post.category.toUpperCase()}
+              <div className="flex items-center gap-2 mb-2">
+                <img 
+                  src={getCategoryGem(post.category)} 
+                  alt={post.category}
+                  className="w-4 h-4"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+                <div className={`inline-block px-2 py-1 border-2 font-bold text-xs ${getCategoryColor(post.category)}`}
+                  style={{ fontFamily: 'monospace' }}
+                >
+                  {post.category.toUpperCase()}
+                </div>
               </div>
 
               {/* Title */}
