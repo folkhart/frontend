@@ -221,14 +221,12 @@ export default function BlacksmithTab() {
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-400">Enhancement Stones:</span>
-                  {getItemImage('craft/gems/enhancement_stone', 'Material') && (
-                    <img
-                      src={getItemImage('craft/gems/enhancement_stone', 'Material')!}
-                      alt="Enhancement Stone"
-                      className="w-4 h-4"
-                      style={{ imageRendering: 'pixelated' }}
-                    />
-                  )}
+                  <img
+                    src={enhancementStoneIcon}
+                    alt="Enhancement Stone"
+                    className="w-4 h-4"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
                 </div>
                 <span className="text-blue-400 font-bold">
                   {getEnhancementStones(selectedItem.enhancementLevel)}
