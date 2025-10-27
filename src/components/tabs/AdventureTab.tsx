@@ -7,6 +7,7 @@ import { Clock, Zap, Trophy } from "lucide-react";
 import BossFight from "@/components/BossFight";
 import dungeonsIcon from "@/assets/ui/dungeons.png";
 import historyIcon from "@/assets/ui/history.png";
+import idleFarmingIcon from "@/assets/ui/idleFarming.png";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
@@ -417,7 +418,12 @@ export default function AdventureTab() {
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="text-3xl">🌾</div>
+              <img 
+                src={idleFarmingIcon} 
+                alt="Idle Farming" 
+                className="w-10 h-10 rounded border-2 border-green-500" 
+                style={{ imageRendering: 'pixelated' }}
+              />
               <div>
                 <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
                   Idle Farming Active
