@@ -64,3 +64,40 @@ export function offDungeonComplete(callback: (data: any) => void) {
 export function offLevelUp(callback: (data: any) => void) {
   socket?.off('level_up', callback);
 }
+
+// Friend & Message events
+export function onNewMessage(callback: (data: any) => void) {
+  socket?.on('new_message', callback);
+}
+
+export function offNewMessage(callback: (data: any) => void) {
+  socket?.off('new_message', callback);
+}
+
+export function onNewFriendRequest(callback: (data: any) => void) {
+  socket?.on('new_friend_request', callback);
+}
+
+export function offNewFriendRequest(callback: (data: any) => void) {
+  socket?.off('new_friend_request', callback);
+}
+
+export function onFriendRequestAccepted(callback: (data: any) => void) {
+  socket?.on('friend_request_accepted', callback);
+}
+
+export function offFriendRequestAccepted(callback: (data: any) => void) {
+  socket?.off('friend_request_accepted', callback);
+}
+
+export function emitSendMessage(receiverId: string, message: any) {
+  socket?.emit('send_message', { receiverId, message });
+}
+
+export function emitFriendRequestSent(receiverId: string, request: any) {
+  socket?.emit('friend_request_sent', { receiverId, request });
+}
+
+export function emitFriendRequestAccepted(senderId: string, accepter: any) {
+  socket?.emit('friend_request_accepted', { senderId, accepter });
+}

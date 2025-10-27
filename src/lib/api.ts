@@ -132,3 +132,22 @@ export const guildApi = {
   donate: (amount: number) => api.post('/guild/donate', { amount }),
   sendMessage: (message: string) => api.post('/guild/chat', { message }),
 };
+
+// Friend API
+export const friendApi = {
+  sendRequest: (username: string) => api.post('/friends/request', { username }),
+  getRequests: () => api.get('/friends/requests'),
+  acceptRequest: (requestId: string) => api.post(`/friends/request/${requestId}/accept`),
+  rejectRequest: (requestId: string) => api.post(`/friends/request/${requestId}/reject`),
+  getFriends: () => api.get('/friends'),
+  removeFriend: (friendId: string) => api.delete(`/friends/${friendId}`),
+};
+
+// Message API
+export const messageApi = {
+  send: (receiverId: string, content: string) => api.post('/messages/send', { receiverId, content }),
+  getConversation: (friendId: string, limit?: number) => api.get(`/messages/conversation/${friendId}`, { params: { limit } }),
+  getUnreadCount: () => api.get('/messages/unread/count'),
+  getUnread: () => api.get('/messages/unread'),
+  markAsRead: (senderId: string) => api.post(`/messages/read/${senderId}`),
+};
