@@ -423,17 +423,30 @@ export default function AdventureTab() {
                   Idle Farming Active
                 </p>
                 <p className="text-xs text-green-200" style={{ fontFamily: 'monospace' }}>
-                  {idleStatus.canClaim
-                    ? "Rewards are ready to claim!"
-                    : `Ends in: ${Math.floor(idleTimeRemaining / 60)}m ${idleTimeRemaining % 60}s`}
+                  {idleStatus.canClaim ? "Ready to claim!" : "In Progress"}
                 </p>
               </div>
             </div>
-            {idleStatus.canClaim && (
-              <span className="text-green-300 text-sm font-bold animate-pulse" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
-                READY!
-              </span>
-            )}
+            <div className="text-right">
+              <div className="text-3xl font-bold text-green-300" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+                {idleStatus.canClaim 
+                  ? "0:00"
+                  : `${Math.floor(idleTimeRemaining / 60)}:${String(idleTimeRemaining % 60).padStart(2, "0")}`
+                }
+              </div>
+              <p className="text-xs text-green-200" style={{ fontFamily: 'monospace' }}>Remaining</p>
+            </div>
+          </div>
+          <div className="w-full bg-stone-900 h-3 overflow-hidden mb-3" style={{ borderRadius: '0', border: '2px solid #15803d' }}>
+            <div
+              className="bg-gradient-to-r from-green-500 to-lime-400 h-full transition-all duration-1000"
+              style={{
+                width: idleStatus.canClaim 
+                  ? '100%' 
+                  : `${((3600 - idleTimeRemaining) / 3600) * 100}%`,
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
+              }}
+            />
           </div>
           <button
             onClick={() => claimIdleMutation.mutate()}
