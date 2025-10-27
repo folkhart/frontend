@@ -1,7 +1,8 @@
-import { LogOut, Info, Trophy, User } from 'lucide-react';
+import { LogOut, Info, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/store/gameStore';
 import { disconnectSocket } from '@/lib/socket';
+import leaderboardIcon from '@/assets/ui/leaderboard.png';
 
 export default function SettingsTab() {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function SettingsTab() {
       {/* Leaderboard Button */}
       <button
         onClick={() => setActiveTab('leaderboard')}
-        className="w-full py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition relative overflow-hidden mb-4"
+        className="w-full py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
         style={{
           border: '3px solid #92400e',
           borderRadius: '0',
@@ -52,8 +53,8 @@ export default function SettingsTab() {
           letterSpacing: '1px'
         }}
       >
-        <Trophy size={20} className="inline mr-2" />
-        <span className="relative z-10">🏆 LEADERBOARD</span>
+        <img src={leaderboardIcon} alt="Leaderboard" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
+        <span className="relative z-10">LEADERBOARD</span>
         <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
       </button>
 
