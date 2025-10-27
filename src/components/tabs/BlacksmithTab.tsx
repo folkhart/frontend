@@ -82,6 +82,40 @@ export default function BlacksmithTab() {
 
   const gems = inventory?.filter((slot: any) => slot.item.type === 'Gem') || [];
 
+  const getItemImage = (spriteId: string, itemType?: string) => {
+    if (!spriteId) return null;
+    
+    try {
+      // Check if it's a potion (numeric sprite ID)
+      if (/^\d+$/.test(spriteId)) {
+        const num = parseInt(spriteId);
+        if (num >= 985 && num <= 992) {
+          return new URL(`../../assets/items/potions/hp/${spriteId}.png`, import.meta.url).href;
+        } else if (num >= 1001 && num <= 1008) {
+          return new URL(`../../assets/items/potions/mp/${spriteId}.png`, import.meta.url).href;
+        } else if (num >= 1033 && num <= 1040) {
+          return new URL(`../../assets/items/potions/attack/${spriteId}.png`, import.meta.url).href;
+        }
+      }
+      
+      // Determine folder based on item type
+      let folder = 'weapons'; // default
+      if (itemType === 'Armor') {
+        folder = 'armors';
+      } else if (itemType === 'Accessory') {
+        folder = 'accessories';
+      } else if (itemType === 'Gem' || itemType === 'Material') {
+        // Gems and materials use their full spriteId path
+        return new URL(`../../assets/items/${spriteId}.png`, import.meta.url).href;
+      }
+      
+      return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
+    } catch (e) {
+      console.error('Failed to load image:', spriteId, itemType, e);
+      return null;
+    }
+  };
+
   const getEnhancementCost = (level: number) => {
     const costs: Record<number, number> = {
       0: 100, 1: 250, 2: 500, 3: 1000, 4: 2500,
@@ -127,12 +161,14 @@ export default function BlacksmithTab() {
                 className="bg-stone-800 border-2 border-stone-700 hover:border-amber-600 p-3 text-left transition"
               >
                 <div className="flex items-center gap-2">
-                  <img
-                    src={`/src/assets/items/${slot.item.spriteId}.png`}
-                    alt={slot.item.name}
-                    className="w-8 h-8"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
+                  {getItemImage(slot.item.spriteId, slot.item.type) && (
+                    <img
+                      src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                      alt={slot.item.name}
+                      className="w-8 h-8"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
                   <div className="flex-1">
                     <div className="text-white font-bold text-sm">
                       {slot.item.name} {slot.enhancementLevel > 0 && `+${slot.enhancementLevel}`}
@@ -148,12 +184,14 @@ export default function BlacksmithTab() {
         <div className="space-y-4">
           <div className="bg-stone-900 border-2 border-amber-600 p-4">
             <div className="flex items-center gap-3 mb-3">
-              <img
-                src={`/src/assets/items/${selectedItem.item.spriteId}.png`}
-                alt={selectedItem.item.name}
-                className="w-12 h-12"
-                style={{ imageRendering: 'pixelated' }}
-              />
+              {getItemImage(selectedItem.item.spriteId, selectedItem.item.type) && (
+                <img
+                  src={getItemImage(selectedItem.item.spriteId, selectedItem.item.type)!}
+                  alt={selectedItem.item.name}
+                  className="w-12 h-12"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              )}
               <div>
                 <div className="text-white font-bold">
                   {selectedItem.item.name} +{selectedItem.enhancementLevel}
@@ -264,12 +302,14 @@ export default function BlacksmithTab() {
                 className="bg-stone-800 border-2 border-stone-700 hover:border-purple-600 p-3 text-left transition"
               >
                 <div className="flex items-center gap-2">
-                  <img
-                    src={`/src/assets/items/${slot.item.spriteId}.png`}
-                    alt={slot.item.name}
-                    className="w-8 h-8"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
+                  {getItemImage(slot.item.spriteId, slot.item.type) && (
+                    <img
+                      src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                      alt={slot.item.name}
+                      className="w-8 h-8"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
                   <div className="flex-1">
                     <div className="text-white font-bold text-sm">
                       {slot.item.name}
@@ -286,12 +326,14 @@ export default function BlacksmithTab() {
         <div className="space-y-4">
           <div className="bg-stone-900 border-2 border-purple-600 p-4">
             <div className="flex items-center gap-3 mb-3">
-              <img
-                src={`/src/assets/items/${selectedItem.item.spriteId}.png`}
-                alt={selectedItem.item.name}
-                className="w-12 h-12"
-                style={{ imageRendering: 'pixelated' }}
-              />
+              {getItemImage(selectedItem.item.spriteId, selectedItem.item.type) && (
+                <img
+                  src={getItemImage(selectedItem.item.spriteId, selectedItem.item.type)!}
+                  alt={selectedItem.item.name}
+                  className="w-12 h-12"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              )}
               <div>
                 <div className="text-white font-bold">{selectedItem.item.name}</div>
                 {selectedItem.refineStats && (
@@ -348,12 +390,14 @@ export default function BlacksmithTab() {
                 className="bg-stone-800 border-2 border-stone-700 hover:border-blue-600 p-3 text-left transition"
               >
                 <div className="flex items-center gap-2">
-                  <img
-                    src={`/src/assets/items/${slot.item.spriteId}.png`}
-                    alt={slot.item.name}
-                    className="w-8 h-8"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
+                  {getItemImage(slot.item.spriteId, slot.item.type) && (
+                    <img
+                      src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                      alt={slot.item.name}
+                      className="w-8 h-8"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
                   <div className="flex-1">
                     <div className="text-white font-bold text-sm">{slot.item.name}</div>
                     <div className="text-blue-400 text-xs">
@@ -369,12 +413,14 @@ export default function BlacksmithTab() {
         <div className="space-y-4">
           <div className="bg-stone-900 border-2 border-blue-600 p-4">
             <div className="flex items-center gap-3 mb-3">
-              <img
-                src={`/src/assets/items/${selectedItem.item.spriteId}.png`}
-                alt={selectedItem.item.name}
-                className="w-12 h-12"
-                style={{ imageRendering: 'pixelated' }}
-              />
+              {getItemImage(selectedItem.item.spriteId, selectedItem.item.type) && (
+                <img
+                  src={getItemImage(selectedItem.item.spriteId, selectedItem.item.type)!}
+                  alt={selectedItem.item.name}
+                  className="w-12 h-12"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+              )}
               <div>
                 <div className="text-white font-bold">{selectedItem.item.name}</div>
                 <div className="text-blue-400 text-sm">
@@ -409,12 +455,14 @@ export default function BlacksmithTab() {
                       disabled={insertGemMutation.isPending}
                       className="bg-stone-800 border-2 border-stone-700 hover:border-blue-600 p-2 transition"
                     >
-                      <img
-                        src={`/src/assets/items/${gemSlot.item.spriteId}.png`}
-                        alt={gemSlot.item.name}
-                        className="w-8 h-8 mx-auto mb-1"
-                        style={{ imageRendering: 'pixelated' }}
-                      />
+                      {getItemImage(gemSlot.item.spriteId, gemSlot.item.type) && (
+                        <img
+                          src={getItemImage(gemSlot.item.spriteId, gemSlot.item.type)!}
+                          alt={gemSlot.item.name}
+                          className="w-8 h-8 mx-auto mb-1"
+                          style={{ imageRendering: 'pixelated' }}
+                        />
+                      )}
                       <div className="text-white text-xs font-bold">{gemSlot.item.name}</div>
                       <div className="text-gray-400 text-xs">x{gemSlot.quantity}</div>
                     </button>
