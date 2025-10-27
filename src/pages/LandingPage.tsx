@@ -10,6 +10,7 @@ export default function LandingPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     username: '',
+    emailOrUsername: '',
     email: '',
     password: '',
   });
@@ -23,9 +24,24 @@ export default function LandingPage() {
 
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const payload = isLogin
-        ? { email: formData.email, password: formData.password }
-        : formData;
+      
+      let payload: any;
+      if (isLogin) {
+        // For login, check if input is email or username
+        const input = formData.emailOrUsername;
+        const isEmail = input.includes('@');
+        payload = {
+          [isEmail ? 'email' : 'username']: input,
+          password: formData.password
+        };
+      } else {
+        // For register, use all fields
+        payload = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password
+        };
+      }
 
       const { data } = await axios.post(`${API_URL}${endpoint}`, payload);
       
@@ -75,13 +91,13 @@ export default function LandingPage() {
           <img 
             src={logo} 
             alt="Folkhart" 
-            className="w-32 h-32 mx-auto mb-4 pixelated drop-shadow-2xl"
+            className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-4 pixelated drop-shadow-2xl"
             style={{ imageRendering: 'pixelated' }}
           />
-          <h1 className="text-6xl font-bold text-amber-400 retro-text mb-2 tracking-wider drop-shadow-lg">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-amber-400 retro-text mb-2 tracking-wider drop-shadow-lg">
             FOLKHART
           </h1>
-          <p className="text-amber-200 text-sm retro-text tracking-widest">
+          <p className="text-amber-200 text-xs sm:text-sm retro-text tracking-widest">
             ⚔️ COZY FANTASY RPG ⚔️
           </p>
         </div>
@@ -103,35 +119,50 @@ export default function LandingPage() {
           {/* Form Content */}
           <div className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
+              {isLogin ? (
                 <div>
                   <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
-                    USERNAME
+                    EMAIL OR USERNAME
                   </label>
                   <input
                     type="text"
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    value={formData.emailOrUsername}
+                    onChange={(e) => setFormData({ ...formData, emailOrUsername: e.target.value })}
                     className="retro-input w-full px-4 py-3 bg-stone-900 border-2 border-amber-600 text-white focus:border-amber-400 focus:outline-none"
-                    required={!isLogin}
-                    placeholder="HERO_NAME"
+                    required
+                    placeholder="hero@mail.com or HERO_NAME"
                   />
                 </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
+                      USERNAME
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      className="retro-input w-full px-4 py-3 bg-stone-900 border-2 border-amber-600 text-white focus:border-amber-400 focus:outline-none"
+                      required
+                      placeholder="HERO_NAME"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
+                      EMAIL
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="retro-input w-full px-4 py-3 bg-stone-900 border-2 border-amber-600 text-white focus:border-amber-400 focus:outline-none"
+                      required
+                      placeholder="hero@folkhart.com"
+                    />
+                  </div>
+                </>
               )}
-
-              <div>
-                <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
-                  EMAIL
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="retro-input w-full px-4 py-3 bg-stone-900 border-2 border-amber-600 text-white focus:border-amber-400 focus:outline-none"
-                  required
-                  placeholder="hero@folkhart.com"
-                />
-              </div>
 
               <div>
                 <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
