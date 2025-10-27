@@ -47,7 +47,6 @@ interface GameState {
   // UI State
   activeTab: 'village' | 'adventure' | 'guild' | 'shop' | 'leaderboard' | 'admin' | 'settings';
   isLoading: boolean;
-  hideAdminsInLeaderboard: boolean;
   
   // Actions
   setAuth: (accessToken: string, refreshToken: string) => void;
@@ -59,7 +58,6 @@ interface GameState {
   updatePlayerGold: (amount: number) => void;
   updatePlayerEnergy: (amount: number) => void;
   updateCharacterExp: (amount: number) => void;
-  setHideAdminsInLeaderboard: (hide: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -71,7 +69,6 @@ export const useGameStore = create<GameState>((set) => ({
   character: null,
   activeTab: 'adventure',
   isLoading: false,
-  hideAdminsInLeaderboard: localStorage.getItem('hideAdminsInLeaderboard') === 'true',
 
   // Actions
   setAuth: (accessToken, refreshToken) => {
@@ -123,9 +120,4 @@ export const useGameStore = create<GameState>((set) => ({
         ? { ...state.character, experience: state.character.experience + amount }
         : null,
     })),
-
-  setHideAdminsInLeaderboard: (hide) => {
-    localStorage.setItem('hideAdminsInLeaderboard', String(hide));
-    set({ hideAdminsInLeaderboard: hide });
-  },
 }));

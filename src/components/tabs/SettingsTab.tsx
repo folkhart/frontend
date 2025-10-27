@@ -6,7 +6,7 @@ import leaderboardIcon from '@/assets/ui/leaderboard.png';
 
 export default function SettingsTab() {
   const navigate = useNavigate();
-  const { player, clearAuth, setActiveTab, hideAdminsInLeaderboard, setHideAdminsInLeaderboard } = useGameStore();
+  const { player, clearAuth, setActiveTab } = useGameStore();
 
   const handleLogout = () => {
     disconnectSocket();
@@ -122,32 +122,6 @@ export default function SettingsTab() {
             <p className="text-gray-400 text-xs mb-1">Total Gems</p>
             <p className="text-blue-400 font-bold text-lg">{player?.gems || 0}</p>
           </div>
-        </div>
-      </div>
-
-      {/* Leaderboard Settings */}
-      <div className="bg-stone-800 rounded-lg border-2 border-stone-700 p-4 mb-4">
-        <h3 className="font-bold text-white mb-3">🏆 Leaderboard Settings</h3>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white text-sm font-medium">Hide Admins</p>
-            <p className="text-gray-400 text-xs">Hide admin players from leaderboard</p>
-          </div>
-          <button
-            onClick={() => setHideAdminsInLeaderboard(!hideAdminsInLeaderboard)}
-            className={`relative w-14 h-7 rounded-full transition-colors ${
-              hideAdminsInLeaderboard ? 'bg-green-600' : 'bg-gray-600'
-            }`}
-            style={{
-              border: '2px solid rgba(0,0,0,0.3)',
-            }}
-          >
-            <div
-              className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
-                hideAdminsInLeaderboard ? 'translate-x-7' : 'translate-x-0'
-              }`}
-            />
-          </button>
         </div>
       </div>
 
