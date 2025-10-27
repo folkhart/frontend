@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Sword, Shield } from 'lucide-react';
 
 interface BossFightProps {

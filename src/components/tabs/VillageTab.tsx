@@ -49,23 +49,7 @@ export default function VillageTab() {
     },
   });
 
-  const useItemMutation = useMutation({
-    mutationFn: (itemId: string) => inventoryApi.use(itemId),
-    onSuccess: async () => {
-      // Update character data
-      const { data: updatedCharacter } = await characterApi.get();
-      setCharacter(updatedCharacter);
-      
-      queryClient.invalidateQueries({ queryKey: ['character'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      
-      (window as any).showToast?.('Item used successfully!', 'success');
-    },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.error || 'Failed to use item';
-      (window as any).showToast?.(errorMessage, 'error');
-    },
-  });
+  // Removed useItemMutation - handled in InventoryTab
 
   if (!character) return null;
 
@@ -159,12 +143,6 @@ export default function VillageTab() {
       )}
     </div>
   );
-
-  const isEquipped = (itemId: string) => {
-    if (!character) return false;
-    return character.weapon?.id === itemId || 
-           character.armor?.id === itemId;
-  };
 
   return (
     <div className="p-3 pb-20">

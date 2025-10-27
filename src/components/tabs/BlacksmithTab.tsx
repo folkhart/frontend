@@ -9,7 +9,6 @@ export default function BlacksmithTab() {
   const queryClient = useQueryClient();
   const [mode, setMode] = useState<BlacksmithMode>('enhance');
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [selectedGem, setSelectedGem] = useState<any>(null);
   const [useProtection, setUseProtection] = useState(false);
   const [result, setResult] = useState<any>(null);
 
@@ -69,7 +68,6 @@ export default function BlacksmithTab() {
       queryClient.invalidateQueries({ queryKey: ['character'] });
       setResult(response.data);
       setSelectedItem(null);
-      setSelectedGem(null);
     },
     onError: (error: any) => {
       (window as any).showToast?.(error.response?.data?.error || 'Gem insertion failed', 'error');

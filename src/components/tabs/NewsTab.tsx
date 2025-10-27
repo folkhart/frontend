@@ -7,12 +7,6 @@ import redGem from "@/assets/ui/news/red_gem.png";
 import blueGem from "@/assets/ui/news/blue_gem.png";
 import greenGem from "@/assets/ui/news/green_gem.png";
 import goldAnchor from "@/assets/ui/news/goldanchor.png";
-import silverAnchor from "@/assets/ui/news/silveranchor.png";
-import bronzeAnchor from "@/assets/ui/news/bronzeanchor.png";
-import bulletPoint1 from "@/assets/ui/news/bulletpoint1.png";
-import bulletPoint2 from "@/assets/ui/news/bulletpoint2.png";
-import bulletPoint3 from "@/assets/ui/news/bulletpoint3.png";
-
 export default function NewsTab() {
   const [selectedPost, setSelectedPost] = useState<any>(null);
 
@@ -48,13 +42,6 @@ export default function NewsTab() {
       default:
         return goldAnchor;
     }
-  };
-
-  const getRankIcon = (index: number) => {
-    if (index === 0) return goldAnchor;
-    if (index === 1) return silverAnchor;
-    if (index === 2) return bronzeAnchor;
-    return bulletPoint1;
   };
 
   const formatDate = (dateString: string) => {
