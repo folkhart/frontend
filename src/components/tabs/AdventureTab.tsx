@@ -493,20 +493,39 @@ export default function AdventureTab() {
 
       {/* Start Idle Farming */}
       {!idleStatus?.active && (
-        <div className="mb-4 p-4 bg-stone-800 rounded-lg border-2 border-stone-700">
-          <p className="text-white font-semibold mb-2">💤 Start Idle Farming</p>
-          <p className="text-sm text-gray-300 mb-3">
-            Let your character farm resources while you're away. Earn gold, exp,
-            and items!
+        <div 
+          className="mb-4 p-4 bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600"
+          style={{
+            borderRadius: '12px',
+            boxShadow: '0 4px 0 #57534e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)',
+          }}
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-2xl">💤</span>
+            <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+              Start Idle Farming
+            </p>
+          </div>
+          <p className="text-sm text-gray-300 mb-3" style={{ fontFamily: 'monospace' }}>
+            Let your character farm resources while you're away. Earn gold, exp, and items!
           </p>
           <button
             onClick={() => startIdleMutation.mutate()}
             disabled={startIdleMutation.isPending}
-            className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold transition btn-press"
+            className="w-full px-4 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+            style={{
+              border: '3px solid #92400e',
+              borderRadius: '0',
+              boxShadow: '0 3px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)',
+              textShadow: '1px 1px 0 #000',
+              fontFamily: 'monospace',
+              letterSpacing: '1px'
+            }}
           >
-            {startIdleMutation.isPending
-              ? "Starting..."
-              : "Start Idle Farming (1 hour)"}
+            <span className="relative z-10">
+              {startIdleMutation.isPending ? "STARTING..." : "START IDLE FARMING (1 HOUR)"}
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
           </button>
         </div>
       )}
@@ -515,25 +534,41 @@ export default function AdventureTab() {
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setView("dungeons")}
-          className={`flex-1 py-2 rounded font-bold transition btn-press flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2 font-bold transition flex items-center justify-center gap-2 relative overflow-hidden ${
             view === "dungeons"
-              ? "bg-amber-600 text-white"
-              : "bg-stone-700 text-gray-300"
+              ? "bg-amber-700 text-white"
+              : "bg-stone-800 text-gray-400 hover:bg-stone-700"
           }`}
+          style={{
+            border: '2px solid #92400e',
+            borderRadius: '0',
+            boxShadow: view === "dungeons" ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: view === "dungeons" ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
         >
           <img src={dungeonsIcon} alt="Dungeons" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
-          Dungeons
+          <span className="relative z-10">Dungeons</span>
+          {view === "dungeons" && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
         </button>
         <button
           onClick={() => setView("history")}
-          className={`flex-1 py-2 rounded font-bold transition btn-press flex items-center justify-center gap-2 ${
+          className={`flex-1 py-2 font-bold transition flex items-center justify-center gap-2 relative overflow-hidden ${
             view === "history"
-              ? "bg-amber-600 text-white"
-              : "bg-stone-700 text-gray-300"
+              ? "bg-amber-700 text-white"
+              : "bg-stone-800 text-gray-400 hover:bg-stone-700"
           }`}
+          style={{
+            border: '2px solid #92400e',
+            borderRadius: '0',
+            boxShadow: view === "history" ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: view === "history" ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
         >
           <img src={historyIcon} alt="History" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
-          History
+          <span className="relative z-10">History</span>
+          {view === "history" && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
         </button>
       </div>
 
