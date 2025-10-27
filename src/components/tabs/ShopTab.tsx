@@ -90,6 +90,9 @@ export default function ShopTab() {
         folder = 'armors';
       } else if (itemType === 'Accessory') {
         folder = 'accessories';
+      } else if (itemType === 'Gem' || itemType === 'Material') {
+        // Gems and materials use their full spriteId path
+        return new URL(`../../assets/items/${spriteId}.png`, import.meta.url).href;
       }
       
       return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
