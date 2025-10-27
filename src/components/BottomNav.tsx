@@ -17,7 +17,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="bg-stone-800 border-t-2 border-stone-700 flex justify-around py-2 shrink-0">
+    <nav className="sticky bottom-0 z-40 bg-stone-800 border-t-2 border-stone-700 flex justify-around py-2 shrink-0">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (

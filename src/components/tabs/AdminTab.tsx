@@ -4,21 +4,23 @@ import { Users, Package, ShoppingBag, Plus, Trash2 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 // API functions
 const adminApi = {
-  getPlayers: () => fetch('http://localhost:3000/api/admin/players', {
+  getPlayers: () => fetch(`${API_URL}/api/admin/players`, {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
   }).then(r => r.json()),
   
-  getItems: () => fetch('http://localhost:3000/api/admin/items', {
+  getItems: () => fetch(`${API_URL}/api/admin/items`, {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
   }).then(r => r.json()),
   
-  getShopItems: () => fetch('http://localhost:3000/api/admin/shop-items', {
+  getShopItems: () => fetch(`${API_URL}/api/admin/shop-items`, {
     headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
   }).then(r => r.json()),
   
-  addShopItem: (data: any) => fetch('http://localhost:3000/api/admin/shop-items', {
+  addShopItem: (data: any) => fetch(`${API_URL}/api/admin/shop-items`, {
     method: 'POST',
     headers: { 
       'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
@@ -27,9 +29,27 @@ const adminApi = {
     body: JSON.stringify(data)
   }).then(r => r.json()),
   
-  deleteShopItem: (id: string) => fetch(`http://localhost:3000/api/admin/shop-items/${id}`, {
+  deleteShopItem: (id: string) => fetch(`${API_URL}/api/admin/shop-items/${id}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+  }).then(r => r.json()),
+  
+  createItem: (data: any) => fetch(`${API_URL}/api/admin/items`, {
+    method: 'POST',
+    headers: { 
+      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  }).then(r => r.json()),
+  
+  giveItemToPlayer: (playerId: string, itemId: string, quantity: number) => fetch(`${API_URL}/api/admin/players/${playerId}/give-item`, {
+    method: 'POST',
+    headers: { 
+      'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ itemId, quantity })
   }).then(r => r.json()),
 };
 

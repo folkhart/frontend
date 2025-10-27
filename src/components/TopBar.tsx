@@ -37,7 +37,7 @@ export default function TopBar() {
 
   return (
     <>
-      <div className="bg-stone-800 p-3 flex justify-between items-center border-b-2 border-amber-700 shrink-0">
+      <div className="sticky top-0 z-40 bg-stone-800 p-3 flex justify-between items-center border-b-2 border-amber-700 shrink-0">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowStats(true)}
