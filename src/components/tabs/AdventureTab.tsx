@@ -579,28 +579,37 @@ export default function AdventureTab() {
             dungeons.map((dungeon: any) => (
               <div
                 key={dungeon.id}
-                className="p-4 bg-stone-800 rounded-lg border-2 border-stone-700 hover:border-stone-600 transition cursor-pointer"
+                className="p-4 bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600 hover:border-amber-600 transition-all cursor-pointer active:translate-y-1"
                 onClick={() => setSelectedDungeon(dungeon)}
+                style={{
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 0 #57534e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)',
+                }}
               >
-                <div className="flex items-start gap-3 mb-2">
+                <div className="flex items-start gap-3 mb-3">
                   <img 
                     src={getDungeonIcon(dungeon.name)} 
                     alt={dungeon.name} 
-                    className="w-12 h-12 rounded border-2 border-stone-600" 
-                    style={{ imageRendering: 'pixelated' }}
+                    className="w-14 h-14 border-2 border-stone-500" 
+                    style={{ imageRendering: 'pixelated', borderRadius: '8px' }}
                   />
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-white text-lg">
+                        <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
                           {dungeon.name}
                         </h3>
-                        <p className="text-sm text-gray-400">{dungeon.zone.name}</p>
+                        <p className="text-sm text-gray-400" style={{ fontFamily: 'monospace' }}>{dungeon.zone.name}</p>
                       </div>
                       <span
-                        className={`text-sm font-bold ${getDifficultyColor(
-                          dungeon.difficulty
-                        )}`}
+                        className={`text-sm font-bold px-2 py-1 ${getDifficultyColor(dungeon.difficulty)}`}
+                        style={{
+                          fontFamily: 'monospace',
+                          textShadow: '1px 1px 0 #000',
+                          border: '2px solid rgba(0,0,0,0.3)',
+                          borderRadius: '4px',
+                          backgroundColor: 'rgba(0,0,0,0.3)'
+                        }}
                       >
                         {dungeon.difficulty}
                       </span>
@@ -609,30 +618,28 @@ export default function AdventureTab() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                  <div className="flex items-center gap-1 text-gray-300">
+                  <div className="flex items-center gap-1 text-amber-400" style={{ fontFamily: 'monospace' }}>
                     <Trophy size={14} />
                     <span>{formatGold(dungeon.baseGoldReward)} Gold</span>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-300">
+                  <div className="flex items-center gap-1 text-blue-400" style={{ fontFamily: 'monospace' }}>
                     <Zap size={14} />
                     <span>{dungeon.energyCost} Energy</span>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-300">
+                  <div className="flex items-center gap-1 text-green-400" style={{ fontFamily: 'monospace' }}>
                     <Clock size={14} />
                     <span>{Math.floor(dungeon.duration / 60)} min</span>
                   </div>
-                  <div className="flex items-center gap-1 text-gray-300">
-                    <span className={getDifficultyColor(dungeon.difficulty)}>
-                      {dungeon.difficulty}
-                    </span>
+                  <div className="flex items-center gap-1 text-purple-400" style={{ fontFamily: 'monospace' }}>
+                    <span>⚔️ CP: {dungeon.recommendedCP}</span>
                   </div>
                 </div>
 
                 {/* Loot Preview - Show class-specific items */}
                 {character && dungeon.lootTable && (
-                  <div className="border-t border-stone-700 pt-2">
-                    <p className="text-xs text-gray-400 mb-2">
-                      Possible Loot for {character.class}:
+                  <div className="border-t-2 border-stone-700 pt-2 mt-2">
+                    <p className="text-xs font-bold text-amber-400 mb-2" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+                      💎 POSSIBLE REWARDS:
                     </p>
                     <div className="flex flex-wrap gap-1">
                       {dungeon.lootTable
@@ -645,11 +652,28 @@ export default function AdventureTab() {
                         .map((entry: any, idx: number) => (
                           <div
                             key={idx}
-                            className="text-xs px-2 py-1 bg-stone-900 rounded text-amber-400"
+                            className="text-xs px-2 py-1 bg-stone-950 text-amber-300 font-bold"
+                            style={{
+                              fontFamily: 'monospace',
+                              border: '2px solid #78350f',
+                              borderRadius: '4px',
+                              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
+                            }}
                           >
-                            {Math.round(entry.dropRate * 100)}%
+                            {Math.round(entry.dropRate * 100)}% Drop
                           </div>
                         ))}
+                      <div
+                        className="text-xs px-2 py-1 bg-green-950 text-green-300 font-bold"
+                        style={{
+                          fontFamily: 'monospace',
+                          border: '2px solid #15803d',
+                          borderRadius: '4px',
+                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
+                        }}
+                      >
+                        🌾 Gems
+                      </div>
                     </div>
                   </div>
                 )}
