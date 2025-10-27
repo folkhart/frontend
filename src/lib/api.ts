@@ -86,6 +86,7 @@ export const dungeonApi = {
     api.post('/dungeon/start', { dungeonId, mode }),
   getRun: (runId: string) => api.get(`/dungeon/run/${runId}`),
   getRuns: (limit?: number) => api.get('/dungeon/runs', { params: { limit } }),
+  getActive: () => api.get('/dungeon/active'),
   complete: (runId: string) => api.post(`/dungeon/complete/${runId}`),
 };
 

@@ -67,6 +67,35 @@ export default function AdventureTab() {
     refetchInterval: 5000,
   });
 
+  // Fetch active dungeon run from backend on mount and sync with localStorage
+  const { data: backendActiveDungeonRun } = useQuery({
+    queryKey: ["activeDungeonRun"],
+    queryFn: async () => {
+      const { data } = await dungeonApi.getActive();
+      return data;
+    },
+    refetchInterval: 10000, // Check every 10 seconds
+  });
+
+  // Sync backend active run with local state
+  useEffect(() => {
+    if (backendActiveDungeonRun && !activeDungeonRun) {
+      // Backend has an active run but local state doesn't - sync it
+      const runWithTime = { 
+        ...backendActiveDungeonRun, 
+        startTime: backendActiveDungeonRun.createdAt 
+      };
+      setActiveDungeonRun(runWithTime);
+      localStorage.setItem("activeDungeonRun", JSON.stringify(runWithTime));
+      
+      const elapsed = Math.floor(
+        (Date.now() - new Date(backendActiveDungeonRun.createdAt).getTime()) / 1000
+      );
+      const remaining = Math.max(0, backendActiveDungeonRun.dungeon.duration - elapsed);
+      setTimeRemaining(remaining);
+    }
+  }, [backendActiveDungeonRun]);
+
   // Idle farming countdown timer
   useEffect(() => {
     if (idleStatus?.active && idleStatus.endsAt) {
