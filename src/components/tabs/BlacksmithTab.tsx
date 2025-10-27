@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { blacksmithApi, inventoryApi } from '@/lib/api';
-import { Hammer, Sparkles, Gem, TrendingUp, Shield, AlertCircle } from 'lucide-react';
+import { Hammer, Shield, AlertCircle } from 'lucide-react';
+import { getRarityColor } from '@/utils/format';
+
+const socketDrillIcon = new URL('../../assets/items/craft/gems/socket_drill.png', import.meta.url).href;
+const refiningStoneIcon = new URL('../../assets/items/craft/gems/refining_stone.png', import.meta.url).href;
+const enhancementStoneIcon = new URL('../../assets/items/craft/gems/enhancement_stone.png', import.meta.url).href;
 
 type BlacksmithMode = 'enhance' | 'refine' | 'socket';
 
@@ -140,7 +145,7 @@ export default function BlacksmithTab() {
     <div className="space-y-4">
       <div className="bg-stone-800 border-2 border-amber-600 p-4">
         <h3 className="text-amber-400 font-bold mb-2 flex items-center gap-2">
-          <TrendingUp size={16} />
+          <img src={enhancementStoneIcon} alt="" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
           ENHANCEMENT (+0 to +9)
         </h3>
         <p className="text-gray-300 text-sm">
@@ -168,7 +173,7 @@ export default function BlacksmithTab() {
                     />
                   )}
                   <div className="flex-1">
-                    <div className="text-white font-bold text-sm">
+                    <div className={`font-bold text-sm ${getRarityColor(slot.item.rarity)}`}>
                       {slot.item.name} {slot.enhancementLevel > 0 && `+${slot.enhancementLevel}`}
                     </div>
                     <div className="text-gray-400 text-xs">{slot.item.rarity}</div>
@@ -201,20 +206,30 @@ export default function BlacksmithTab() {
             </div>
 
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-gray-400">Success Rate:</span>
                 <span className={`font-bold ${getSuccessRate(selectedItem.enhancementLevel) >= 80 ? 'text-green-400' : getSuccessRate(selectedItem.enhancementLevel) >= 40 ? 'text-yellow-400' : 'text-red-400'}`}>
                   {getSuccessRate(selectedItem.enhancementLevel)}%
                 </span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-gray-400">Gold Cost:</span>
                 <span className="text-amber-400 font-bold">
                   {getEnhancementCost(selectedItem.enhancementLevel)}g
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Enhancement Stones:</span>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Enhancement Stones:</span>
+                  {getItemImage('craft/gems/enhancement_stone', 'Material') && (
+                    <img
+                      src={getItemImage('craft/gems/enhancement_stone', 'Material')!}
+                      alt="Enhancement Stone"
+                      className="w-4 h-4"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
+                </div>
                 <span className="text-blue-400 font-bold">
                   {getEnhancementStones(selectedItem.enhancementLevel)}
                 </span>
@@ -278,7 +293,7 @@ export default function BlacksmithTab() {
     <div className="space-y-4">
       <div className="bg-stone-800 border-2 border-purple-600 p-4">
         <h3 className="text-purple-400 font-bold mb-2 flex items-center gap-2">
-          <Sparkles size={16} />
+          <img src={refiningStoneIcon} alt="" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
           REFINING
         </h3>
         <p className="text-gray-300 text-sm">
@@ -309,7 +324,7 @@ export default function BlacksmithTab() {
                     />
                   )}
                   <div className="flex-1">
-                    <div className="text-white font-bold text-sm">
+                    <div className={`font-bold text-sm ${getRarityColor(slot.item.rarity)}`}>
                       {slot.item.name}
                       {slot.refineStats && <span className="text-purple-400 ml-1">★</span>}
                     </div>
@@ -369,7 +384,7 @@ export default function BlacksmithTab() {
     <div className="space-y-4">
       <div className="bg-stone-800 border-2 border-blue-600 p-4">
         <h3 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
-          <Gem size={16} />
+          <img src={socketDrillIcon} alt="" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
           SOCKET SYSTEM
         </h3>
         <p className="text-gray-300 text-sm">
@@ -397,7 +412,7 @@ export default function BlacksmithTab() {
                     />
                   )}
                   <div className="flex-1">
-                    <div className="text-white font-bold text-sm">{slot.item.name}</div>
+                    <div className={`font-bold text-sm ${getRarityColor(slot.item.rarity)}`}>{slot.item.name}</div>
                     <div className="text-blue-400 text-xs">
                       Sockets: {slot.socketedGems?.length || 0}/{slot.socketSlots || 0}
                     </div>
@@ -543,6 +558,13 @@ export default function BlacksmithTab() {
               ? 'bg-amber-600 text-white'
               : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
           }`}
+          style={{
+            border: '2px solid #92400e',
+            borderRadius: '0',
+            boxShadow: mode === 'enhance' ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: mode === 'enhance' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
         >
           ENHANCE
         </button>
@@ -557,6 +579,13 @@ export default function BlacksmithTab() {
               ? 'bg-purple-600 text-white'
               : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
           }`}
+          style={{
+            border: '2px solid #581c87',
+            borderRadius: '0',
+            boxShadow: mode === 'refine' ? '0 2px 0 #7e22ce, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: mode === 'refine' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
         >
           REFINE
         </button>
@@ -571,6 +600,13 @@ export default function BlacksmithTab() {
               ? 'bg-blue-600 text-white'
               : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
           }`}
+          style={{
+            border: '2px solid #1e3a8a',
+            borderRadius: '0',
+            boxShadow: mode === 'socket' ? '0 2px 0 #2563eb, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: mode === 'socket' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
         >
           SOCKET
         </button>
