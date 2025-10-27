@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logo from '../assets/ui/logo.png';
+import { useGameStore } from '@/store/gameStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { setAuth } = useGameStore();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     username: '',
@@ -43,8 +45,8 @@ export default function LandingPage() {
 
       const { data } = await axios.post(`${API_URL}${endpoint}`, payload);
       
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      // Update Zustand store (which also updates localStorage)
+      setAuth(data.accessToken, data.refreshToken);
       navigate('/game');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Something went wrong!');
