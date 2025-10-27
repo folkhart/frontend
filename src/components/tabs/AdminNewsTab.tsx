@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { newsApi } from '@/lib/api';
-import { Plus, Edit, Trash2, Eye, EyeOff, Pin, Save, X } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, EyeOff, Pin, Save, X, Smile } from 'lucide-react';
 
 export default function AdminNewsTab() {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [editingPost, setEditingPost] = useState<any>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -14,6 +16,9 @@ export default function AdminNewsTab() {
     category: 'General',
     imageUrl: '',
   });
+
+  // Generate emoji list (fc1 to fc2192)
+  const emojis = Array.from({ length: 2192 }, (_, i) => `fc${i + 1}`);
 
   const { data: newsData } = useQuery({
     queryKey: ['news', 'all'],
@@ -111,7 +116,30 @@ export default function AdminNewsTab() {
   const handleCancel = () => {
     setIsCreating(false);
     setEditingPost(null);
+    setShowEmojiPicker(false);
     resetForm();
+  };
+
+  const insertEmoji = (emojiId: string) => {
+    const textarea = contentRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = formData.content;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    
+    const emojiCode = `[emoji:${emojiId}]`;
+    const newText = before + emojiCode + after;
+    
+    setFormData({ ...formData, content: newText });
+    
+    // Set cursor position after inserted emoji
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + emojiCode.length, start + emojiCode.length);
+    }, 0);
   };
 
   if (isCreating) {
@@ -171,15 +199,46 @@ export default function AdminNewsTab() {
 
           {/* Content */}
           <div>
-            <label className="block text-amber-400 text-sm font-bold mb-2" style={{ fontFamily: 'monospace' }}>
-              CONTENT *
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-amber-400 text-sm font-bold" style={{ fontFamily: 'monospace' }}>
+                CONTENT *
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="px-3 py-1 bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1"
+              >
+                <Smile size={14} />
+                {showEmojiPicker ? 'HIDE EMOJIS' : 'ADD EMOJI'}
+              </button>
+            </div>
+            
+            {showEmojiPicker && (
+              <div className="mb-2 bg-stone-800 border-2 border-blue-600 p-3 max-h-64 overflow-y-auto">
+                <p className="text-xs text-blue-400 mb-2 font-bold">Click an emoji to insert [emoji:ID] code</p>
+                <div className="grid grid-cols-12 gap-1">
+                  {emojis.map((emojiId) => (
+                    <img
+                      key={emojiId}
+                      src={`/src/assets/ui/news/emojis/64x64/${emojiId}.png`}
+                      alt={emojiId}
+                      className="w-8 h-8 cursor-pointer hover:scale-125 hover:bg-blue-700 transition"
+                      style={{ imageRendering: 'pixelated' }}
+                      onClick={() => insertEmoji(emojiId)}
+                      title={emojiId}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <textarea
+              ref={contentRef}
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               className="w-full px-3 py-2 bg-stone-800 border-2 border-stone-700 text-white focus:border-amber-500 outline-none"
               rows={12}
-              placeholder="Write your post content..."
+              placeholder="Write your post content... Use [emoji:fcXXX] to add emojis!"
             />
           </div>
 
