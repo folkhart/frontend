@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { characterApi, inventoryApi } from '@/lib/api';
-import { Sword, Shield, Heart, Zap, X, Hammer } from 'lucide-react';
+import { Sword, Shield, Heart, Zap, X } from 'lucide-react';
 import { getRarityColor, getRarityBorder, getClassIcon } from '@/utils/format';
 import inventoryIcon from '@/assets/ui/inventory.png';
 import equipmentIcon from '@/assets/ui/equipment.png';
+import anvilIcon from '@/assets/ui/craft/anvil.png';
 import CraftingTab from './CraftingTab';
 import InventoryTab from './InventoryTab';
 
@@ -215,7 +216,7 @@ export default function VillageTab() {
             fontFamily: 'monospace',
           }}
         >
-          <Hammer size={16} />
+          <img src={anvilIcon} alt="Crafting" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
           <span className="relative z-10">Crafting</span>
           {activeView === 'crafting' && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
         </button>
