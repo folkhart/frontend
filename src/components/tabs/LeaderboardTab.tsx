@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { leaderboardApi } from '@/lib/api';
 import { Trophy, Swords, Users } from 'lucide-react';
+import { useGameStore } from '@/store/gameStore';
 
 export default function LeaderboardTab() {
   const [activeBoard, setActiveBoard] = useState<'level' | 'combat' | 'guilds'>('level');
+  const { hideAdminsInLeaderboard } = useGameStore();
 
   const { data: levelBoard, isLoading: levelLoading } = useQuery({
     queryKey: ['leaderboard', 'level'],
@@ -48,7 +50,23 @@ export default function LeaderboardTab() {
   };
 
   const isLoading = levelLoading || combatLoading || guildLoading;
-  const currentData = activeBoard === 'level' ? levelBoard : activeBoard === 'combat' ? combatBoard : guildBoard;
+  const rawData = activeBoard === 'level' ? levelBoard : activeBoard === 'combat' ? combatBoard : guildBoard;
+  
+  // Filter out admins if the setting is enabled
+  const currentData = useMemo(() => {
+    if (!rawData || activeBoard === 'guilds') return rawData;
+    
+    if (hideAdminsInLeaderboard) {
+      const filtered = rawData.filter((entry: any) => !entry.isAdmin);
+      // Re-rank the filtered results
+      return filtered.map((entry: any, index: number) => ({
+        ...entry,
+        rank: index + 1
+      }));
+    }
+    
+    return rawData;
+  }, [rawData, hideAdminsInLeaderboard, activeBoard]);
 
   return (
     <div className="p-3 pb-20">
