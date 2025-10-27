@@ -1,12 +1,33 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { craftingApi, inventoryApi } from '@/lib/api';
-import { getRarityColor, formatGold } from '@/utils/format';
-import { Hammer, Check, X } from 'lucide-react';
+import { getRarityColor } from '@/utils/format';
+import { Hammer, Check } from 'lucide-react';
 import { useState } from 'react';
+import anvilIcon from '@/assets/ui/craft/anvil.png';
+import anvilHitIcon from '@/assets/ui/craft/anvil_hit.png';
+import anvilSuccessIcon from '@/assets/ui/craft/anvil_successful.png';
+import anvilFailIcon from '@/assets/ui/craft/anvil_unsucessful.png';
+import recipeLowGrade from '@/assets/ui/craft/craftRecipeLowGrade.png';
+import recipeMidGrade from '@/assets/ui/craft/craftRecipeMidGrade.png';
+import recipeHighGrade from '@/assets/ui/craft/craftRecipeHighGrade.png';
 
 export default function CraftingTab() {
   const queryClient = useQueryClient();
   const [selectedRecipe, setSelectedRecipe] = useState<any>(null);
+  const [craftingAnimation, setCraftingAnimation] = useState<'idle' | 'crafting' | 'success' | 'fail'>('idle');
+
+  const getRecipeIcon = (rarity: string) => {
+    if (rarity === 'Legendary' || rarity === 'Epic') return recipeHighGrade;
+    if (rarity === 'Rare' || rarity === 'Uncommon') return recipeMidGrade;
+    return recipeLowGrade;
+  };
+
+  const getAnvilIcon = () => {
+    if (craftingAnimation === 'success') return anvilSuccessIcon;
+    if (craftingAnimation === 'fail') return anvilFailIcon;
+    if (craftingAnimation === 'crafting') return anvilHitIcon;
+    return anvilIcon;
+  };
 
   const { data: recipes, isLoading } = useQuery({
     queryKey: ['craftingRecipes'],
@@ -25,21 +46,33 @@ export default function CraftingTab() {
   });
 
   const craftMutation = useMutation({
-    mutationFn: (recipeId: string) => craftingApi.craft(recipeId),
+    mutationFn: async (recipeId: string) => {
+      setCraftingAnimation('crafting');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Animation delay
+      return craftingApi.craft(recipeId);
+    },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['character'] });
-      (window as any).showToast?.(
-        `Crafted ${data.data.craftedItem.name}!`,
-        'success'
-      );
-      setSelectedRecipe(null);
+      setCraftingAnimation('success');
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['inventory'] });
+        queryClient.invalidateQueries({ queryKey: ['character'] });
+        (window as any).showToast?.(
+          `Crafted ${data.data.craftedItem.name}!`,
+          'success'
+        );
+        setSelectedRecipe(null);
+        setCraftingAnimation('idle');
+      }, 1500);
     },
     onError: (error: any) => {
-      (window as any).showToast?.(
-        error.response?.data?.error || 'Failed to craft item',
-        'error'
-      );
+      setCraftingAnimation('fail');
+      setTimeout(() => {
+        (window as any).showToast?.(
+          error.response?.data?.error || 'Failed to craft item',
+          'error'
+        );
+        setCraftingAnimation('idle');
+      }, 1500);
     },
   });
 
@@ -108,10 +141,12 @@ export default function CraftingTab() {
 
   return (
     <div className="p-3 pb-20">
-      <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-        <Hammer size={20} />
-        Crafting
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <img src={anvilIcon} alt="Crafting" className="w-6 h-6" style={{ imageRendering: 'pixelated' }} />
+          Crafting
+        </h2>
+      </div>
 
       <div className="space-y-3">
         {recipes.map((recipe: any) => {
@@ -126,7 +161,7 @@ export default function CraftingTab() {
               onClick={() => setSelectedRecipe(recipe)}
             >
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-stone-900 rounded flex items-center justify-center">
+                <div className="relative w-12 h-12 bg-stone-900 rounded flex items-center justify-center">
                   {getItemImage(recipe.resultItem.spriteId, recipe.resultItem.type) ? (
                     <img 
                       src={getItemImage(recipe.resultItem.spriteId, recipe.resultItem.type)!} 
@@ -137,6 +172,12 @@ export default function CraftingTab() {
                   ) : (
                     <span className="text-2xl">⚒️</span>
                   )}
+                  <img 
+                    src={getRecipeIcon(recipe.resultItem.rarity)} 
+                    alt="Recipe" 
+                    className="absolute -top-1 -right-1 w-5 h-5" 
+                    style={{ imageRendering: 'pixelated' }}
+                  />
                 </div>
                 <div className="flex-1">
                   <h3 className={`font-bold text-sm ${getRarityColor(recipe.resultItem.rarity)}`}>
@@ -188,8 +229,18 @@ export default function CraftingTab() {
       {selectedRecipe && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-stone-800 rounded-lg border-4 border-amber-600 p-6 max-w-md w-full">
+            {/* Anvil Animation */}
+            <div className="flex justify-center mb-4">
+              <img 
+                src={getAnvilIcon()} 
+                alt="Anvil" 
+                className={`w-20 h-20 ${craftingAnimation === 'crafting' ? 'animate-bounce' : ''}`}
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
+
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-16 h-16 bg-stone-900 rounded flex items-center justify-center">
+              <div className="relative w-16 h-16 bg-stone-900 rounded flex items-center justify-center">
                 {getItemImage(selectedRecipe.resultItem.spriteId, selectedRecipe.resultItem.type) ? (
                   <img 
                     src={getItemImage(selectedRecipe.resultItem.spriteId, selectedRecipe.resultItem.type)!} 
@@ -200,6 +251,12 @@ export default function CraftingTab() {
                 ) : (
                   <span className="text-4xl">⚒️</span>
                 )}
+                <img 
+                  src={getRecipeIcon(selectedRecipe.resultItem.rarity)} 
+                  alt="Recipe" 
+                  className="absolute -top-1 -right-1 w-6 h-6" 
+                  style={{ imageRendering: 'pixelated' }}
+                />
               </div>
               <div>
                 <h2 className={`text-xl font-bold ${getRarityColor(selectedRecipe.resultItem.rarity)}`} style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
