@@ -10,7 +10,7 @@ export default function SettingsTab() {
   const handleLogout = () => {
     disconnectSocket();
     clearAuth();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
