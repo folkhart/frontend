@@ -67,10 +67,15 @@ export default function VillageTab() {
 
   if (!character) return null;
 
-  const getItemImage = (spriteId: string, itemType?: string) => {
+  const getItemImage = (spriteId: string, itemType?: string, itemName?: string) => {
     if (!spriteId) return null;
     
     try {
+      // Handle gems
+      if (itemName?.toLowerCase().includes('wooden gem')) {
+        return new URL(`../../assets/items/craft/gems/woodenGem.png`, import.meta.url).href;
+      }
+      
       // Check if it's a potion (numeric sprite ID)
       if (/^\d+$/.test(spriteId)) {
         const num = parseInt(spriteId);
@@ -130,8 +135,12 @@ export default function VillageTab() {
       <p className="text-xs text-gray-400 mb-2">{label}</p>
       {equippedItem ? (
         <div className="flex items-center gap-2">
-          {getItemImage(equippedItem.spriteId, equippedItem.type) && (
-            <img src={getItemImage(equippedItem.spriteId, equippedItem.type)!} alt={equippedItem.name} className="w-12 h-12 object-contain" />
+          {getItemImage(equippedItem.spriteId, equippedItem.type, equippedItem.name) && (
+            <img 
+              src={getItemImage(equippedItem.spriteId, equippedItem.type, equippedItem.name)!} 
+              alt={equippedItem.name} 
+              className="w-12 h-12 object-contain" 
+            />
           )}
           <div className="flex-1 min-w-0">
             <p className={`font-bold text-sm truncate ${getRarityColor(equippedItem.rarity)}`}>{equippedItem.name}</p>
@@ -301,8 +310,12 @@ export default function VillageTab() {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      {getItemImage(slot.item.spriteId, slot.item.type) && (
-                        <img src={getItemImage(slot.item.spriteId, slot.item.type)!} alt={slot.item.name} className="w-12 h-12 object-contain" />
+                      {getItemImage(slot.item.spriteId, slot.item.type, slot.item.name) && (
+                        <img 
+                          src={getItemImage(slot.item.spriteId, slot.item.type, slot.item.name)!} 
+                          alt={slot.item.name} 
+                          className="w-12 h-12 object-contain" 
+                        />
                       )}
                       <div className="flex-1">
                         <p className={`font-bold ${getRarityColor(slot.item.rarity)}`}>{slot.item.name}</p>
