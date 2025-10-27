@@ -15,8 +15,13 @@ export default function FriendsTab() {
   const { data: friends, refetch: refetchFriends } = useQuery({
     queryKey: ['friends'],
     queryFn: async () => {
-      const { data } = await friendApi.getFriends();
-      return data;
+      try {
+        const { data } = await friendApi.getFriends();
+        return data;
+      } catch (error) {
+        console.error('Friends API not available yet');
+        return [];
+      }
     },
   });
 
@@ -24,8 +29,13 @@ export default function FriendsTab() {
   const { data: friendRequests, refetch: refetchRequests } = useQuery({
     queryKey: ['friendRequests'],
     queryFn: async () => {
-      const { data } = await friendApi.getRequests();
-      return data;
+      try {
+        const { data } = await friendApi.getRequests();
+        return data;
+      } catch (error) {
+        console.error('Friend requests API not available yet');
+        return [];
+      }
     },
   });
 
@@ -34,8 +44,13 @@ export default function FriendsTab() {
     queryKey: ['conversation', selectedFriend?.id],
     queryFn: async () => {
       if (!selectedFriend) return [];
-      const { data } = await messageApi.getConversation(selectedFriend.id);
-      return data;
+      try {
+        const { data } = await messageApi.getConversation(selectedFriend.id);
+        return data;
+      } catch (error) {
+        console.error('Messages API not available yet');
+        return [];
+      }
     },
     enabled: !!selectedFriend,
   });
@@ -44,10 +59,16 @@ export default function FriendsTab() {
   const { data: unreadCount } = useQuery({
     queryKey: ['unreadCount'],
     queryFn: async () => {
-      const { data } = await messageApi.getUnreadCount();
-      return data.count;
+      try {
+        const { data } = await messageApi.getUnreadCount();
+        return data.count;
+      } catch (error) {
+        console.error('Unread count API not available yet');
+        return 0;
+      }
     },
     refetchInterval: 5000,
+    retry: false,
   });
 
   // Send friend request mutation
@@ -154,6 +175,15 @@ export default function FriendsTab() {
           </span>
         )}
       </h2>
+
+      {/* Backend Deployment Notice */}
+      <div className="bg-blue-900 border-2 border-blue-600 p-4 mb-4 rounded">
+        <p className="text-blue-200 text-sm font-bold mb-1">🚀 Feature Deploying...</p>
+        <p className="text-blue-300 text-xs">
+          The Friends & Messaging system is being deployed to the server. 
+          Please check back in a few minutes!
+        </p>
+      </div>
 
       {/* Tab Switcher */}
       <div className="flex gap-2 mb-4">
