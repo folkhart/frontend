@@ -2,16 +2,18 @@ import { useState } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { characterApi, inventoryApi } from '@/lib/api';
-import { Sword, Shield, Heart, Zap, X } from 'lucide-react';
+import { Sword, Shield, Heart, Zap, X, Hammer } from 'lucide-react';
 import { getRarityColor, getRarityBorder, getClassIcon } from '@/utils/format';
 import inventoryIcon from '@/assets/ui/inventory.png';
 import equipmentIcon from '@/assets/ui/equipment.png';
+import CraftingTab from './CraftingTab';
+import InventoryTab from './InventoryTab';
 
 export default function VillageTab() {
   const queryClient = useQueryClient();
   const { character, setCharacter } = useGameStore();
   const [selectedSlot, setSelectedSlot] = useState<'weapon' | 'armor' | 'ring' | 'necklace' | 'belt' | 'earring' | null>(null);
-  const [activeView, setActiveView] = useState<'equipment' | 'inventory'>('equipment');
+  const [activeView, setActiveView] = useState<'equipment' | 'inventory' | 'crafting'>('equipment');
 
   const { data: inventory } = useQuery({
     queryKey: ['inventory'],
@@ -198,6 +200,25 @@ export default function VillageTab() {
           <span className="relative z-10">Inventory</span>
           {activeView === 'inventory' && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
         </button>
+        <button
+          onClick={() => setActiveView('crafting')}
+          className={`flex-1 py-2 font-bold transition flex items-center justify-center gap-1 relative overflow-hidden ${
+            activeView === 'crafting'
+              ? 'bg-amber-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #92400e',
+            borderRadius: '0',
+            boxShadow: activeView === 'crafting' ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeView === 'crafting' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <Hammer size={16} />
+          <span className="relative z-10">Crafting</span>
+          {activeView === 'crafting' && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
+        </button>
       </div>
 
       {activeView === 'equipment' ? (
@@ -308,108 +329,10 @@ export default function VillageTab() {
         </div>
       )}
       </div>
+      ) : activeView === 'inventory' ? (
+        <InventoryTab />
       ) : (
-        /* Inventory View */
-        <div>
-          <h2 className="text-lg font-bold text-white mb-3">🎒 Inventory</h2>
-          
-          {!inventory || inventory.length === 0 ? (
-            <div className="text-center py-8">
-              <img src={inventoryIcon} alt="Empty" className="w-12 h-12 mx-auto mb-4 opacity-50" style={{ imageRendering: 'pixelated' }} />
-              <p className="text-gray-400">Your inventory is empty</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2">
-              {inventory.map((slot: any) => {
-                const equipped = isEquipped(slot.item.id);
-                return (
-                  <div
-                    key={slot.id}
-                    className={`p-2 bg-stone-800 rounded-lg border-2 ${
-                      equipped ? 'border-green-500' : getRarityBorder(slot.item.rarity)
-                    } relative`}
-                  >
-                    {equipped && (
-                      <div className="absolute top-1 right-1 bg-green-500 rounded-full p-1">
-                        <span className="text-white text-xs">✓</span>
-                      </div>
-                    )}
-
-                    <div className="w-full aspect-square bg-stone-900 rounded mb-2 flex items-center justify-center p-3">
-                      {getItemImage(slot.item.spriteId, slot.item.type) ? (
-                        <img 
-                          src={getItemImage(slot.item.spriteId, slot.item.type)!} 
-                          alt={slot.item.name}
-                          className="max-w-[48px] max-h-[48px] object-contain"
-                          style={{ imageRendering: 'pixelated' }}
-                        />
-                      ) : (
-                        <span className="text-2xl">
-                          {slot.item.type === 'Weapon' && '⚔️'}
-                          {slot.item.type === 'Armor' && '🛡️'}
-                          {slot.item.type === 'Accessory' && '💍'}
-                          {slot.item.type === 'Consumable' && '🧪'}
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className={`font-bold text-xs mb-1 truncate ${getRarityColor(slot.item.rarity)}`}>
-                      {slot.item.name}
-                    </h3>
-
-                    {slot.quantity > 1 && (
-                      <p className="text-xs text-gray-400 mb-1">x{slot.quantity}</p>
-                    )}
-
-                    {/* Show consumable effect */}
-                    {slot.item.type === 'Consumable' && slot.item.description && (
-                      <p className="text-xs text-green-300 mb-2 italic">
-                        ✨ {slot.item.description}
-                      </p>
-                    )}
-
-                    <div className="text-xs text-gray-400 mb-2 flex flex-wrap gap-1">
-                      {slot.item.attackBonus > 0 && <span className="text-orange-400">ATK +{slot.item.attackBonus}</span>}
-                      {slot.item.defenseBonus > 0 && <span className="text-blue-400">DEF +{slot.item.defenseBonus}</span>}
-                      {slot.item.healthBonus > 0 && <span className="text-red-400">HP +{slot.item.healthBonus}</span>}
-                    </div>
-
-                    {slot.item.type === 'Consumable' ? (
-                      <button
-                        onClick={() => useItemMutation.mutate(slot.item.id)}
-                        disabled={useItemMutation.isPending}
-                        className="w-full py-2 bg-green-700 hover:bg-green-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
-                        style={{
-                          border: '2px solid #15803d',
-                          borderRadius: '0',
-                          boxShadow: '0 2px 0 #166534, 0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-                          textShadow: '1px 1px 0 #000',
-                          fontFamily: 'monospace'
-                        }}
-                      >
-                        <span className="relative z-10">🧪 USE</span>
-                        <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>
-                      </button>
-                    ) : equipped ? (
-                      <div 
-                        className="w-full py-2 bg-green-700 text-white text-xs font-bold text-center"
-                        style={{
-                          border: '2px solid #15803d',
-                          borderRadius: '0',
-                          boxShadow: '0 2px 0 #166534, inset 0 1px 0 rgba(255,255,255,0.2)',
-                          textShadow: '1px 1px 0 #000',
-                          fontFamily: 'monospace'
-                        }}
-                      >
-                        ✓ EQUIPPED
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <CraftingTab />
       )}
     </div>
   );
