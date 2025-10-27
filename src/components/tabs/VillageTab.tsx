@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { characterApi, inventoryApi } from '@/lib/api';
-import { Sword, Shield, Heart, Zap, X, Trophy } from 'lucide-react';
+import { Sword, Shield, Heart, Zap, X } from 'lucide-react';
 import { getRarityColor, getRarityBorder, getClassIcon } from '@/utils/format';
 import inventoryIcon from '@/assets/ui/inventory.png';
 import equipmentIcon from '@/assets/ui/equipment.png';
@@ -11,13 +11,12 @@ import hammerIcon from '@/assets/ui/craft/hammer.png';
 import CraftingTab from './CraftingTab';
 import InventoryTab from './InventoryTab';
 import BlacksmithTab from './BlacksmithTab';
-import AchievementTab from './AchievementTab';
 
 export default function VillageTab() {
   const queryClient = useQueryClient();
   const { character, setCharacter } = useGameStore();
   const [selectedSlot, setSelectedSlot] = useState<'weapon' | 'armor' | 'ring' | 'necklace' | 'belt' | 'earring' | null>(null);
-  const [activeView, setActiveView] = useState<'equipment' | 'inventory' | 'crafting' | 'blacksmith' | 'achievements'>('equipment');
+  const [activeView, setActiveView] = useState<'equipment' | 'inventory' | 'crafting' | 'blacksmith'>('equipment');
 
   const { data: inventory } = useQuery({
     queryKey: ['inventory'],
@@ -225,25 +224,6 @@ export default function VillageTab() {
           <span className="relative z-10">Blacksmith</span>
           {activeView === 'blacksmith' && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
         </button>
-        <button
-          onClick={() => setActiveView('achievements')}
-          className={`flex-1 py-2 font-bold transition flex items-center justify-center gap-1 relative overflow-hidden ${
-            activeView === 'achievements'
-              ? 'bg-amber-700 text-white'
-              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
-          }`}
-          style={{
-            border: '2px solid #92400e',
-            borderRadius: '0',
-            boxShadow: activeView === 'achievements' ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
-            textShadow: activeView === 'achievements' ? '1px 1px 0 #000' : 'none',
-            fontFamily: 'monospace',
-          }}
-        >
-          <Trophy size={16} className="text-amber-400" />
-          <span className="relative z-10">Achievements</span>
-          {activeView === 'achievements' && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
-        </button>
       </div>
 
       {activeView === 'equipment' ? (
@@ -362,10 +342,8 @@ export default function VillageTab() {
         <InventoryTab />
       ) : activeView === 'crafting' ? (
         <CraftingTab />
-      ) : activeView === 'blacksmith' ? (
-        <BlacksmithTab />
       ) : (
-        <AchievementTab />
+        <BlacksmithTab />
       )}
     </div>
   );

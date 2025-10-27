@@ -1,18 +1,35 @@
-import { LogOut, Info, User, Users, Newspaper } from 'lucide-react';
+import { useState } from 'react';
+import { LogOut, Info, User, Users, Newspaper, Trophy } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/store/gameStore';
 import { disconnectSocket } from '@/lib/socket';
 import leaderboardIcon from '@/assets/ui/leaderboard.png';
+import AchievementTab from './AchievementTab';
 
 export default function SettingsTab() {
   const navigate = useNavigate();
   const { player, clearAuth, setActiveTab } = useGameStore();
+  const [showAchievements, setShowAchievements] = useState(false);
 
   const handleLogout = () => {
     disconnectSocket();
     clearAuth();
     navigate('/');
   };
+
+  if (showAchievements) {
+    return (
+      <div className="p-4 pb-20">
+        <button
+          onClick={() => setShowAchievements(false)}
+          className="mb-3 px-4 py-2 bg-stone-700 hover:bg-stone-600 text-white font-bold transition"
+        >
+          ← Back to Settings
+        </button>
+        <AchievementTab />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 pb-20">
@@ -74,6 +91,24 @@ export default function SettingsTab() {
         <Newspaper size={20} />
         <span className="relative z-10">NEWS & UPDATES</span>
         <div className="absolute inset-0 bg-gradient-to-b from-purple-400/20 to-transparent"></div>
+      </button>
+
+      {/* Achievements Button */}
+      <button
+        onClick={() => setShowAchievements(true)}
+        className="w-full py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: '3px solid #92400e',
+          borderRadius: '0',
+          boxShadow: '0 3px 0 #b45309, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+          textShadow: '1px 1px 0 #000',
+          fontFamily: 'monospace',
+          letterSpacing: '1px'
+        }}
+      >
+        <Trophy size={20} />
+        <span className="relative z-10">ACHIEVEMENTS & TITLES</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
       </button>
 
       {/* Leaderboard Button */}

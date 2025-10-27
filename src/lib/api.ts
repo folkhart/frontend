@@ -178,3 +178,12 @@ export const blacksmithApi = {
   getHistory: (limit?: number) =>
     api.get('/blacksmith/history', { params: { limit } }),
 };
+
+// Achievement API
+export const achievementApi = {
+  getAll: () => api.get('/achievements'),
+  getStats: () => api.get('/achievements/stats'),
+  equipTitle: (achievementId: string) => api.post(`/achievements/equip/${achievementId}`),
+  unequipTitle: () => api.post('/achievements/unequip'),
+  claimStep: (achievementId: string, stepIndex: number) => api.post(`/achievements/claim-step/${achievementId}/${stepIndex}`),
+};

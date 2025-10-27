@@ -1,6 +1,20 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tantml:parameter name="query';
-import { Trophy, Award, Star, Lock, Check } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Trophy, Award, Star, Lock, Check, Gift } from 'lucide-react';
+import { achievementApi } from '@/lib/api';
+import achievementIcon from '@/assets/ui/achievement.png';
+
+interface AchievementStep {
+  level: number;
+  title: string;
+  titleColor: string;
+  goldReward: number;
+  gemsReward: number;
+  attackBonus?: number;
+  defenseBonus?: number;
+  healthBonus?: number;
+  points: number;
+}
 
 interface Achievement {
   id: string;
@@ -13,7 +27,10 @@ interface Achievement {
     count?: number;
     level?: number;
     amount?: number;
+    maxLevel?: number;
   };
+  isMultiStep: boolean;
+  steps?: AchievementStep[];
   title: string | null;
   titleColor: string | null;
   goldReward: number;
@@ -27,6 +44,8 @@ interface Achievement {
   completed: boolean;
   completedAt: string | null;
   isEquipped: boolean;
+  currentStep: number;
+  claimedSteps: number[];
 }
 
 interface AchievementStats {
@@ -43,36 +62,23 @@ export default function AchievementTab() {
   const { data: achievements = [] } = useQuery<Achievement[]>({
     queryKey: ['achievements'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/achievements', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to fetch achievements');
-      return response.json();
+      const { data } = await achievementApi.getAll();
+      return data;
     },
   });
 
   const { data: stats } = useQuery<AchievementStats>({
     queryKey: ['achievement-stats'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/achievements/stats', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to fetch stats');
-      return response.json();
+      const { data } = await achievementApi.getStats();
+      return data;
     },
   });
 
   const equipTitleMutation = useMutation({
     mutationFn: async (achievementId: string) => {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/achievements/equip/${achievementId}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to equip title');
-      return response.json();
+      const { data } = await achievementApi.equipTitle(achievementId);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
@@ -83,18 +89,29 @@ export default function AchievementTab() {
 
   const unequipTitleMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/achievements/unequip', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to unequip title');
-      return response.json();
+      const { data } = await achievementApi.unequipTitle();
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
       (window as any).showToast?.('Title unequipped!', 'success');
+    },
+  });
+
+  const claimStepMutation = useMutation({
+    mutationFn: async ({ achievementId, stepIndex }: { achievementId: string; stepIndex: number }) => {
+      const { data } = await achievementApi.claimStep(achievementId, stepIndex);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['achievements'] });
+      queryClient.invalidateQueries({ queryKey: ['character'] });
+      queryClient.invalidateQueries({ queryKey: ['achievement-stats'] });
+      (window as any).showToast?.(
+        `Step ${data.step + 1} claimed! +${data.rewards.gold}g, +${data.rewards.gems} gems`,
+        'success'
+      );
     },
   });
 
@@ -207,7 +224,14 @@ export default function AchievementTab() {
                   achievement.completed ? 'bg-amber-900/50' : 'bg-stone-900'
                 }`}
               >
-                {achievement.completed ? (
+                {achievement.iconId === 'achievement' ? (
+                  <img
+                    src={achievementIcon}
+                    alt="Achievement"
+                    className="w-8 h-8"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                ) : achievement.completed ? (
                   <Check size={24} className="text-green-400" />
                 ) : (
                   <Lock size={24} className="text-gray-600" />
@@ -229,8 +253,57 @@ export default function AchievementTab() {
                   </div>
                 </div>
 
-                {/* Progress Bar */}
-                {!achievement.completed && (
+                {/* Multi-step Progress */}
+                {achievement.isMultiStep && achievement.steps && (
+                  <div className="mt-2 space-y-2">
+                    {achievement.steps.map((step, index) => {
+                      const isReached = achievement.progress >= step.level;
+                      const isClaimed = achievement.claimedSteps.includes(index);
+                      return (
+                        <div
+                          key={index}
+                          className={`p-2 rounded border ${
+                            isClaimed
+                              ? 'bg-green-900/30 border-green-600'
+                              : isReached
+                              ? 'bg-amber-900/30 border-amber-600'
+                              : 'bg-stone-900 border-stone-700'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {isClaimed ? (
+                                <Check size={16} className="text-green-400" />
+                              ) : isReached ? (
+                                <Gift size={16} className="text-amber-400" />
+                              ) : (
+                                <Lock size={16} className="text-gray-600" />
+                              )}
+                              <span className="text-xs font-bold text-white">Level {step.level}</span>
+                              <span className="text-xs text-gray-400">
+                                +{step.goldReward}g, +{step.gemsReward} gems
+                              </span>
+                            </div>
+                            {isReached && !isClaimed && (
+                              <button
+                                onClick={() =>
+                                  claimStepMutation.mutate({ achievementId: achievement.id, stepIndex: index })
+                                }
+                                disabled={claimStepMutation.isPending}
+                                className="px-2 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 text-white text-xs font-bold transition"
+                              >
+                                CLAIM
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Progress Bar (for non-multi-step) */}
+                {!achievement.isMultiStep && !achievement.completed && (
                   <div className="mt-2">
                     <div className="flex justify-between text-xs text-gray-400 mb-1">
                       <span>Progress</span>
@@ -250,8 +323,8 @@ export default function AchievementTab() {
                   </div>
                 )}
 
-                {/* Rewards & Title */}
-                {achievement.completed && (
+                {/* Rewards & Title (for non-multi-step completed) */}
+                {!achievement.isMultiStep && achievement.completed && (
                   <div className="mt-2 space-y-2">
                     {/* Rewards */}
                     <div className="flex gap-3 text-xs">
