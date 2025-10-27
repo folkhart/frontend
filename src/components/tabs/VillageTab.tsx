@@ -161,11 +161,7 @@ export default function VillageTab() {
   const isEquipped = (itemId: string) => {
     if (!character) return false;
     return character.weapon?.id === itemId || 
-           character.armor?.id === itemId || 
-           character.ring?.id === itemId ||
-           character.necklace?.id === itemId ||
-           character.belt?.id === itemId ||
-           character.earring?.id === itemId;
+           character.armor?.id === itemId;
   };
 
   return (
@@ -257,10 +253,10 @@ export default function VillageTab() {
         <div className="mt-3">
           <p className="text-xs text-amber-400 font-bold mb-2">💍 Accessories</p>
           <div className="grid grid-cols-2 gap-2">
-            <EquipmentSlot slotType="ring" equippedItem={character.ring} label="💍 Ring" />
-            <EquipmentSlot slotType="necklace" equippedItem={character.necklace} label="📿 Necklace" />
-            <EquipmentSlot slotType="belt" equippedItem={character.belt} label="🔗 Belt" />
-            <EquipmentSlot slotType="earring" equippedItem={character.earring} label="💎 Earring" />
+            <EquipmentSlot slotType="ring" equippedItem={null} label="💍 Ring" />
+            <EquipmentSlot slotType="necklace" equippedItem={null} label="📿 Necklace" />
+            <EquipmentSlot slotType="belt" equippedItem={null} label="🔗 Belt" />
+            <EquipmentSlot slotType="earring" equippedItem={null} label="💎 Earring" />
           </div>
         </div>
       </div>

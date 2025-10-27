@@ -18,7 +18,7 @@ export default function LeaderboardTab() {
   const { data: combatBoard, isLoading: combatLoading } = useQuery({
     queryKey: ['leaderboard', 'combat'],
     queryFn: async () => {
-      const { data } = await leaderboardApi.getByCombatPower(100);
+      const { data } = await leaderboardApi.getByCP(100);
       return data;
     },
     enabled: activeBoard === 'combat',

@@ -1,4 +1,4 @@
-import { LogOut, Info, User } from 'lucide-react';
+import { LogOut, Info, User, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/store/gameStore';
 import { disconnectSocket } from '@/lib/socket';
@@ -39,6 +39,24 @@ export default function SettingsTab() {
           </div>
         </div>
       </div>
+
+      {/* Friends Button */}
+      <button
+        onClick={() => setActiveTab('friends')}
+        className="w-full py-3 bg-blue-700 hover:bg-blue-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: '3px solid #1e3a8a',
+          borderRadius: '0',
+          boxShadow: '0 3px 0 #1e40af, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+          textShadow: '1px 1px 0 #000',
+          fontFamily: 'monospace',
+          letterSpacing: '1px'
+        }}
+      >
+        <Users size={20} />
+        <span className="relative z-10">FRIENDS & MESSAGES</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-400/20 to-transparent"></div>
+      </button>
 
       {/* Leaderboard Button */}
       <button

@@ -1,5 +1,4 @@
 import { useGameStore } from "@/store/gameStore";
-import { Users } from "lucide-react";
 import adventureIcon from "@/assets/ui/adventure.png";
 import villageIcon from "@/assets/ui/village.png";
 import guildIcon from "@/assets/ui/guild.png";
@@ -10,12 +9,11 @@ export default function BottomNav() {
   const { activeTab, setActiveTab } = useGameStore();
 
   const tabs = [
-    { id: "village" as const, icon: villageIcon, label: "Village", isImage: true },
-    { id: "guild" as const, icon: guildIcon, label: "Guild", isImage: true },
-    { id: "adventure" as const, icon: adventureIcon, label: "Adventure", isImage: true },
-    { id: "friends" as const, icon: null, label: "Friends", isImage: false },
-    { id: "shop" as const, icon: shopIcon, label: "Shop", isImage: true },
-    { id: "settings" as const, icon: settingsIcon, label: "Settings", isImage: true },
+    { id: "village" as const, icon: villageIcon, label: "Village" },
+    { id: "guild" as const, icon: guildIcon, label: "Guild" },
+    { id: "adventure" as const, icon: adventureIcon, label: "Adventure" },
+    { id: "shop" as const, icon: shopIcon, label: "Shop" },
+    { id: "settings" as const, icon: settingsIcon, label: "Settings" },
   ];
 
   return (
@@ -32,26 +30,15 @@ export default function BottomNav() {
                 : "text-gray-400 hover:text-gray-300"
             }`}
           >
-            {tab.isImage && tab.icon ? (
-              <img
-                src={tab.icon}
-                alt={tab.label}
-                className={`w-7 h-7 object-contain transition-all ${
-                  isActive
-                    ? "brightness-125 scale-110"
-                    : "brightness-75 hover:brightness-100"
-                }`}
-              />
-            ) : (
-              <Users
-                size={28}
-                className={`transition-all ${
-                  isActive
-                    ? "text-white scale-110"
-                    : "text-gray-400"
-                }`}
-              />
-            )}
+            <img
+              src={tab.icon}
+              alt={tab.label}
+              className={`w-7 h-7 object-contain transition-all ${
+                isActive
+                  ? "brightness-125 scale-110"
+                  : "brightness-75 hover:brightness-100"
+              }`}
+            />
             <span className="text-xs font-medium">{tab.label}</span>
           </button>
         );
