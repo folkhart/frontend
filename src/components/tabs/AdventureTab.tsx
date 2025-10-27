@@ -558,6 +558,13 @@ export default function AdventureTab() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => {
+                    if (activeDungeonRun && !activeDungeonRun.completed) {
+                      (window as any).showToast?.(
+                        `You are already doing this run: ${activeDungeonRun.dungeon.name}`,
+                        "warning"
+                      );
+                      return;
+                    }
                     startDungeonMutation.mutate({
                       dungeonId: selectedDungeon.id,
                       mode: "Idle",
@@ -579,6 +586,13 @@ export default function AdventureTab() {
                 </button>
                 <button
                   onClick={() => {
+                    if (activeDungeonRun && !activeDungeonRun.completed) {
+                      (window as any).showToast?.(
+                        `You are already doing this run: ${activeDungeonRun.dungeon.name}`,
+                        "warning"
+                      );
+                      return;
+                    }
                     startDungeonMutation.mutate({
                       dungeonId: selectedDungeon.id,
                       mode: "Active",
@@ -601,6 +615,13 @@ export default function AdventureTab() {
               </div>
               <button
                 onClick={() => {
+                  if (activeDungeonRun && !activeDungeonRun.completed) {
+                    (window as any).showToast?.(
+                      `You are already doing this run: ${activeDungeonRun.dungeon.name}`,
+                      "warning"
+                    );
+                    return;
+                  }
                   setShowBossFight(true);
                   setSelectedDungeon(null);
                 }}
