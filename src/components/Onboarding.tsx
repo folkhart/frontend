@@ -1,51 +1,59 @@
-import { useState } from 'react';
-import { X, ChevronRight, ChevronLeft } from 'lucide-react';
-import villageIcon from '@/assets/ui/village.png';
-import guildIcon from '@/assets/ui/guild.png';
-import adventureIcon from '@/assets/ui/adventure.png';
-import shopIcon from '@/assets/ui/shop.png';
+import { useState } from "react";
+import { X, ChevronRight, ChevronLeft } from "lucide-react";
+import villageIcon from "@/assets/ui/village.png";
+import guildIcon from "@/assets/ui/guild.png";
+import adventureIcon from "@/assets/ui/adventure.png";
+import shopIcon from "@/assets/ui/shop.png";
+import logo from "@/assets/ui/logo.png";
 
 interface OnboardingStep {
   title: string;
   description: string;
   icon?: string;
-  position?: 'center' | 'bottom';
+  position?: "center" | "bottom";
 }
 
 const onboardingSteps: OnboardingStep[] = [
   {
-    title: '🎮 Welcome to Folkhart!',
-    description: 'A cozy fantasy idle RPG where you embark on epic adventures, fight monsters, and build your legend!',
-    position: 'center',
+    title: "Welcome to Folkhart!",
+    description:
+      "A cozy fantasy idle RPG where you embark on epic adventures, fight monsters, and build your legend!",
+    position: "center",
+    icon: logo,
   },
   {
-    title: '🏘️ Village',
-    description: 'Your home base! Manage your inventory, equip items, and prepare for adventures.',
+    title: "Village",
+    description:
+      "Your home base! Manage your inventory, equip items, and prepare for adventures.",
     icon: villageIcon,
-    position: 'bottom',
+    position: "bottom",
   },
   {
-    title: '⚔️ Guild',
-    description: 'Join forces with other players! Create or join guilds, chat, and compete together.',
+    title: "Guild",
+    description:
+      "Join forces with other players! Create or join guilds, chat, and compete together.",
     icon: guildIcon,
-    position: 'bottom',
+    position: "bottom",
   },
   {
-    title: '🗺️ Adventure',
-    description: 'Explore dungeons, fight bosses, and earn rewards! Choose between Idle or Active runs.',
+    title: "Adventure",
+    description:
+      "Explore dungeons, fight bosses, and earn rewards! Choose between Idle or Active runs.",
     icon: adventureIcon,
-    position: 'bottom',
+    position: "bottom",
   },
   {
-    title: '🛒 Shop',
-    description: 'Buy powerful items, consumables, and upgrades to strengthen your character!',
+    title: "Shop",
+    description:
+      "Buy powerful items, consumables, and upgrades to strengthen your character!",
     icon: shopIcon,
-    position: 'bottom',
+    position: "bottom",
   },
   {
-    title: '🎯 Ready to Start!',
-    description: 'You\'re all set! Start your adventure and become a legend in Folkhart!',
-    position: 'center',
+    title: "Ready to Start!",
+    description:
+      "You're all set! Start your adventure and become a legend in Folkhart!",
+    position: "center",
   },
 ];
 
@@ -88,14 +96,14 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div 
+      <div
         className={`bg-stone-800 border-4 border-amber-600 p-6 max-w-md w-full relative ${
-          step.position === 'bottom' ? 'mb-20' : ''
+          step.position === "bottom" ? "mb-20" : ""
         }`}
         style={{
-          borderRadius: '0',
-          boxShadow: '0 8px 0 rgba(0,0,0,0.5)',
-          animation: 'slideIn 0.3s ease-out',
+          borderRadius: "0",
+          boxShadow: "0 8px 0 rgba(0,0,0,0.5)",
+          animation: "slideIn 0.3s ease-out",
         }}
       >
         {/* Skip Button */}
@@ -109,17 +117,20 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         {/* Icon */}
         {step.icon && (
           <div className="flex justify-center mb-4">
-            <img 
-              src={step.icon} 
-              alt={step.title} 
-              className="w-20 h-20" 
-              style={{ imageRendering: 'pixelated' }}
+            <img
+              src={step.icon}
+              alt={step.title}
+              className="w-20 h-20"
+              style={{ imageRendering: "pixelated" }}
             />
           </div>
         )}
 
         {/* Content */}
-        <h2 className="text-3xl font-bold text-amber-400 mb-4 text-center" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+        <h2
+          className="text-3xl font-bold text-amber-400 mb-4 text-center"
+          style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
+        >
           {step.title}
         </h2>
         <p className="text-gray-300 text-center mb-6 text-lg leading-relaxed">
@@ -133,10 +144,10 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               key={index}
               className={`w-2 h-2 rounded-full transition-all ${
                 index === currentStep
-                  ? 'bg-amber-400 w-6'
+                  ? "bg-amber-400 w-6"
                   : index < currentStep
-                  ? 'bg-amber-600'
-                  : 'bg-stone-600'
+                  ? "bg-amber-600"
+                  : "bg-stone-600"
               }`}
             />
           ))}
@@ -149,11 +160,11 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
               onClick={handlePrevious}
               className="flex-1 py-3 bg-stone-700 hover:bg-stone-600 text-white font-bold transition flex items-center justify-center gap-2"
               style={{
-                border: '3px solid #57534e',
-                borderRadius: '0',
-                boxShadow: '0 3px 0 #44403c',
-                textShadow: '1px 1px 0 #000',
-                fontFamily: 'monospace',
+                border: "3px solid #57534e",
+                borderRadius: "0",
+                boxShadow: "0 3px 0 #44403c",
+                textShadow: "1px 1px 0 #000",
+                fontFamily: "monospace",
               }}
             >
               <ChevronLeft size={20} />
@@ -164,20 +175,25 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             onClick={handleNext}
             className="flex-1 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition flex items-center justify-center gap-2"
             style={{
-              border: '3px solid #92400e',
-              borderRadius: '0',
-              boxShadow: '0 3px 0 #b45309',
-              textShadow: '1px 1px 0 #000',
-              fontFamily: 'monospace',
+              border: "3px solid #92400e",
+              borderRadius: "0",
+              boxShadow: "0 3px 0 #b45309",
+              textShadow: "1px 1px 0 #000",
+              fontFamily: "monospace",
             }}
           >
-            {currentStep === onboardingSteps.length - 1 ? "LET'S GO!" : 'NEXT'}
-            {currentStep < onboardingSteps.length - 1 && <ChevronRight size={20} />}
+            {currentStep === onboardingSteps.length - 1 ? "LET'S GO!" : "NEXT"}
+            {currentStep < onboardingSteps.length - 1 && (
+              <ChevronRight size={20} />
+            )}
           </button>
         </div>
 
         {/* Step Counter */}
-        <p className="text-center text-gray-500 text-sm mt-4" style={{ fontFamily: 'monospace' }}>
+        <p
+          className="text-center text-gray-500 text-sm mt-4"
+          style={{ fontFamily: "monospace" }}
+        >
           Step {currentStep + 1} of {onboardingSteps.length}
         </p>
       </div>

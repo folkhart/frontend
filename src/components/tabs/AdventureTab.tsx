@@ -41,11 +41,18 @@ export default function AdventureTab() {
     const saved = localStorage.getItem("activeDungeonRun");
     if (saved) {
       const run = JSON.parse(saved);
-      const elapsed = Math.floor(
-        (Date.now() - new Date(run.startTime).getTime()) / 1000
-      );
-      const remaining = Math.max(0, run.dungeon.duration - elapsed);
-      return remaining;
+      // Use completesAt if available, otherwise calculate from startTime
+      if (run.completesAt) {
+        const completesAt = new Date(run.completesAt).getTime();
+        const remaining = Math.max(0, Math.floor((completesAt - Date.now()) / 1000));
+        return remaining;
+      } else {
+        const elapsed = Math.floor(
+          (Date.now() - new Date(run.startTime).getTime()) / 1000
+        );
+        const remaining = Math.max(0, run.dungeon.duration - elapsed);
+        return remaining;
+      }
     }
     return 0;
   });
@@ -176,66 +183,77 @@ export default function AdventureTab() {
 
   // Restore timer on mount
   useEffect(() => {
-    if (activeDungeonRun && !activeDungeonRun.completed && timeRemaining > 0) {
-      const interval = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (activeDungeonRun && !activeDungeonRun.completed) {
+      // Calculate actual time remaining from completesAt
+      const completesAt = new Date(activeDungeonRun.completesAt || activeDungeonRun.startTime).getTime() + (activeDungeonRun.dungeon.duration * 1000);
+      const now = Date.now();
+      const actualTimeRemaining = Math.max(0, Math.floor((completesAt - now) / 1000));
+      
+      // Update state with actual time
+      setTimeRemaining(actualTimeRemaining);
+      
+      // Only set up timers if there's time remaining
+      if (actualTimeRemaining > 0) {
+        const interval = setInterval(() => {
+          setTimeRemaining((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              return 0;
+            }
+            return prev - 1;
+          });
+        }, 1000);
 
-      // Auto-complete when timer reaches 0
-      const timeout = setTimeout(async () => {
-        try {
-          const result = await dungeonApi.complete(activeDungeonRun.id);
-          await queryClient.invalidateQueries({ queryKey: ["character"] });
-          await queryClient.refetchQueries({ queryKey: ["character"] });
+        // Auto-complete when actual time expires
+        const timeout = setTimeout(async () => {
+          try {
+            const result = await dungeonApi.complete(activeDungeonRun.id);
+            await queryClient.invalidateQueries({ queryKey: ["character"] });
+            await queryClient.refetchQueries({ queryKey: ["character"] });
 
-          const completedRun = {
-            ...activeDungeonRun,
-            completed: true,
-            result: result.data,
-          };
-          setActiveDungeonRun(completedRun);
-          localStorage.setItem(
-            "activeDungeonRun",
-            JSON.stringify(completedRun)
-          );
-          
-          // Send browser notification
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification('Dungeon Complete!', {
-              body: `${activeDungeonRun.dungeon.name} completed! ${result.data.success ? '✅ Victory!' : '❌ Defeated'}`,
-              icon: '/icon.png',
-              badge: '/icon.png',
-            });
-          }
-          
-          // Show toast
-          (window as any).showToast?.(
-            result.data.success ? 'Dungeon completed successfully!' : 'Dungeon failed!',
-            result.data.success ? 'success' : 'error'
-          );
-        } catch (error: any) {
-          console.error("Failed to complete dungeon:", error);
-          // If dungeon run not found (400 error), clear it
-          if (error.response?.status === 400) {
-            console.log(
-              "Dungeon run not found in database, clearing local state"
+            const completedRun = {
+              ...activeDungeonRun,
+              completed: true,
+              result: result.data,
+            };
+            setActiveDungeonRun(completedRun);
+            localStorage.setItem(
+              "activeDungeonRun",
+              JSON.stringify(completedRun)
             );
-            setActiveDungeonRun(null);
-            localStorage.removeItem("activeDungeonRun");
+            
+            // Send browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+              new Notification('Dungeon Complete!', {
+                body: `${activeDungeonRun.dungeon.name} completed! ${result.data.success ? '✅ Victory!' : '❌ Defeated'}`,
+                icon: '/icon.png',
+                badge: '/icon.png',
+              });
+            }
+            
+            // Show toast
+            (window as any).showToast?.(
+              result.data.success ? 'Dungeon completed successfully!' : 'Dungeon failed!',
+              result.data.success ? 'success' : 'error'
+            );
+          } catch (error: any) {
+            console.error("Failed to complete dungeon:", error);
+            // If dungeon run not found (400 error), clear it
+            if (error.response?.status === 400) {
+              console.log(
+                "Dungeon run not found in database, clearing local state"
+              );
+              setActiveDungeonRun(null);
+              localStorage.removeItem("activeDungeonRun");
+            }
           }
-        }
-      }, timeRemaining * 1000);
+        }, actualTimeRemaining * 1000);
 
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
+        return () => {
+          clearInterval(interval);
+          clearTimeout(timeout);
+        };
+      }
     }
   }, [activeDungeonRun?.id]);
 
