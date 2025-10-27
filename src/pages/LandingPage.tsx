@@ -27,11 +27,9 @@ export default function LandingPage() {
       
       let payload: any;
       if (isLogin) {
-        // For login, check if input is email or username
-        const input = formData.emailOrUsername;
-        const isEmail = input.includes('@');
+        // For login, send as emailOrUsername
         payload = {
-          [isEmail ? 'email' : 'username']: input,
+          emailOrUsername: formData.emailOrUsername,
           password: formData.password
         };
       } else {
