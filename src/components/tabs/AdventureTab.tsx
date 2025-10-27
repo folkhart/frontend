@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { dungeonApi, idleApi, authApi, characterApi } from "@/lib/api";
 import { useGameStore } from "@/store/gameStore";
-import { getDifficultyColor, formatGold } from "@/utils/format";
+import { dungeonApi, idleApi, authApi, characterApi } from "@/lib/api";
+import { formatGold, getRarityColor, getDifficultyColor } from "@/utils/format";
 import { Clock, Zap, Trophy } from "lucide-react";
 import BossFight from "@/components/BossFight";
 import dungeonsIcon from "@/assets/ui/dungeons.png";
@@ -28,7 +28,7 @@ const getDungeonIcon = (dungeonName: string) => {
 export default function AdventureTab() {
   const queryClient = useQueryClient();
   const { character, setPlayer } = useGameStore();
-  const [view, setView] = useState<"dungeons" | "idle">("dungeons");
+  const [view, setView] = useState<"dungeons" | "history">("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showBossFight, setShowBossFight] = useState(false);
   const [activeDungeonRun, setActiveDungeonRun] = useState<any>(() => {
@@ -56,6 +56,15 @@ export default function AdventureTab() {
       const { data } = await dungeonApi.getAll();
       return data;
     },
+  });
+
+  const { data: dungeonHistory } = useQuery({
+    queryKey: ["dungeonHistory"],
+    queryFn: async () => {
+      const { data } = await dungeonApi.getRuns(20);
+      return data;
+    },
+    enabled: view === "history",
   });
 
   const { data: idleStatus, refetch: refetchIdle } = useQuery({
@@ -450,13 +459,12 @@ export default function AdventureTab() {
           Dungeons
         </button>
         <button
-          onClick={() => setView("idle")}
-          className={`flex-1 py-2 rounded font-bold transition btn-press flex items-center justify-center gap-2 opacity-50 cursor-not-allowed ${
-            view === "idle"
+          onClick={() => setView("history")}
+          className={`flex-1 py-2 rounded font-bold transition btn-press flex items-center justify-center gap-2 ${
+            view === "history"
               ? "bg-amber-600 text-white"
               : "bg-stone-700 text-gray-300"
           }`}
-          disabled
         >
           <img src={historyIcon} alt="History" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
           History
@@ -556,6 +564,96 @@ export default function AdventureTab() {
           ) : (
             <div className="text-center text-gray-400 py-8">
               <p>No dungeons available. Check back later!</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* History View */}
+      {view === "history" && (
+        <div className="space-y-3">
+          {dungeonHistory && dungeonHistory.length > 0 ? (
+            dungeonHistory.map((run: any) => (
+              <div
+                key={run.id}
+                className={`p-4 bg-stone-800 rounded-lg border-2 ${
+                  run.status === 'Completed' 
+                    ? 'border-green-700' 
+                    : run.status === 'Failed' 
+                    ? 'border-red-700' 
+                    : 'border-stone-700'
+                }`}
+              >
+                <div className="flex items-start gap-3 mb-2">
+                  <img 
+                    src={getDungeonIcon(run.dungeon.name)} 
+                    alt={run.dungeon.name} 
+                    className="w-12 h-12 rounded border-2 border-stone-600" 
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-bold text-white text-lg">
+                          {run.dungeon.name}
+                        </h3>
+                        <p className="text-sm text-gray-400">{run.dungeon.zone.name}</p>
+                      </div>
+                      <span
+                        className={`text-sm font-bold ${
+                          run.status === 'Completed' 
+                            ? 'text-green-400' 
+                            : run.status === 'Failed' 
+                            ? 'text-red-400' 
+                            : 'text-yellow-400'
+                        }`}
+                      >
+                        {run.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-1 text-gray-300">
+                    <Trophy size={14} />
+                    <span>{formatGold(run.goldEarned || 0)} Gold</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-300">
+                    <Zap size={14} />
+                    <span>{run.expEarned || 0} EXP</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-300">
+                    <Clock size={14} />
+                    <span>{run.mode}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-300">
+                    <span className="text-xs text-gray-500">
+                      {new Date(run.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+
+                {run.itemsEarned && run.itemsEarned.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-stone-700">
+                    <p className="text-xs text-gray-400 mb-1">Items Earned:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {run.itemsEarned.map((item: any, idx: number) => (
+                        <span
+                          key={idx}
+                          className={`text-xs px-2 py-1 bg-stone-900 rounded ${getRarityColor(item.rarity)}`}
+                        >
+                          {item.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-400 py-8">
+              <p>No dungeon history yet. Complete some dungeons to see your history!</p>
             </div>
           )}
         </div>
