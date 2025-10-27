@@ -93,6 +93,32 @@ export default function AdventureTab() {
       );
       const remaining = Math.max(0, backendActiveDungeonRun.dungeon.duration - elapsed);
       setTimeRemaining(remaining);
+    } else if (!backendActiveDungeonRun && activeDungeonRun && !activeDungeonRun.completed) {
+      // Backend doesn't have an active run but local state does - it must be completed
+      // Try to complete it
+      dungeonApi.complete(activeDungeonRun.id)
+        .then(({ data: result }) => {
+          const completedRun = {
+            ...activeDungeonRun,
+            completed: true,
+            result: result,
+          };
+          setActiveDungeonRun(completedRun);
+          localStorage.setItem("activeDungeonRun", JSON.stringify(completedRun));
+          queryClient.invalidateQueries({ queryKey: ["character"] });
+          
+          // Show notification
+          (window as any).showToast?.(
+            result.success ? 'Dungeon completed successfully!' : 'Dungeon failed!',
+            result.success ? 'success' : 'error'
+          );
+        })
+        .catch((error) => {
+          console.error("Failed to complete dungeon:", error);
+          // Clear invalid run
+          setActiveDungeonRun(null);
+          localStorage.removeItem("activeDungeonRun");
+        });
     }
   }, [backendActiveDungeonRun]);
 
