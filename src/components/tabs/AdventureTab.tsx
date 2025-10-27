@@ -5,6 +5,25 @@ import { useGameStore } from "@/store/gameStore";
 import { getDifficultyColor, formatGold } from "@/utils/format";
 import { Clock, Zap, Trophy } from "lucide-react";
 import BossFight from "@/components/BossFight";
+import dungeonsIcon from "@/assets/ui/dungeons.png";
+import historyIcon from "@/assets/ui/history.png";
+import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
+import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
+import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
+import darkForestIcon from "@/assets/ui/dungeonIcons/darkForest.png";
+import dragonLairIcon from "@/assets/ui/dungeonIcons/dragonLair.png";
+
+// Helper function to get dungeon icon based on name
+const getDungeonIcon = (dungeonName: string) => {
+  const iconMap: Record<string, string> = {
+    "Rat Cellar": ratCellarIcon,
+    "Goblin Cave": goblinCaveIcon,
+    "Slime Den": slimeDenIcon,
+    "Dark Forest": darkForestIcon,
+    "Dragon's Lair": dragonLairIcon,
+  };
+  return iconMap[dungeonName] || ratCellarIcon; // Default to rat cellar if not found
+};
 
 export default function AdventureTab() {
   const queryClient = useQueryClient();
@@ -366,23 +385,26 @@ export default function AdventureTab() {
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setView("dungeons")}
-          className={`flex-1 py-2 rounded font-bold transition btn-press ${
+          className={`flex-1 py-2 rounded font-bold transition btn-press flex items-center justify-center gap-2 ${
             view === "dungeons"
               ? "bg-amber-600 text-white"
               : "bg-stone-700 text-gray-300"
           }`}
         >
-          🏰 Dungeons
+          <img src={dungeonsIcon} alt="Dungeons" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
+          Dungeons
         </button>
         <button
           onClick={() => setView("idle")}
-          className={`flex-1 py-2 rounded font-bold transition btn-press ${
+          className={`flex-1 py-2 rounded font-bold transition btn-press flex items-center justify-center gap-2 opacity-50 cursor-not-allowed ${
             view === "idle"
               ? "bg-amber-600 text-white"
               : "bg-stone-700 text-gray-300"
           }`}
+          disabled
         >
-          📜 History
+          <img src={historyIcon} alt="History" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
+          History
         </button>
       </div>
 
@@ -396,20 +418,30 @@ export default function AdventureTab() {
                 className="p-4 bg-stone-800 rounded-lg border-2 border-stone-700 hover:border-stone-600 transition cursor-pointer"
                 onClick={() => setSelectedDungeon(dungeon)}
               >
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-bold text-white text-lg">
-                      {dungeon.name}
-                    </h3>
-                    <p className="text-sm text-gray-400">{dungeon.zone.name}</p>
+                <div className="flex items-start gap-3 mb-2">
+                  <img 
+                    src={getDungeonIcon(dungeon.name)} 
+                    alt={dungeon.name} 
+                    className="w-12 h-12 rounded border-2 border-stone-600" 
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-bold text-white text-lg">
+                          {dungeon.name}
+                        </h3>
+                        <p className="text-sm text-gray-400">{dungeon.zone.name}</p>
+                      </div>
+                      <span
+                        className={`text-sm font-bold ${getDifficultyColor(
+                          dungeon.difficulty
+                        )}`}
+                      >
+                        {dungeon.difficulty}
+                      </span>
+                    </div>
                   </div>
-                  <span
-                    className={`text-sm font-bold ${getDifficultyColor(
-                      dungeon.difficulty
-                    )}`}
-                  >
-                    {dungeon.difficulty}
-                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-sm mb-3">
@@ -523,26 +555,6 @@ export default function AdventureTab() {
             </div>
 
             <div className="space-y-2">
-              <button
-                onClick={() => {
-                  setShowBossFight(true);
-                  setSelectedDungeon(null);
-                }}
-                className="w-full py-4 bg-red-700 hover:bg-red-600 text-white font-bold transition relative overflow-hidden group"
-                style={{
-                  border: '4px solid #8B4513',
-                  borderRadius: '0',
-                  boxShadow: '0 4px 0 #4a0000, 0 8px 0 rgba(0,0,0,0.3)',
-                  textShadow: '2px 2px 0 #000',
-                  imageRendering: 'pixelated',
-                  fontFamily: 'monospace',
-                  letterSpacing: '2px'
-                }}
-              >
-                <span className="relative z-10 text-xl tracking-wider">⚔️ BOSS FIGHT ⚔️</span>
-                <div className="absolute inset-0 bg-gradient-to-b from-red-500/30 to-transparent group-hover:from-red-400/40"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400"></div>
-              </button>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => {
@@ -587,6 +599,26 @@ export default function AdventureTab() {
                   <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
                 </button>
               </div>
+              <button
+                onClick={() => {
+                  setShowBossFight(true);
+                  setSelectedDungeon(null);
+                }}
+                className="w-full py-4 bg-red-700 hover:bg-red-600 text-white font-bold transition relative overflow-hidden group"
+                style={{
+                  border: '4px solid #8B4513',
+                  borderRadius: '0',
+                  boxShadow: '0 4px 0 #4a0000, 0 8px 0 rgba(0,0,0,0.3)',
+                  textShadow: '2px 2px 0 #000',
+                  imageRendering: 'pixelated',
+                  fontFamily: 'monospace',
+                  letterSpacing: '2px'
+                }}
+              >
+                <span className="relative z-10 text-xl tracking-wider">⚔️ BOSS FIGHT ⚔️</span>
+                <div className="absolute inset-0 bg-gradient-to-b from-red-500/30 to-transparent group-hover:from-red-400/40"></div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400"></div>
+              </button>
             </div>
 
             <button
