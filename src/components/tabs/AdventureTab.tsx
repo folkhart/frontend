@@ -278,36 +278,47 @@ export default function AdventureTab() {
     <div className="p-4 pb-20 relative">
       {/* Active Dungeon Banner (non-blocking) */}
       {activeDungeonRun && !activeDungeonRun.completed && (
-        <div className="mb-4 p-4 bg-gradient-to-r from-orange-900/80 to-red-900/80 rounded-lg border-2 border-orange-600 animate-pulse">
-          <div className="flex items-center justify-between">
+        <div 
+          className="mb-4 p-4 bg-gradient-to-b from-orange-800 to-red-900 border-4 border-amber-600"
+          style={{
+            borderRadius: '12px',
+            boxShadow: '0 4px 0 #92400e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="text-3xl">⚔️</div>
+              <img 
+                src={getDungeonIcon(activeDungeonRun.dungeon.name)} 
+                alt={activeDungeonRun.dungeon.name} 
+                className="w-10 h-10 rounded border-2 border-amber-500" 
+                style={{ imageRendering: 'pixelated' }}
+              />
               <div>
-                <p className="text-white font-bold">
+                <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
                   {activeDungeonRun.dungeon.name}
                 </p>
-                <p className="text-sm text-orange-300">
+                <p className="text-xs text-orange-200" style={{ fontFamily: 'monospace' }}>
                   {activeDungeonRun.mode} Mode - In Progress
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-amber-400">
-                {Math.floor(timeRemaining / 60)}:
-                {String(timeRemaining % 60).padStart(2, "0")}
+              <div className="text-3xl font-bold text-amber-300" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+                {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, "0")}
               </div>
-              <p className="text-xs text-gray-300">Remaining</p>
+              <p className="text-xs text-orange-200" style={{ fontFamily: 'monospace' }}>Remaining</p>
             </div>
           </div>
-          <div className="w-full bg-stone-900 rounded-full h-2 overflow-hidden mt-3">
+          <div className="w-full bg-stone-900 h-3 overflow-hidden" style={{ borderRadius: '0', border: '2px solid #78350f' }}>
             <div
-              className="bg-gradient-to-r from-amber-600 to-amber-400 h-full transition-all duration-1000"
+              className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-1000"
               style={{
                 width: `${
                   ((activeDungeonRun.dungeon.duration - timeRemaining) /
                     activeDungeonRun.dungeon.duration) *
                   100
                 }%`,
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
               }}
             />
           </div>
@@ -397,30 +408,48 @@ export default function AdventureTab() {
       )}
       {/* Idle Status Banner */}
       {idleStatus?.active && (
-        <div className="mb-4 p-4 bg-green-900/50 rounded-lg border-2 border-green-600">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-white font-semibold flex items-center gap-2">
-              <span>🌾</span> Idle Farming Active
-            </p>
+        <div 
+          className="mb-4 p-4 bg-gradient-to-b from-green-800 to-green-900 border-4 border-green-600"
+          style={{
+            borderRadius: '12px',
+            boxShadow: '0 4px 0 #15803d, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🌾</div>
+              <div>
+                <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+                  Idle Farming Active
+                </p>
+                <p className="text-xs text-green-200" style={{ fontFamily: 'monospace' }}>
+                  {idleStatus.canClaim
+                    ? "Rewards are ready to claim!"
+                    : `Ends in: ${Math.floor(idleTimeRemaining / 60)}m ${idleTimeRemaining % 60}s`}
+                </p>
+              </div>
+            </div>
             {idleStatus.canClaim && (
-              <span className="text-green-300 text-sm font-bold animate-pulse">
-                Ready!
+              <span className="text-green-300 text-sm font-bold animate-pulse" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+                READY!
               </span>
             )}
           </div>
-          <p className="text-sm text-green-200 mb-3">
-            {idleStatus.canClaim
-              ? "Rewards are ready to claim!"
-              : `Ends in: ${Math.floor(idleTimeRemaining / 60)}m ${
-                  idleTimeRemaining % 60
-                }s`}
-          </p>
           <button
             onClick={() => claimIdleMutation.mutate()}
             disabled={!idleStatus.canClaim || claimIdleMutation.isPending}
-            className="w-full px-4 py-2 bg-green-700 hover:bg-green-600 text-white rounded font-bold transition disabled:opacity-50 disabled:cursor-not-allowed btn-press"
+            className="w-full px-4 py-3 bg-green-700 hover:bg-green-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+            style={{
+              border: '3px solid #15803d',
+              borderRadius: '0',
+              boxShadow: '0 3px 0 #166534, inset 0 1px 0 rgba(255,255,255,0.2)',
+              textShadow: '1px 1px 0 #000',
+              fontFamily: 'monospace',
+              letterSpacing: '1px'
+            }}
           >
-            {claimIdleMutation.isPending ? "Claiming..." : "Claim Rewards"}
+            <span className="relative z-10">{claimIdleMutation.isPending ? "CLAIMING..." : "CLAIM REWARDS"}</span>
+            <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>
           </button>
         </div>
       )}

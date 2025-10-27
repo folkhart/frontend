@@ -15,6 +15,7 @@ import AdminTab from '@/components/tabs/AdminTab';
 import SettingsTab from '@/components/tabs/SettingsTab';
 import NotificationToast from '@/components/NotificationToast';
 import Toast from '@/components/Toast';
+import Onboarding from '@/components/Onboarding';
 
 export default function GamePage() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export default function GamePage() {
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     loadPlayerData();
@@ -30,6 +32,12 @@ export default function GamePage() {
       Notification.requestPermission();
     }
     setupSocketListeners();
+    
+    // Check if user has seen onboarding
+    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
   }, []);
 
   // Energy regeneration timer - regenerate 1 energy every 5 minutes
@@ -119,6 +127,16 @@ export default function GamePage() {
     setToast({ message, type });
   };
 
+  // Expose restartOnboarding function globally for Settings tab
+  (window as any).restartOnboarding = () => {
+    setShowOnboarding(true);
+  };
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+    setShowOnboarding(false);
+  };
+
   return (
     <div className="h-screen bg-stone-900">
       <TopBar />
@@ -148,6 +166,10 @@ export default function GamePage() {
           type={toast.type}
           onClose={() => setToast(null)}
         />
+      )}
+
+      {showOnboarding && (
+        <Onboarding onComplete={handleOnboardingComplete} />
       )}
     </div>
   );

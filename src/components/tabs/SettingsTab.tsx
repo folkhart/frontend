@@ -58,6 +58,24 @@ export default function SettingsTab() {
         <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
       </button>
 
+      {/* Restart Onboarding Button */}
+      <button
+        onClick={() => (window as any).restartOnboarding?.()}
+        className="w-full py-3 bg-blue-700 hover:bg-blue-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: '3px solid #1e3a8a',
+          borderRadius: '0',
+          boxShadow: '0 3px 0 #1e40af, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+          textShadow: '1px 1px 0 #000',
+          fontFamily: 'monospace',
+          letterSpacing: '1px'
+        }}
+      >
+        <Info size={20} />
+        <span className="relative z-10">RESTART TUTORIAL</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-400/20 to-transparent"></div>
+      </button>
+
       {/* Admin Panel Button - Only show for admins */}
       {player?.isAdmin && (
         <button
