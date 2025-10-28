@@ -11,6 +11,7 @@ export default function ShopTab() {
   const queryClient = useQueryClient();
   const { player, setPlayer, character } = useGameStore();
   const [dailyGemsClaimed, setDailyGemsClaimed] = useState(false);
+  const [timeUntilNextClaim, setTimeUntilNextClaim] = useState('');
   const refreshCost = 50; // gems
 
   // Fetch shop items from backend
@@ -56,17 +57,36 @@ export default function ShopTab() {
   });
 
   useEffect(() => {
-    // Check if we can claim daily gems
-    const lastClaim = localStorage.getItem('lastDailyGemClaim');
-    const now = new Date();
-    const today = now.toDateString();
+    // Check if we can claim daily gems and update countdown
+    const updateClaimStatus = () => {
+      const lastClaim = localStorage.getItem('lastDailyGemClaim');
+      const now = new Date();
+      const today = now.toDateString();
+      
+      if (lastClaim !== today) {
+        setDailyGemsClaimed(false);
+        setTimeUntilNextClaim('');
+      } else {
+        setDailyGemsClaimed(true);
+        
+        // Calculate time until next claim (midnight)
+        const tomorrow = new Date(now);
+        tomorrow.setHours(24, 0, 0, 0);
+        const diff = tomorrow.getTime() - now.getTime();
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        setTimeUntilNextClaim(`${hours}h ${minutes}m ${seconds}s`);
+      }
+    };
     
-    if (lastClaim !== today) {
-      setDailyGemsClaimed(false);
-    } else {
-      setDailyGemsClaimed(true);
-    }
-  }, []);
+    updateClaimStatus();
+    const interval = setInterval(updateClaimStatus, 1000);
+    
+    return () => clearInterval(interval);
+  }, [dailyGemsClaimed]);
 
   const getItemImage = (spriteId: string, itemType?: string) => {
     if (!spriteId) return null;
@@ -84,18 +104,30 @@ export default function ShopTab() {
         }
       }
       
+      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
+      if (spriteId.includes('/')) {
+        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing'
+        // For accessories with woodenSet/, the path is accessories/woodenSet/...
+        const fullPath = spriteId.startsWith('woodenSet/') 
+          ? `accessories/${spriteId}` 
+          : spriteId;
+        return `/src/assets/items/${fullPath}.png`;
+      }
+      
       // Determine folder based on item type
       let folder = 'weapons'; // default
       if (itemType === 'Armor') {
         folder = 'armors';
       } else if (itemType === 'Accessory') {
         folder = 'accessories';
-      } else if (itemType === 'Gem' || itemType === 'Material') {
-        // Gems and materials use their full spriteId path
-        return new URL(`../../assets/items/${spriteId}.png`, import.meta.url).href;
+      } else if (itemType === 'Consumable') {
+        folder = 'consumables';
+      } else if (itemType === 'Material' || itemType === 'Gem') {
+        // Materials and gems without paths should go to craft/gems
+        return `/src/assets/items/craft/gems/${spriteId}.png`;
       }
       
-      return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
+      return `/src/assets/items/${folder}/${spriteId}.png`;
     } catch (e) {
       console.error('Failed to load image:', spriteId, itemType, e);
       return null;
@@ -143,23 +175,30 @@ export default function ShopTab() {
       </div>
 
       {/* Daily Free Gems */}
-      <button
-        onClick={claimDailyGems}
-        disabled={dailyGemsClaimed}
-        className="w-full mb-2 py-3 bg-green-700 hover:bg-green-600 text-white font-bold transition relative overflow-hidden disabled:opacity-50 disabled:grayscale"
-        style={{
-          border: '3px solid #15803d',
-          borderRadius: '0',
-          boxShadow: dailyGemsClaimed ? 'none' : '0 3px 0 #166534, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-          textShadow: '1px 1px 0 #000',
-          fontFamily: 'monospace',
-          letterSpacing: '1px'
-        }}
-      >
-        <Gem size={16} className="inline mr-2" />
-        <span className="relative z-10">{dailyGemsClaimed ? 'DAILY GEMS CLAIMED!' : '🎁 CLAIM 10 FREE GEMS!'}</span>
-        {!dailyGemsClaimed && <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>}
-      </button>
+      <div className="mb-2">
+        <button
+          onClick={claimDailyGems}
+          disabled={dailyGemsClaimed}
+          className="w-full py-3 bg-green-700 hover:bg-green-600 text-white font-bold transition relative overflow-hidden disabled:opacity-50 disabled:grayscale"
+          style={{
+            border: '3px solid #15803d',
+            borderRadius: '0',
+            boxShadow: dailyGemsClaimed ? 'none' : '0 3px 0 #166534, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+            textShadow: '1px 1px 0 #000',
+            fontFamily: 'monospace',
+            letterSpacing: '1px'
+          }}
+        >
+          <Gem size={16} className="inline mr-2" />
+          <span className="relative z-10">{dailyGemsClaimed ? 'DAILY GEMS CLAIMED!' : '🎁 CLAIM 10 FREE GEMS!'}</span>
+          {!dailyGemsClaimed && <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>}
+        </button>
+        {dailyGemsClaimed && timeUntilNextClaim && (
+          <p className="text-center text-xs text-gray-400 mt-1" style={{ fontFamily: 'monospace' }}>
+            Next claim in: <span className="text-green-400">{timeUntilNextClaim}</span>
+          </p>
+        )}
+      </div>
 
       {/* Manual Refresh Button */}
       <button

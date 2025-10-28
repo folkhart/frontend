@@ -31,6 +31,10 @@ interface Character {
   helmet?: any;
   gloves?: any;
   shoes?: any;
+  ring?: any;
+  necklace?: any;
+  belt?: any;
+  earring?: any;
   accessory?: any;
   companion?: any;
   currentActivityType?: string;

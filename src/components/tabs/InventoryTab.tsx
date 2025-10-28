@@ -40,13 +40,14 @@ export default function InventoryTab() {
         }
       }
 
-      // Handle Gems and Materials - use craft/gems folder with spriteId filename
-      if (itemType === "Gem" || itemType === "Material") {
-        const gemPath = `../../assets/items/craft/gems/${spriteId}.png`;
-        console.log("Loading gem/material from:", gemPath);
-        const url = new URL(gemPath, import.meta.url).href;
-        console.log("Resolved URL:", url);
-        return url;
+      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
+      if (spriteId.includes('/')) {
+        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing'
+        // For accessories with woodenSet/, the path is accessories/woodenSet/...
+        const fullPath = spriteId.startsWith('woodenSet/') 
+          ? `accessories/${spriteId}` 
+          : spriteId;
+        return `/src/assets/items/${fullPath}.png`;
       }
 
       // Determine folder based on item type
@@ -55,14 +56,11 @@ export default function InventoryTab() {
         folder = "armors";
       } else if (itemType === "Accessory") {
         folder = "accessories";
+      } else if (itemType === "Consumable") {
+        folder = "consumables";
       }
 
-      const url = new URL(
-        `../../assets/items/${folder}/${spriteId}.png`,
-        import.meta.url
-      ).href;
-      console.log("Resolved URL:", url);
-      return url;
+      return `/src/assets/items/${folder}/${spriteId}.png`;
     } catch (e) {
       console.error("Failed to load image:", spriteId, itemType, e);
       return null;
@@ -108,9 +106,18 @@ export default function InventoryTab() {
 
   const useItemMutation = useMutation({
     mutationFn: (itemId: string) => inventoryApi.use(itemId),
-    onSuccess: () => {
+    onSuccess: async (response) => {
+      // Update character immediately with new HP
+      if (response.data?.character) {
+        setCharacter(response.data.character);
+      }
+      // Refresh queries
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      (window as any).showToast?.("Item used successfully!", "success");
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || "Failed to use item", "error");
     },
   });
 

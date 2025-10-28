@@ -101,18 +101,27 @@ export default function BlacksmithTab() {
         }
       }
       
+      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
+      if (spriteId.includes('/')) {
+        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing'
+        // For accessories with woodenSet/, the path is accessories/woodenSet/...
+        const fullPath = spriteId.startsWith('woodenSet/') 
+          ? `accessories/${spriteId}` 
+          : spriteId;
+        return `/src/assets/items/${fullPath}.png`;
+      }
+      
       // Determine folder based on item type
       let folder = 'weapons'; // default
       if (itemType === 'Armor') {
         folder = 'armors';
       } else if (itemType === 'Accessory') {
         folder = 'accessories';
-      } else if (itemType === 'Gem' || itemType === 'Material') {
-        // Gems and materials use their full spriteId path
-        return new URL(`../../assets/items/${spriteId}.png`, import.meta.url).href;
+      } else if (itemType === 'Consumable') {
+        folder = 'consumables';
       }
       
-      return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
+      return `/src/assets/items/${folder}/${spriteId}.png`;
     } catch (e) {
       console.error('Failed to load image:', spriteId, itemType, e);
       return null;

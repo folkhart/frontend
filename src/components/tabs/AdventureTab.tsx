@@ -113,7 +113,7 @@ export default function AdventureTab() {
     } else if (!backendActiveDungeonRun && activeDungeonRun && !activeDungeonRun.completed) {
       // Backend doesn't have an active run but local state does
       // Check if the dungeon time has actually expired before completing
-      const completesAt = new Date(activeDungeonRun.completesAt || activeDungeonRun.startTime).getTime() + (activeDungeonRun.dungeon.duration * 1000);
+      const completesAt = new Date(activeDungeonRun.completesAt).getTime();
       const now = Date.now();
       const hasExpired = now >= completesAt;
       
@@ -198,7 +198,7 @@ export default function AdventureTab() {
   useEffect(() => {
     if (activeDungeonRun && !activeDungeonRun.completed) {
       // Calculate actual time remaining from completesAt
-      const completesAt = new Date(activeDungeonRun.completesAt || activeDungeonRun.startTime).getTime() + (activeDungeonRun.dungeon.duration * 1000);
+      const completesAt = new Date(activeDungeonRun.completesAt).getTime();
       const now = Date.now();
       const actualTimeRemaining = Math.max(0, Math.floor((completesAt - now) / 1000));
       
