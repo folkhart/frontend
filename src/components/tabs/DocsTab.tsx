@@ -1,13 +1,11 @@
 import { useState, useMemo } from "react";
 import { Book, ChevronRight, Home, Search, X } from "lucide-react";
+import ItemShowcase from "../docs/ItemShowcase";
 
 export default function DocsTab() {
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const getItemImage = (spriteId: string) => {
-    return `/src/assets/items/${spriteId}.png`;
-  };
+  const [showItemGallery, setShowItemGallery] = useState<{ category: string; subcategory?: string } | null>(null);
 
   const docs = [
     {
@@ -618,6 +616,56 @@ See "Gems & Socketing" guide for detailed information.
 - Crafting achievements need materials
 - Social achievements need other players`,
     },
+    {
+      id: "item-weapons",
+      title: "⚔️ Weapons Gallery",
+      icon: "⚔️",
+      category: "Items",
+      keywords: ["weapon", "sword", "axe", "bow", "staff", "dagger", "warrior", "mage", "ranger", "cleric", "rogue"],
+      isGallery: true,
+      galleryType: "weapons",
+      content: "Browse all weapons by class",
+    },
+    {
+      id: "item-armors",
+      title: "🛡️ Armor Gallery",
+      icon: "🛡️",
+      category: "Items",
+      keywords: ["armor", "helmet", "gloves", "shoes", "body", "defense"],
+      isGallery: true,
+      galleryType: "armors",
+      content: "Browse all armor pieces by slot",
+    },
+    {
+      id: "item-accessories",
+      title: "💍 Accessories Gallery",
+      icon: "💍",
+      category: "Items",
+      keywords: ["accessory", "ring", "necklace", "belt", "earring", "wooden"],
+      isGallery: true,
+      galleryType: "accessories",
+      content: "Browse all accessories",
+    },
+    {
+      id: "item-gems",
+      title: "💎 Gems Gallery",
+      icon: "💎",
+      category: "Items",
+      keywords: ["gem", "socket", "ruby", "sapphire", "topaz", "emerald", "amethyst", "diamond"],
+      isGallery: true,
+      galleryType: "gems",
+      content: "Browse all gems and their bonuses",
+    },
+    {
+      id: "item-materials",
+      title: "🔨 Materials Gallery",
+      icon: "🔨",
+      category: "Items",
+      keywords: ["material", "craft", "enhancement", "refining", "socket", "protection"],
+      isGallery: true,
+      galleryType: "materials",
+      content: "Browse all crafting materials",
+    },
   ];
 
   const filteredDocs = useMemo(() => {
@@ -703,6 +751,29 @@ See "Gems & Socketing" guide for detailed information.
     });
   };
 
+  // If showing item gallery, render ItemShowcase
+  if (showItemGallery) {
+    return (
+      <div className="p-3 pb-20">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+            <Book size={24} className="text-amber-400" />
+            Item Gallery
+          </h2>
+          <button
+            onClick={() => setShowItemGallery(null)}
+            className="text-amber-400 hover:text-amber-300 flex items-center gap-1 text-sm font-bold"
+            style={{ fontFamily: 'monospace' }}
+          >
+            <Home size={16} />
+            Back
+          </button>
+        </div>
+        <ItemShowcase category={showItemGallery.category as any} subcategory={showItemGallery.subcategory} />
+      </div>
+    );
+  }
+
   return (
     <div className="p-3 pb-20">
       {/* Header */}
@@ -755,10 +826,16 @@ See "Gems & Socketing" guide for detailed information.
           {/* Doc List */}
           {filteredDocs.length > 0 ? (
             <div className="space-y-2">
-              {filteredDocs.map((doc) => (
+              {filteredDocs.map((doc: any) => (
                 <button
                   key={doc.id}
-                  onClick={() => setSelectedDoc(doc.id)}
+                  onClick={() => {
+                    if (doc.isGallery) {
+                      setShowItemGallery({ category: doc.galleryType });
+                    } else {
+                      setSelectedDoc(doc.id);
+                    }
+                  }}
                   className="w-full p-4 bg-stone-800 hover:bg-stone-700 border-2 border-stone-700 hover:border-amber-600 transition flex items-center justify-between group"
                   style={{
                     borderRadius: '0',
