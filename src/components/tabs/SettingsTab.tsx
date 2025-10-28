@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LogOut, Info, User, Users, Newspaper, Trophy } from 'lucide-react';
+import { LogOut, Info, User, Users, Newspaper, Trophy, Book } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/store/gameStore';
 import { disconnectSocket } from '@/lib/socket';
@@ -127,6 +127,24 @@ export default function SettingsTab() {
         <img src={leaderboardIcon} alt="Leaderboard" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
         <span className="relative z-10">LEADERBOARD</span>
         <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+      </button>
+
+      {/* Documentation Button */}
+      <button
+        onClick={() => navigate('/docs')}
+        className="w-full py-3 bg-green-700 hover:bg-green-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: '3px solid #15803d',
+          borderRadius: '0',
+          boxShadow: '0 3px 0 #166534, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+          textShadow: '1px 1px 0 #000',
+          fontFamily: 'monospace',
+          letterSpacing: '1px'
+        }}
+      >
+        <Book size={20} />
+        <span className="relative z-10">📖 DOCUMENTATION</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>
       </button>
 
       {/* Restart Onboarding Button */}

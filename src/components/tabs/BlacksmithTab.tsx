@@ -108,7 +108,7 @@ export default function BlacksmithTab() {
         const fullPath = spriteId.startsWith('woodenSet/') 
           ? `accessories/${spriteId}` 
           : spriteId;
-        return `/src/assets/items/${fullPath}.png`;
+        return new URL(`../../assets/items/${fullPath}.png`, import.meta.url).href;
       }
       
       // Determine folder based on item type
@@ -121,7 +121,7 @@ export default function BlacksmithTab() {
         folder = 'consumables';
       }
       
-      return `/src/assets/items/${folder}/${spriteId}.png`;
+      return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
     } catch (e) {
       console.error('Failed to load image:', spriteId, itemType, e);
       return null;

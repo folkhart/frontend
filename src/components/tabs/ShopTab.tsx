@@ -111,7 +111,7 @@ export default function ShopTab() {
         const fullPath = spriteId.startsWith('woodenSet/') 
           ? `accessories/${spriteId}` 
           : spriteId;
-        return `/src/assets/items/${fullPath}.png`;
+        return new URL(`../../assets/items/${fullPath}.png`, import.meta.url).href;
       }
       
       // Determine folder based on item type
@@ -124,10 +124,10 @@ export default function ShopTab() {
         folder = 'consumables';
       } else if (itemType === 'Material' || itemType === 'Gem') {
         // Materials and gems without paths should go to craft/gems
-        return `/src/assets/items/craft/gems/${spriteId}.png`;
+        return new URL(`../../assets/items/craft/gems/${spriteId}.png`, import.meta.url).href;
       }
       
-      return `/src/assets/items/${folder}/${spriteId}.png`;
+      return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
     } catch (e) {
       console.error('Failed to load image:', spriteId, itemType, e);
       return null;
