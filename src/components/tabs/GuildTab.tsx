@@ -345,7 +345,7 @@ export default function GuildTab() {
                         }`}
                       >
                         <img
-                          src={`/src/assets/ui/guild/guild_icons/${iconId}.gif`}
+                          src={`/assets/ui/guild/guild_icons/${iconId}.gif`}
                           alt={iconId}
                           className="w-12 h-12 mx-auto"
                           style={{ imageRendering: 'pixelated' }}
@@ -413,7 +413,7 @@ export default function GuildTab() {
           <div className="relative">
             <div className="w-16 h-16 bg-stone-900 border-2 border-stone-700 flex items-center justify-center">
               <img
-                src={`/src/assets/ui/guild/guild_icons/${myGuild.iconId || 'Blank_Gold__Animated_32x32'}.gif`}
+                src={`/assets/ui/guild/guild_icons/${myGuild.iconId || 'Blank_Gold__Animated_32x32'}.gif`}
                 alt="Guild Emblem"
                 className="w-14 h-14"
                 style={{ imageRendering: 'pixelated' }}
@@ -934,7 +934,7 @@ export default function GuildTab() {
                   }`}
                 >
                   <img
-                    src={`/src/assets/ui/guild/guild_icons/${iconId}.gif`}
+                    src={`/assets/ui/guild/guild_icons/${iconId}.gif`}
                     alt={iconId}
                     className="w-16 h-16 mx-auto"
                     style={{ imageRendering: 'pixelated' }}
