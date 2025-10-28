@@ -57,6 +57,8 @@ export default function BlacksmithTab() {
     mutationFn: (slotId: string) => blacksmithApi.addSocketSlot(slotId),
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['player'] }); // For gold update
+      queryClient.refetchQueries({ queryKey: ['inventory'] }); // Force immediate refetch
       setResult(response.data);
       setSelectedItem(null);
     },
@@ -71,6 +73,8 @@ export default function BlacksmithTab() {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
+      queryClient.invalidateQueries({ queryKey: ['player'] }); // For gold update
+      queryClient.refetchQueries({ queryKey: ['inventory'] }); // Force immediate refetch
       setResult(response.data);
       setSelectedItem(null);
     },

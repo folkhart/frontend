@@ -65,6 +65,8 @@ export default function AchievementTab() {
       const { data } = await achievementApi.getAll();
       return data;
     },
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchOnWindowFocus: true,
   });
 
   const { data: stats } = useQuery<AchievementStats>({
@@ -73,6 +75,8 @@ export default function AchievementTab() {
       const { data } = await achievementApi.getStats();
       return data;
     },
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchOnWindowFocus: true,
   });
 
   const equipTitleMutation = useMutation({
@@ -108,6 +112,8 @@ export default function AchievementTab() {
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
       queryClient.invalidateQueries({ queryKey: ['achievement-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['player'] }); // For gold/gems update
+      queryClient.refetchQueries({ queryKey: ['player'] }); // Force immediate refetch
       (window as any).showToast?.(
         `Step ${data.step + 1} claimed! +${data.rewards.gold}g, +${data.rewards.gems} gems`,
         'success'
