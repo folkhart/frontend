@@ -11,32 +11,24 @@ export default function InventoryTab() {
   const { character, setCharacter } = useGameStore();
 
   const getItemImage = (spriteId: string, itemType?: string) => {
-    if (!spriteId) {
-      console.log("No spriteId provided");
-      return null;
-    }
-
-    console.log("getItemImage called with:", { spriteId, itemType });
+    if (!spriteId) return null;
 
     try {
+      // Use eager glob imports to ensure images are bundled
+      const images = import.meta.glob('../../assets/items/**/*.png', { eager: true, as: 'url' });
+      
       // Check if it's a potion (numeric sprite ID)
       if (/^\d+$/.test(spriteId)) {
         const num = parseInt(spriteId);
         if (num >= 985 && num <= 992) {
-          return new URL(
-            `../../assets/items/potions/hp/${spriteId}.png`,
-            import.meta.url
-          ).href;
+          const path = `../../assets/items/potions/hp/${spriteId}.png`;
+          return images[path] || null;
         } else if (num >= 1001 && num <= 1008) {
-          return new URL(
-            `../../assets/items/potions/mp/${spriteId}.png`,
-            import.meta.url
-          ).href;
+          const path = `../../assets/items/potions/mp/${spriteId}.png`;
+          return images[path] || null;
         } else if (num >= 1033 && num <= 1040) {
-          return new URL(
-            `../../assets/items/potions/attack/${spriteId}.png`,
-            import.meta.url
-          ).href;
+          const path = `../../assets/items/potions/attack/${spriteId}.png`;
+          return images[path] || null;
         }
       }
 
@@ -47,7 +39,8 @@ export default function InventoryTab() {
         const fullPath = spriteId.startsWith('woodenSet/') 
           ? `accessories/${spriteId}` 
           : spriteId;
-        return new URL(`../../assets/items/${fullPath}.png`, import.meta.url).href;
+        const path = `../../assets/items/${fullPath}.png`;
+        return images[path] || null;
       }
 
       // Determine folder based on item type
@@ -58,9 +51,13 @@ export default function InventoryTab() {
         folder = "accessories";
       } else if (itemType === "Consumable") {
         folder = "consumables";
+      } else if (itemType === "Material" || itemType === "Gem") {
+        const path = `../../assets/items/craft/gems/${spriteId}.png`;
+        return images[path] || null;
       }
 
-      return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
+      const path = `../../assets/items/${folder}/${spriteId}.png`;
+      return images[path] || null;
     } catch (e) {
       console.error("Failed to load image:", spriteId, itemType, e);
       return null;
