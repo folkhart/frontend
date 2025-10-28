@@ -131,6 +131,10 @@ export const guildApi = {
     api.post(`/guild/rank/${playerId}`, { rank }),
   donate: (amount: number) => api.post('/guild/donate', { amount }),
   sendMessage: (message: string) => api.post('/guild/chat', { message }),
+  // Guild Shop
+  convertGoldToCoins: (amount: number) => api.post('/guild/convert-gold', { amount }),
+  getShopItems: (category?: string) => api.get('/guild/shop', { params: { category } }),
+  purchaseShopItem: (shopItemId: string) => api.post(`/guild/shop/purchase/${shopItemId}`),
 };
 
 // Friend API

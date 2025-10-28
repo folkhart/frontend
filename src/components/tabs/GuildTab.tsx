@@ -16,6 +16,7 @@ import guildMembersIcon from '@/assets/ui/guild/guildMembers.png';
 import guildChatIcon from '@/assets/ui/guild/guildChat.png';
 import guildDonateIcon from '@/assets/ui/guild/guildDonate.png';
 import settingsIcon from '@/assets/ui/settings.png';
+import GuildShop from '@/components/guild/GuildShop';
 
 type View = 'browse' | 'my-guild' | 'members' | 'chat' | 'donate' | 'shop' | 'settings';
 
@@ -598,93 +599,7 @@ export default function GuildTab() {
       )}
 
       {/* Guild Shop */}
-      {view === 'shop' && (
-        <div className="space-y-3">
-          <div className="bg-stone-800 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <img src={guildShopIcon} alt="Shop" className="w-5 h-5" />
-                Guild Shop
-              </h3>
-              <div className="text-sm">
-                <span className="text-yellow-400 font-bold">{myGuild.guildGold}</span>
-                <span className="text-gray-400"> Guild Gold</span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-400 mb-4">
-              Exclusive items purchasable with guild gold. Officers and Leaders can manage shop inventory.
-            </p>
-
-            {/* Mock Shop Items */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-stone-900 rounded-lg p-3 border-2 border-purple-600">
-                <div className="w-full aspect-square bg-stone-800 rounded mb-2 flex items-center justify-center">
-                  <span className="text-4xl">⚔️</span>
-                </div>
-                <p className="font-bold text-purple-400 text-sm">Guild Sword</p>
-                <p className="text-xs text-gray-400 mb-2">+15 ATK</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-yellow-400 font-bold text-sm">500 GG</span>
-                  <button className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold">
-                    Buy
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-stone-900 rounded-lg p-3 border-2 border-purple-600">
-                <div className="w-full aspect-square bg-stone-800 rounded mb-2 flex items-center justify-center">
-                  <span className="text-4xl">🛡️</span>
-                </div>
-                <p className="font-bold text-purple-400 text-sm">Guild Armor</p>
-                <p className="text-xs text-gray-400 mb-2">+20 DEF</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-yellow-400 font-bold text-sm">600 GG</span>
-                  <button className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold">
-                    Buy
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-stone-900 rounded-lg p-3 border-2 border-blue-600">
-                <div className="w-full aspect-square bg-stone-800 rounded mb-2 flex items-center justify-center">
-                  <span className="text-4xl">💎</span>
-                </div>
-                <p className="font-bold text-blue-400 text-sm">Guild Gem</p>
-                <p className="text-xs text-gray-400 mb-2">+50 Gems</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-yellow-400 font-bold text-sm">300 GG</span>
-                  <button className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold">
-                    Buy
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-stone-900 rounded-lg p-3 border-2 border-green-600">
-                <div className="w-full aspect-square bg-stone-800 rounded mb-2 flex items-center justify-center">
-                  <span className="text-4xl">🧪</span>
-                </div>
-                <p className="font-bold text-green-400 text-sm">Guild Potion</p>
-                <p className="text-xs text-gray-400 mb-2">Restore 200 HP</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-yellow-400 font-bold text-sm">100 GG</span>
-                  <button className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold">
-                    Buy
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {canManage() && (
-              <div className="mt-4 p-3 bg-amber-900/30 border border-amber-600 rounded">
-                <p className="text-amber-200 text-xs font-bold mb-2">Officer/Leader Tools</p>
-                <button className="w-full py-2 bg-amber-600 hover:bg-amber-700 text-white rounded font-bold text-sm">
-                  Manage Shop Inventory
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {view === 'shop' && myGuild && <GuildShop guild={myGuild} />}
 
       {/* Guild Settings */}
       {view === 'settings' && (
