@@ -91,7 +91,9 @@ export default function VillageTab() {
         const fullPath = spriteId.startsWith('woodenSet/') 
           ? `accessories/${spriteId}` 
           : spriteId;
-        return new URL(`../../assets/items/${fullPath}.png`, import.meta.url).href;
+        const imagePath = `../../assets/items/${fullPath}.png`;
+        console.log('Loading image with path:', imagePath, 'for spriteId:', spriteId);
+        return new URL(imagePath, import.meta.url).href;
       }
 
       // Determine folder based on item type
@@ -102,6 +104,9 @@ export default function VillageTab() {
         folder = "accessories";
       } else if (itemType === "Consumable") {
         folder = "consumables";
+      } else if (itemType === "Material" || itemType === "Gem") {
+        // Materials and gems go to craft/gems folder
+        return new URL(`../../assets/items/craft/gems/${spriteId}.png`, import.meta.url).href;
       }
 
       return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
