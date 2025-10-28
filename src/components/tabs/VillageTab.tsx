@@ -134,7 +134,7 @@ export default function VillageTab() {
 
       // Check for guild shop items
       if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
-        return `/src/assets/items/guildshop_items/${getGuildItemPath(spriteId)}`;
+        return `/assets/items/guildshop_items/${getGuildItemPath(spriteId)}`;
       }
 
       // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)

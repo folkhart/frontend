@@ -110,7 +110,7 @@ export default function InventoryTab() {
       // Check for guild shop items (guild_sword, guild_dagger, Chest, key, etc.)
       if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
         // Guild items need special path handling
-        return `/src/assets/items/guildshop_items/${getGuildItemPath(spriteId, itemType)}`;
+        return `/assets/items/guildshop_items/${getGuildItemPath(spriteId, itemType)}`;
       }
 
       // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
