@@ -20,8 +20,11 @@ import ItemShowcase from "@/components/docs/ItemShowcase";
 
 export default function DocsPage() {
   const navigate = useNavigate();
-  const [selectedCategory, setSelectedCategory] = useState<string>("getting-started");
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<string>("getting-started");
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
+    null
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [showItemGallery, setShowItemGallery] = useState<{
     category: string;
@@ -755,7 +758,7 @@ Enhanced items show their level visually:
 - Massive power increase
 - Prestigious achievement`,
     },
-    "leaderboard": {
+    leaderboard: {
       title: "🥇 Leaderboard & Monthly Rewards",
       body: `# Leaderboard & Monthly Rewards
 
@@ -1079,7 +1082,7 @@ Good luck, and may the best adventurer win! 🏆`,
           >
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
-          
+
           <h1
             className="text-xl lg:text-2xl font-bold text-white flex items-center gap-2"
             style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
@@ -1089,7 +1092,7 @@ Good luck, and may the best adventurer win! 🏆`,
             <span className="sm:hidden">Wiki</span>
           </h1>
         </div>
-        
+
         <button
           onClick={() => navigate("/")}
           className="flex items-center gap-2 px-3 py-2 lg:px-4 bg-amber-700 hover:bg-amber-600 text-white font-bold transition text-sm lg:text-base"
@@ -1115,11 +1118,11 @@ Good luck, and may the best adventurer win! 🏆`,
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        
+
         {/* Sidebar */}
         <div
           className={`
-            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
             lg:translate-x-0
             fixed lg:relative
             w-64 bg-stone-800 border-r-2 border-stone-700 overflow-y-auto

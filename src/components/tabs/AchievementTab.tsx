@@ -115,6 +115,18 @@ export default function AchievementTab() {
     },
   });
 
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await achievementApi.sync();
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['achievements'] });
+      queryClient.invalidateQueries({ queryKey: ['achievement-stats'] });
+      (window as any).showToast?.('Achievement progress synced!', 'success');
+    },
+  });
+
   const categories = ['All', 'Progression', 'Combat', 'Collection', 'Crafting', 'Social'];
 
   const filteredAchievements = achievements.filter((achievement) =>
@@ -157,7 +169,7 @@ export default function AchievementTab() {
       {/* Stats Overview */}
       {stats && (
         <div className="bg-stone-800 border-2 border-amber-600 p-4 mb-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 mb-3">
             <div className="text-center">
               <div className="text-2xl font-bold text-amber-400">{stats.totalPoints}</div>
               <div className="text-xs text-gray-400">Achievement Points</div>
@@ -169,7 +181,7 @@ export default function AchievementTab() {
               <div className="text-xs text-gray-400">Completed</div>
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mb-3">
             <div className="flex justify-between text-xs text-gray-400 mb-1">
               <span>Progress</span>
               <span>{stats.completionPercentage}%</span>
@@ -181,6 +193,19 @@ export default function AchievementTab() {
               />
             </div>
           </div>
+          <button
+            onClick={() => syncMutation.mutate()}
+            disabled={syncMutation.isPending}
+            className="w-full py-2 bg-blue-700 hover:bg-blue-600 disabled:bg-gray-600 text-white font-bold text-sm transition"
+            style={{
+              border: '2px solid #1e3a8a',
+              borderRadius: '0',
+              boxShadow: '0 2px 0 #1e40af',
+              fontFamily: 'monospace',
+            }}
+          >
+            {syncMutation.isPending ? '🔄 SYNCING...' : '🔄 SYNC PROGRESS'}
+          </button>
         </div>
       )}
 

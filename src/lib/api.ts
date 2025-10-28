@@ -186,4 +186,5 @@ export const achievementApi = {
   equipTitle: (achievementId: string) => api.post(`/achievements/equip/${achievementId}`),
   unequipTitle: () => api.post('/achievements/unequip'),
   claimStep: (achievementId: string, stepIndex: number) => api.post(`/achievements/claim-step/${achievementId}/${stepIndex}`),
+  sync: () => api.post('/achievements/sync'),
 };
