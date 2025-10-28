@@ -28,7 +28,7 @@ const getDungeonIcon = (dungeonName: string) => {
 
 export default function AdventureTab() {
   const queryClient = useQueryClient();
-  const { character, setPlayer } = useGameStore();
+  const { character, player, setPlayer } = useGameStore();
   const [view, setView] = useState<"dungeons" | "history">("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showBossFight, setShowBossFight] = useState(false);
@@ -280,6 +280,14 @@ export default function AdventureTab() {
     }) => {
       const { data } = await dungeonApi.start(dungeonId, mode);
 
+      // Immediately update player energy in state
+      if (player && data.energyCost !== undefined) {
+        setPlayer({
+          ...player,
+          energy: player.energy - data.energyCost,
+        });
+      }
+
       // Add start time for persistence
       const runWithTime = { ...data, startTime: new Date().toISOString() };
 
@@ -292,7 +300,7 @@ export default function AdventureTab() {
     },
     onSuccess: async () => {
       setSelectedDungeon(null);
-      // Refresh player data to update energy
+      // Refresh player data to ensure sync
       const { data: profile } = await authApi.getProfile();
       setPlayer(profile);
     },

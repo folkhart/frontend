@@ -59,6 +59,57 @@ export default function VillageTab() {
 
   if (!character) return null;
 
+  const getGuildItemPath = (spriteId: string) => {
+    // Convert tier names to numbers (bronze→1, silver→2, gold→3, diamond→4)
+    let fileName = spriteId;
+    const tierMap: { [key: string]: string } = {
+      'bronze': '1',
+      'silver': '2',
+      'gold': '3',
+      'diamond': '4',
+    };
+    
+    for (const [tier, number] of Object.entries(tierMap)) {
+      if (fileName.includes(`_${tier}`)) {
+        fileName = fileName.replace(`_${tier}`, number);
+        break;
+      }
+    }
+    
+    // Map to correct file paths
+    if (spriteId === 'guild_key') return `chests_and_keys/key1.png`;
+    if (fileName.startsWith('guild_chest')) return `chests_and_keys/Chest${fileName.replace('guild_chest', '')}.png`;
+    if (fileName.startsWith('guild_sword')) return `weapons/guild_sword/${fileName.replace('guild_sword', 'guildsword')}.png`;
+    if (fileName.startsWith('guild_bow')) return `weapons/guild_bow/${fileName}.png`;
+    if (fileName.startsWith('guild_dagger')) return `weapons/guild_dagger/${fileName}.png`;
+    if (fileName.startsWith('guild_shield')) return `weapons/guild_shield/${fileName}.png`;
+    if (fileName.startsWith('guild_staff')) return `weapons/guild_staff/${fileName}.png`;
+    if (fileName.startsWith('guild_armor')) return `armors/warrior_armors/${fileName}.png`;
+    // guild_glove1 to guild_glove4
+    if (fileName.includes('glove')) return `guild_armor_pieces/gloves/${fileName}.png`;
+    // guild_shoe1 → guild_shoes1.png
+    if (fileName.includes('boot') || fileName.includes('shoe')) {
+      const shoeName = fileName.replace('guild_boot', 'guild_shoes').replace('guild_shoe', 'guild_shoes');
+      return `guild_armor_pieces/shoes/${shoeName}.png`;
+    }
+    // Handle accessories (map to Icon files)
+    if (fileName === 'guild_belt') return `guild_accessories/belts/Icon27.png`;
+    if (fileName === 'guild_earring') return `guild_accessories/earrings/Icon12.png`;
+    if (fileName === 'guild_necklace') return `guild_accessories/necklaces/Icon29.png`;
+    if (fileName === 'guild_ring') return `guild_accessories/rings/Icon1.png`;
+    
+    // Handle Icon files directly
+    if (fileName.startsWith('Icon')) {
+      const iconNum = parseInt(fileName.match(/\d+/)?.[0] || '0');
+      if (iconNum >= 1 && iconNum <= 11) return `guild_accessories/rings/${fileName}.png`;
+      if (iconNum >= 12 && iconNum <= 20) return `guild_accessories/earrings/${fileName}.png`;
+      if (iconNum >= 29 && iconNum <= 48) return `guild_accessories/necklaces/${fileName}.png`;
+      if (iconNum === 2 || iconNum === 27 || iconNum === 35) return `guild_accessories/belts/${fileName}.png`;
+    }
+    
+    return `${fileName}.png`;
+  };
+
   const getItemImage = (spriteId: string, itemType?: string) => {
     if (!spriteId) return null;
 
@@ -79,6 +130,11 @@ export default function VillageTab() {
           const path = `../../assets/items/potions/attack/${spriteId}.png`;
           return images[path] || null;
         }
+      }
+
+      // Check for guild shop items
+      if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
+        return `/src/assets/items/guildshop_items/${getGuildItemPath(spriteId)}`;
       }
 
       // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)

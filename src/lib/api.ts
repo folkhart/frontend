@@ -122,10 +122,11 @@ export const guildApi = {
   list: (page?: number, limit?: number) => api.get('/guild/list', { params: { page, limit } }),
   getMyGuild: () => api.get('/guild/my-guild'),
   getGuild: (guildId: string) => api.get(`/guild/${guildId}`),
-  create: (name: string, tag: string, description?: string) =>
-    api.post('/guild/create', { name, tag, description }),
+  create: (name: string, tag: string, description?: string, iconId?: string) =>
+    api.post('/guild/create', { name, tag, description, iconId }),
   join: (guildId: string) => api.post(`/guild/join/${guildId}`),
   leave: () => api.post('/guild/leave'),
+  disband: () => api.post('/guild/disband'),
   kick: (playerId: string) => api.post(`/guild/kick/${playerId}`),
   updateRank: (playerId: string, rank: string) =>
     api.post(`/guild/rank/${playerId}`, { rank }),
@@ -135,6 +136,9 @@ export const guildApi = {
   convertGoldToCoins: (amount: number) => api.post('/guild/convert-gold', { amount }),
   getShopItems: (category?: string) => api.get('/guild/shop', { params: { category } }),
   purchaseShopItem: (shopItemId: string) => api.post(`/guild/shop/purchase/${shopItemId}`),
+  // Guild Settings
+  updateEmblem: (iconId: string) => api.post('/guild/emblem', { iconId }),
+  upgrade: () => api.post('/guild/upgrade'),
 };
 
 // Friend API

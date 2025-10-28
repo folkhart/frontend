@@ -8,7 +8,82 @@ import inventoryIcon from "@/assets/ui/inventory.png";
 
 export default function InventoryTab() {
   const queryClient = useQueryClient();
-  const { character, setCharacter } = useGameStore();
+  const { character, player, setCharacter, setPlayer } = useGameStore();
+
+  const getGuildItemPath = (spriteId: string, itemType?: string) => {
+    console.log('🖼️ [INVENTORY] Getting guild item path for:', spriteId);
+    
+    // FIRST: Convert tier names to numbers (bronze→1, silver→2, gold→3, diamond→4)
+    let fileName = spriteId;
+    const tierMap: { [key: string]: string } = {
+      'bronze': '1',
+      'silver': '2',
+      'gold': '3',
+      'diamond': '4',
+    };
+    
+    for (const [tier, number] of Object.entries(tierMap)) {
+      if (fileName.includes(`_${tier}`)) {
+        fileName = fileName.replace(`_${tier}`, number);
+        break;
+      }
+    }
+    
+    console.log('   → After tier mapping:', fileName);
+    
+    // Handle guild_key (no tier, maps to key1.png)
+    if (spriteId === 'guild_key') {
+      return `chests_and_keys/key1.png`;
+    }
+    
+    // Handle guild_chest# (maps to Chest#.png with capital C)
+    if (fileName.startsWith('guild_chest')) {
+      const num = fileName.replace('guild_chest', '');
+      return `chests_and_keys/Chest${num}.png`;
+    }
+    
+    // Handle guild_sword# (maps to guildsword#.png - no underscore)
+    if (fileName.startsWith('guild_sword')) {
+      const finalName = fileName.replace('guild_sword', 'guildsword');
+      return `weapons/guild_sword/${finalName}.png`;
+    }
+    
+    // Handle other weapons
+    if (fileName.startsWith('guild_bow')) return `weapons/guild_bow/${fileName}.png`;
+    if (fileName.startsWith('guild_dagger')) return `weapons/guild_dagger/${fileName}.png`;
+    if (fileName.startsWith('guild_shield')) return `weapons/guild_shield/${fileName}.png`;
+    if (fileName.startsWith('guild_staff')) return `weapons/guild_staff/${fileName}.png`;
+    
+    // Handle armors
+    if (fileName.startsWith('guild_armor')) return `armors/warrior_armors/${fileName}.png`;
+    
+    // Handle armor pieces
+    // guild_glove1 to guild_glove4
+    if (fileName.includes('glove')) return `guild_armor_pieces/gloves/${fileName}.png`;
+    // guild_shoe1 → guild_shoes1.png
+    if (fileName.includes('boot') || fileName.includes('shoe')) {
+      const shoeName = fileName.replace('guild_boot', 'guild_shoes').replace('guild_shoe', 'guild_shoes');
+      return `guild_armor_pieces/shoes/${shoeName}.png`;
+    }
+    
+    // Handle accessories (map to Icon files)
+    if (fileName === 'guild_belt') return `guild_accessories/belts/Icon27.png`;
+    if (fileName === 'guild_earring') return `guild_accessories/earrings/Icon12.png`;
+    if (fileName === 'guild_necklace') return `guild_accessories/necklaces/Icon29.png`;
+    if (fileName === 'guild_ring') return `guild_accessories/rings/Icon1.png`;
+    
+    // Handle Icon files directly
+    if (fileName.startsWith('Icon')) {
+      const iconNum = parseInt(fileName.match(/\d+/)?.[0] || '0');
+      if (iconNum >= 1 && iconNum <= 11) return `guild_accessories/rings/${fileName}.png`;
+      if (iconNum >= 12 && iconNum <= 20) return `guild_accessories/earrings/${fileName}.png`;
+      if (iconNum >= 29 && iconNum <= 48) return `guild_accessories/necklaces/${fileName}.png`;
+      if (iconNum === 2 || iconNum === 27 || iconNum === 35) return `guild_accessories/belts/${fileName}.png`;
+    }
+    
+    console.warn('⚠️ [INVENTORY] No mapping found for guild item:', spriteId, '→', fileName);
+    return `${fileName}.png`; // fallback
+  };
 
   const getItemImage = (spriteId: string, itemType?: string) => {
     if (!spriteId) return null;
@@ -30,6 +105,12 @@ export default function InventoryTab() {
           const path = `../../assets/items/potions/attack/${spriteId}.png`;
           return images[path] || null;
         }
+      }
+
+      // Check for guild shop items (guild_sword, guild_dagger, Chest, key, etc.)
+      if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
+        // Guild items need special path handling
+        return `/src/assets/items/guildshop_items/${getGuildItemPath(spriteId, itemType)}`;
       }
 
       // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
@@ -104,14 +185,31 @@ export default function InventoryTab() {
   const useItemMutation = useMutation({
     mutationFn: (itemId: string) => inventoryApi.use(itemId),
     onSuccess: async (response) => {
-      // Update character immediately with new HP
-      if (response.data?.character) {
-        setCharacter(response.data.character);
+      // Handle chest opening rewards
+      if (response.data?.effect === 'chest_opened' && response.data?.reward) {
+        const reward = response.data.reward;
+        const rarityEmoji = 
+          reward.rarity === 'Legendary' ? '⭐' :
+          reward.rarity === 'Epic' ? '💜' :
+          reward.rarity === 'Rare' ? '💙' :
+          reward.rarity === 'Uncommon' ? '💚' : '⚪';
+        
+        // Show special chest opening notification
+        (window as any).showToast?.(
+          `🎁 CHEST OPENED!\n${rarityEmoji} ${reward.name} (${reward.rarity})\n📦 ${reward.type} added to inventory!`,
+          'success'
+        );
+      } else {
+        // Update character immediately with new HP
+        if (response.data?.character) {
+          setCharacter(response.data.character);
+        }
+        (window as any).showToast?.("Item used successfully!", "success");
       }
+      
       // Refresh queries
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      (window as any).showToast?.("Item used successfully!", "success");
     },
     onError: (error: any) => {
       (window as any).showToast?.(error.response?.data?.error || "Failed to use item", "error");
@@ -126,7 +224,15 @@ export default function InventoryTab() {
       inventorySlotId: string;
       quantity: number;
     }) => craftingApi.sell(inventorySlotId, quantity),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // Immediately update player gold in state
+      if (player && data.data.goldEarned) {
+        setPlayer({
+          ...player,
+          gold: player.gold + data.data.goldEarned,
+        });
+      }
+
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       (window as any).showToast?.(

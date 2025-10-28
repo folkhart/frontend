@@ -4,7 +4,7 @@ import { guildApi, authApi } from '@/lib/api';
 import { useGameStore } from '@/store/gameStore';
 import { 
   Users, Plus, TrendingUp, MessageCircle,
-  LogOut, UserMinus, Shield, Send
+  UserMinus, Shield, Send
 } from 'lucide-react';
 import guildIcon from '@/assets/ui/guild.png';
 import guildLeaderIcon from '@/assets/ui/guild/guildLeader.png';
@@ -13,6 +13,7 @@ import guildRecruitIcon from '@/assets/ui/guild/guildRecruit.png';
 import guildShopIcon from '@/assets/ui/guild/guildShop.png';
 import guildInfoIcon from '@/assets/ui/guild/guildInfo.png';
 import guildMembersIcon from '@/assets/ui/guild/guildMembers.png';
+import guildLeaveIcon from '@/assets/ui/guild/guildLeave.png';
 import guildChatIcon from '@/assets/ui/guild/guildChat.png';
 import guildDonateIcon from '@/assets/ui/guild/guildDonate.png';
 import settingsIcon from '@/assets/ui/settings.png';
@@ -28,11 +29,13 @@ export default function GuildTab() {
   const [guildName, setGuildName] = useState('');
   const [guildTag, setGuildTag] = useState('');
   const [guildDescription, setGuildDescription] = useState('');
+  const [selectedEmblem, setSelectedEmblem] = useState('Blank_Gold__Animated_32x32');
   const [chatMessage, setChatMessage] = useState('');
   const [donateAmount, setDonateAmount] = useState('');
   const [showEditDescription, setShowEditDescription] = useState(false);
   const [newDescription, setNewDescription] = useState('');
   const [showDisbandConfirm, setShowDisbandConfirm] = useState(false);
+  const [showEmblemPicker, setShowEmblemPicker] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch player's guild
@@ -68,7 +71,7 @@ export default function GuildTab() {
 
   // Mutations
   const createGuildMutation = useMutation({
-    mutationFn: () => guildApi.create(guildName, guildTag, guildDescription),
+    mutationFn: () => guildApi.create(guildName, guildTag, guildDescription, selectedEmblem),
     onSuccess: async () => {
       // Refresh guild data
       await refetchMyGuild();
@@ -160,6 +163,45 @@ export default function GuildTab() {
     },
     onError: (error: any) => {
       (window as any).showToast?.(error.response?.data?.error || 'Failed to send message', 'error');
+    },
+  });
+
+  const updateEmblemMutation = useMutation({
+    mutationFn: (iconId: string) => guildApi.updateEmblem(iconId),
+    onSuccess: () => {
+      (window as any).showToast?.('Guild emblem updated!', 'success');
+      setShowEmblemPicker(false);
+      refetchMyGuild();
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to update emblem', 'error');
+    },
+  });
+
+  const upgradeGuildMutation = useMutation({
+    mutationFn: () => guildApi.upgrade(),
+    onSuccess: async (response) => {
+      const { guild, player: updatedPlayer, cost } = response.data;
+      
+      // Immediately update player gold
+      if (player && updatedPlayer) {
+        setPlayer({
+          ...player,
+          gold: updatedPlayer.gold,
+        });
+      }
+      
+      (window as any).showToast?.(
+        `🎉 Guild upgraded to Level ${guild.level}! (-${cost.toLocaleString()} gold)`,
+        'success'
+      );
+      
+      // Refresh guild data
+      refetchMyGuild();
+      queryClient.invalidateQueries({ queryKey: ['player'] });
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to upgrade guild', 'error');
     },
   });
 
@@ -288,6 +330,36 @@ export default function GuildTab() {
                     maxLength={200}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Choose Emblem</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Blank_Gold__Animated_32x32', 'Blank_Purple_Animated_32x32', 'Blank_Silver_Animated_32x32'].map((iconId) => (
+                      <button
+                        key={iconId}
+                        type="button"
+                        onClick={() => setSelectedEmblem(iconId)}
+                        className={`p-2 rounded border-2 transition ${
+                          selectedEmblem === iconId
+                            ? 'border-amber-500 bg-amber-900/30'
+                            : 'border-stone-600 bg-stone-900 hover:border-amber-400'
+                        }`}
+                      >
+                        <img
+                          src={`/src/assets/ui/guild/guild_icons/${iconId}.gif`}
+                          alt={iconId}
+                          className="w-12 h-12 mx-auto"
+                          style={{ imageRendering: 'pixelated' }}
+                          onError={(e) => {
+                            e.currentTarget.src = '/assets/ui/guild.png';
+                          }}
+                        />
+                        <p className="text-xs text-gray-400 mt-1 text-center">
+                          {iconId.replace('_Animated_32x32', '').replace('Blank_', '').replace(/_/g, ' ')}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <div className="bg-amber-900/30 border border-amber-600 rounded p-2 text-xs text-amber-200">
                   <p className="font-bold">Cost: 1,000 Gold</p>
                 </div>
@@ -334,30 +406,64 @@ export default function GuildTab() {
 
   return (
     <div className="p-3 pb-20">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-purple-900 to-purple-700 rounded-lg p-3 mb-3 border-2 border-purple-600">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-12 bg-purple-800 rounded flex items-center justify-center font-bold text-white relative">
-              <img src={guildIcon} alt="Guild" className="w-8 h-8 absolute opacity-20" />
-              <span className="relative z-10">{myGuild.tag}</span>
+      {/* Header - Retro Style */}
+      <div className="bg-stone-800 p-3 mb-3 border-2 border-amber-600" style={{ boxShadow: '0 4px 0 #92400e' }}>
+        <div className="flex items-center gap-3 mb-2">
+          {/* Animated Guild Emblem */}
+          <div className="relative">
+            <div className="w-16 h-16 bg-stone-900 border-2 border-stone-700 flex items-center justify-center">
+              <img
+                src={`/src/assets/ui/guild/guild_icons/${myGuild.iconId || 'Blank_Gold__Animated_32x32'}.gif`}
+                alt="Guild Emblem"
+                className="w-14 h-14"
+                style={{ imageRendering: 'pixelated' }}
+                onError={(e) => {
+                  e.currentTarget.src = '/assets/ui/guild.png';
+                }}
+              />
             </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">{myGuild.name}</h2>
-              <p className="text-sm text-purple-200">Level {myGuild.level} • {myGuild.members?.length}/{myGuild.maxMembers} Members</p>
+            {/* Tag Badge */}
+            <div className="absolute -bottom-1 -right-1 bg-amber-600 border-2 border-amber-800 px-2 py-0.5">
+              <span className="text-xs font-bold text-white" style={{ fontFamily: 'monospace' }}>{myGuild.tag}</span>
             </div>
           </div>
+
+          {/* Guild Info */}
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: 'monospace' }}>{myGuild.name}</h2>
+            <div className="flex gap-3 text-xs" style={{ fontFamily: 'monospace' }}>
+              <span className="text-amber-400">LV.{myGuild.level}</span>
+              <span className="text-gray-400">•</span>
+              <span className="text-blue-400">{myGuild.members?.length}/{myGuild.maxMembers} Members</span>
+            </div>
+          </div>
+
+          {/* Leave Button */}
           {membership?.rank !== 'Leader' && (
             <button
               onClick={() => leaveGuildMutation.mutate()}
-              className="p-2 bg-red-600 hover:bg-red-700 rounded"
+              className="p-2 bg-red-700 hover:bg-red-600"
+              style={{
+                border: '2px solid #7f1d1d',
+                boxShadow: '0 2px 0 #7f1d1d',
+              }}
+              title="Leave Guild"
             >
-              <LogOut size={16} />
+              <img 
+                src={guildLeaveIcon} 
+                alt="Leave" 
+                className="w-5 h-5"
+                style={{ imageRendering: 'pixelated' }}
+              />
             </button>
           )}
         </div>
+
+        {/* Description */}
         {myGuild.description && (
-          <p className="text-sm text-purple-100">{myGuild.description}</p>
+          <div className="bg-stone-900 border border-stone-700 p-2 mt-2">
+            <p className="text-sm text-gray-300" style={{ fontFamily: 'monospace' }}>{myGuild.description}</p>
+          </div>
         )}
       </div>
 
@@ -670,16 +776,34 @@ export default function GuildTab() {
                       Edit Guild Description
                     </button>
                     <button 
-                      onClick={() => (window as any).showToast?.('Emblem customization coming soon!', 'info')}
+                      onClick={() => setShowEmblemPicker(true)}
                       className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-bold text-sm"
                     >
                       Change Guild Emblem
                     </button>
                     <button 
-                      onClick={() => (window as any).showToast?.('Guild upgrades coming soon!', 'info')}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold text-sm"
+                      onClick={() => {
+                        const currentLevel = myGuild?.level || 1;
+                        const upgradeCost = Math.floor(10000 * Math.pow(2, currentLevel - 1));
+                        
+                        if (currentLevel >= 10) {
+                          (window as any).showToast?.('Guild is already at maximum level!', 'info');
+                          return;
+                        }
+                        
+                        if (!player || player.gold < upgradeCost) {
+                          (window as any).showToast?.(`Not enough gold! Need ${upgradeCost.toLocaleString()} gold`, 'error');
+                          return;
+                        }
+                        
+                        if (confirm(`Upgrade guild to Level ${currentLevel + 1}?\nCost: ${upgradeCost.toLocaleString()} gold`)) {
+                          upgradeGuildMutation.mutate();
+                        }
+                      }}
+                      disabled={upgradeGuildMutation.isPending}
+                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded font-bold text-sm"
                     >
-                      Upgrade Guild (Costs Gold)
+                      {upgradeGuildMutation.isPending ? 'Upgrading...' : `Upgrade Guild (${Math.floor(10000 * Math.pow(2, (myGuild?.level || 1) - 1)).toLocaleString()} Gold)`}
                     </button>
                     <button 
                       onClick={() => setShowDisbandConfirm(true)}
@@ -752,11 +876,18 @@ export default function GuildTab() {
             <p className="text-red-300 text-sm mb-4">This action cannot be undone! All members will be kicked and the guild will be permanently deleted.</p>
             <div className="flex gap-2">
               <button
-                onClick={() => {
-                  // TODO: Add backend API for disbanding guild
-                  (window as any).showToast?.('Guild disbanded', 'info');
-                  setShowDisbandConfirm(false);
-                  setView('browse');
+                onClick={async () => {
+                  try {
+                    await guildApi.disband();
+                    (window as any).showToast?.('Guild disbanded successfully!', 'success');
+                    setShowDisbandConfirm(false);
+                    setView('browse');
+                    // Force refresh guild data
+                    await refetchMyGuild();
+                    queryClient.invalidateQueries({ queryKey: ['myGuild'] });
+                  } catch (error: any) {
+                    (window as any).showToast?.(error.response?.data?.error || 'Failed to disband guild', 'error');
+                  }
                 }}
                 className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded text-sm"
               >
@@ -769,6 +900,60 @@ export default function GuildTab() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Emblem Picker Modal */}
+      {showEmblemPicker && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowEmblemPicker(false)}>
+          <div className="bg-stone-800 rounded-lg border-2 border-purple-600 p-4 max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold text-white mb-4">Choose Guild Emblem</h2>
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {[
+                'Blank_Gold__Animated_32x32',
+                'Blank_Purple_Animated_32x32',
+                'Blank_Silver_Animated_32x32',
+                'Coins_Animated_32x32',
+                'Diamond_Animated_32x32',
+                'Dragon_Animated_32x32',
+                'Emerald_Animated_32x32',
+                'Enchanter_Animated_32x32',
+                'Royal_Animated_32x32',
+                'Skull_Animated_32x32',
+                'Sword_Animated_32x32',
+              ].map((iconId) => (
+                <button
+                  key={iconId}
+                  onClick={() => updateEmblemMutation.mutate(iconId)}
+                  disabled={updateEmblemMutation.isPending}
+                  className={`p-3 rounded-lg border-2 transition hover:scale-105 ${
+                    myGuild?.iconId === iconId
+                      ? 'border-purple-500 bg-purple-900/50'
+                      : 'border-stone-600 bg-stone-900 hover:border-purple-400'
+                  }`}
+                >
+                  <img
+                    src={`/src/assets/ui/guild/guild_icons/${iconId}.gif`}
+                    alt={iconId}
+                    className="w-16 h-16 mx-auto"
+                    style={{ imageRendering: 'pixelated' }}
+                    onError={(e) => {
+                      e.currentTarget.src = '/assets/ui/guild.png';
+                    }}
+                  />
+                  <p className="text-xs text-gray-400 mt-2 text-center">
+                    {iconId.replace('_Animated_32x32', '').replace(/_/g, ' ')}
+                  </p>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowEmblemPicker(false)}
+              className="w-full py-2 bg-stone-700 hover:bg-stone-600 text-white font-bold rounded text-sm"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

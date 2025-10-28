@@ -54,10 +54,22 @@ export default function GuildShop({ guild }: GuildShopProps) {
       const { data } = await guildApi.convertGoldToCoins(amount);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
+      // Immediately update guild coins and guild gold in UI
+      if (guild) {
+        queryClient.setQueryData(['myGuild'], (old: any) => ({
+          ...old,
+          guildCoins: data.newGuildCoins,
+          guildGold: data.newGuildGold,
+        }));
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['myGuild'] });
       queryClient.invalidateQueries({ queryKey: ['player'] });
-      (window as any).showToast?.('Gold converted to guild coins!', 'success');
+      (window as any).showToast?.(
+        `Converted! +${data.coinsReceived} GC | +${data.guildGoldDonated} Guild Gold (5%)`,
+        'success'
+      );
       setShowConvertModal(false);
       setConvertAmount('');
     },
@@ -73,6 +85,14 @@ export default function GuildShop({ guild }: GuildShopProps) {
       return data;
     },
     onSuccess: (data) => {
+      // Immediately update guild coins in UI
+      if (guild && data.remainingCoins !== undefined) {
+        queryClient.setQueryData(['myGuild'], (old: any) => ({
+          ...old,
+          guildCoins: data.remainingCoins,
+        }));
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['myGuild'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       (window as any).showToast?.(
@@ -100,6 +120,117 @@ export default function GuildShop({ guild }: GuildShopProps) {
 
   const canPurchase = (item: ShopItem) => {
     return guild.level >= item.minGuildLevel && guild.guildCoins >= item.guildCoinCost;
+  };
+
+  const getItemSpritePath = (category: string, spriteId: string) => {
+    console.log('🖼️ Building sprite path for:', { category, spriteId });
+    
+    // Map database spriteIds to actual file names
+    const tierMap: { [key: string]: string } = {
+      'bronze': '1',
+      'silver': '2', 
+      'gold': '3',
+      'diamond': '4',
+    };
+
+    // Transform spriteId based on tier
+    let fileName = spriteId;
+    for (const [tier, number] of Object.entries(tierMap)) {
+      if (spriteId.includes(`_${tier}`)) {
+        fileName = spriteId.replace(`_${tier}`, number);
+        break;
+      }
+    }
+
+    // Specific transformations for each item type
+    // WEAPONS
+    if (fileName.startsWith('guild_sword')) {
+      fileName = fileName.replace('guild_sword', 'guildsword');
+      return `/src/assets/items/guildshop_items/weapons/guild_sword/${fileName}.png`;
+    }
+    if (fileName.startsWith('guild_bow')) {
+      return `/src/assets/items/guildshop_items/weapons/guild_bow/${fileName}.png`;
+    }
+    if (fileName.startsWith('guild_dagger')) {
+      return `/src/assets/items/guildshop_items/weapons/guild_dagger/${fileName}.png`;
+    }
+    if (fileName.startsWith('guild_shield')) {
+      return `/src/assets/items/guildshop_items/weapons/guild_shield/${fileName}.png`;
+    }
+    if (fileName.startsWith('guild_staff')) {
+      return `/src/assets/items/guildshop_items/weapons/guild_staff/${fileName}.png`;
+    }
+
+    // ARMORS
+    if (fileName.includes('cleric')) {
+      fileName = fileName.replace('cleric_robe', 'guild_clericrobe');
+      return `/src/assets/items/guildshop_items/armors/cleric_robes/${fileName}.png`;
+    }
+    if (fileName.includes('mage') && fileName.includes('robe')) {
+      fileName = fileName.replace('mage_robe', 'guild_robe');
+      return `/src/assets/items/guildshop_items/armors/mage_robes/${fileName}.png`;
+    }
+    if (fileName.includes('armor')) {
+      // guild_armor1 → warrior_armors folder
+      return `/src/assets/items/guildshop_items/armors/warrior_armors/${fileName}.png`;
+    }
+
+    // ARMOR PIECES
+    if (fileName.includes('glove')) {
+      // guild_glove1 → gloves/guild_glove1.png
+      return `/src/assets/items/guildshop_items/guild_armor_pieces/gloves/${fileName}.png`;
+    }
+    if (fileName.includes('shoe') || fileName.includes('boot')) {
+      // guild_shoe1 → guild_shoes1.png (files are named guild_shoes#.png with 's')
+      fileName = fileName.replace('guild_boot', 'guild_shoes').replace('guild_shoe', 'guild_shoes');
+      return `/src/assets/items/guildshop_items/guild_armor_pieces/shoes/${fileName}.png`;
+    }
+
+    // CHESTS AND KEYS
+    if (category === 'Chest') {
+      // guild_chest1 → Chest1.png (extract number, capitalize C)
+      const num = fileName.replace('guild_chest', '');
+      return `/src/assets/items/guildshop_items/chests_and_keys/Chest${num}.png`;
+    }
+    if (category === 'Key') {
+      // guild_key → key1.png
+      return `/src/assets/items/guildshop_items/chests_and_keys/key1.png`;
+    }
+
+    // ACCESSORIES (use Icon##.png format)
+    // guild_belt → Icon27.png in belts folder
+    if (fileName === 'guild_belt') {
+      return `/src/assets/items/guildshop_items/guild_accessories/belts/Icon27.png`;
+    }
+    // guild_earring → Icon12.png in earrings folder
+    if (fileName === 'guild_earring') {
+      return `/src/assets/items/guildshop_items/guild_accessories/earrings/Icon12.png`;
+    }
+    // guild_necklace → Icon29.png in necklaces folder
+    if (fileName === 'guild_necklace') {
+      return `/src/assets/items/guildshop_items/guild_accessories/necklaces/Icon29.png`;
+    }
+    // guild_ring → Icon1.png in rings folder
+    if (fileName === 'guild_ring') {
+      return `/src/assets/items/guildshop_items/guild_accessories/rings/Icon1.png`;
+    }
+    
+    // Handle Icon files directly (for other accessories if any)
+    if (fileName.startsWith('Icon')) {
+      const iconNum = parseInt(fileName.match(/\d+/)?.[0] || '0');
+      if (iconNum >= 1 && iconNum <= 11) {
+        return `/src/assets/items/guildshop_items/guild_accessories/rings/${fileName}.png`;
+      } else if (iconNum >= 12 && iconNum <= 20) {
+        return `/src/assets/items/guildshop_items/guild_accessories/earrings/${fileName}.png`;
+      } else if (iconNum >= 29 && iconNum <= 48) {
+        return `/src/assets/items/guildshop_items/guild_accessories/necklaces/${fileName}.png`;
+      } else if (iconNum === 2 || iconNum === 27 || iconNum === 35) {
+        return `/src/assets/items/guildshop_items/guild_accessories/belts/${fileName}.png`;
+      }
+    }
+
+    console.error('❌ No mapping found for:', { category, spriteId, fileName });
+    return '/assets/items/placeholder.png';
   };
 
   const handleConvert = () => {
@@ -186,12 +317,16 @@ export default function GuildShop({ guild }: GuildShopProps) {
                 {/* Item Sprite */}
                 <div className="w-16 h-16 bg-stone-900 border border-stone-700 flex items-center justify-center relative">
                   <img
-                    src={`/assets/items/guildshop_items/${shopItem.item.spriteId}.png`}
+                    src={getItemSpritePath(shopItem.category, shopItem.item.spriteId)}
                     alt={shopItem.item.name}
                     className="w-12 h-12"
                     style={{ imageRendering: 'pixelated' }}
                     onError={(e) => {
-                      e.currentTarget.src = '/assets/items/placeholder.png';
+                      const target = e.currentTarget;
+                      // Prevent infinite loop
+                      if (!target.src.includes('placeholder.png')) {
+                        target.src = '/assets/items/placeholder.png';
+                      }
                     }}
                   />
                   {locked && (
@@ -342,7 +477,8 @@ export default function GuildShop({ guild }: GuildShopProps) {
 
             <div className="mb-4">
               <div className="text-sm text-gray-400 mb-2">
-                Conversion Rate: 100 Gold = 1 Guild Coin
+                <strong>Conversion Rate:</strong> 100 Gold = 1 Guild Coin<br />
+                <span className="text-green-400">+5% automatically donated to Guild Gold</span>
               </div>
               <input
                 type="number"
