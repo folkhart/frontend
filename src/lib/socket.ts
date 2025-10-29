@@ -1,8 +1,28 @@
 import { io, Socket } from 'socket.io-client';
+import { useEffect, useState } from 'react';
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:3000';
 
 let socket: Socket | null = null;
+
+// React hook to use socket in components
+export function useSocket() {
+  const [socketInstance, setSocketInstance] = useState<Socket | null>(socket);
+
+  useEffect(() => {
+    setSocketInstance(socket);
+    
+    const interval = setInterval(() => {
+      if (socket && socket !== socketInstance) {
+        setSocketInstance(socket);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [socketInstance]);
+
+  return socketInstance;
+}
 
 export function connectSocket(token: string) {
   if (socket?.connected) {

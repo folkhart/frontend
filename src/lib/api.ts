@@ -67,6 +67,8 @@ export const characterApi = {
   get: () => api.get('/character'),
   equip: (itemId: string, slot: string) =>
     api.post('/character/equip', { itemId, slot }),
+  unequip: (slot: string) =>
+    api.post('/character/unequip', { slot }),
   updateHP: (hp: number) =>
     api.post('/character/update-hp', { hp }),
 };

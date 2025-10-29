@@ -13,6 +13,13 @@ import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
 import darkForestIcon from "@/assets/ui/dungeonIcons/darkForest.png";
 import dragonLairIcon from "@/assets/ui/dungeonIcons/dragonLair.png";
+import obsidianVaultIcon from "@/assets/ui/dungeonIcons/obsidianVault.png";
+import hollowrootSanctuaryIcon from "@/assets/ui/dungeonIcons/hollowrootSanctuary.png";
+import theMawOfSilenceIcon from "@/assets/ui/dungeonIcons/theMawOfSilence.png";
+import clockworkNecropolisIcon from "@/assets/ui/dungeonIcons/clockworkNecropolis.png";
+import paleCitadelIcon from "@/assets/ui/dungeonIcons/paleCitadel.png";
+import theAbyssalSpireIcon from "@/assets/ui/dungeonIcons/theAbyssalSpire.png";
+import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
 
 // Helper function to get dungeon icon based on name
 const getDungeonIcon = (dungeonName: string) => {
@@ -22,6 +29,13 @@ const getDungeonIcon = (dungeonName: string) => {
     "Slime Den": slimeDenIcon,
     "Dark Forest": darkForestIcon,
     "Dragon's Lair": dragonLairIcon,
+    "Shattered Obsidian Vault": obsidianVaultIcon,
+    "Hollowroot Sanctuary": hollowrootSanctuaryIcon,
+    "The Maw of Silence": theMawOfSilenceIcon,
+    "The Clockwork Necropolis": clockworkNecropolisIcon,
+    "The Pale Citadel": paleCitadelIcon,
+    "The Abyssal Spire": theAbyssalSpireIcon,
+    "The Ecliptic Throne": eclipticThroneIcon
   };
   return iconMap[dungeonName] || ratCellarIcon; // Default to rat cellar if not found
 };
@@ -636,7 +650,9 @@ export default function AdventureTab() {
       {view === "dungeons" && (
         <div className="space-y-3">
           {dungeons && dungeons.length > 0 ? (
-            dungeons.map((dungeon: any) => (
+            dungeons
+              .filter((dungeon: any) => character && character.level >= dungeon.recommendedLevel)
+              .map((dungeon: any) => (
               <div
                 key={dungeon.id}
                 className="p-4 bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600 hover:border-amber-600 transition-all cursor-pointer active:translate-y-1"
@@ -656,9 +672,17 @@ export default function AdventureTab() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
-                          {dungeon.name}
-                        </h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+                            {dungeon.name}
+                          </h3>
+                          <span 
+                            className="text-xs font-bold px-2 py-0.5 bg-blue-600 text-white border-2 border-blue-800"
+                            style={{ fontFamily: 'monospace' }}
+                          >
+                            Lv.{dungeon.recommendedLevel}
+                          </span>
+                        </div>
                         <p className="text-sm text-gray-400" style={{ fontFamily: 'monospace' }}>{dungeon.zone.name}</p>
                       </div>
                       <span
@@ -951,7 +975,8 @@ export default function AdventureTab() {
                   <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
                 </button>
               </div>
-              <button
+              {/* BOSS FIGHT DISABLED - Coming Soon! */}
+              {/* <button
                 onClick={() => {
                   if (activeDungeonRun && !activeDungeonRun.completed) {
                     (window as any).showToast?.(
@@ -977,7 +1002,7 @@ export default function AdventureTab() {
                 <span className="relative z-10 text-xl tracking-wider">⚔️ BOSS FIGHT ⚔️</span>
                 <div className="absolute inset-0 bg-gradient-to-b from-red-500/30 to-transparent group-hover:from-red-400/40"></div>
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400"></div>
-              </button>
+              </button> */}
             </div>
 
             <button
@@ -990,8 +1015,8 @@ export default function AdventureTab() {
         </div>
       )}
 
-      {/* Boss Fight Component */}
-      {showBossFight && character && selectedDungeon && (
+      {/* Boss Fight Component - DISABLED */}
+      {/* {showBossFight && character && selectedDungeon && (
         <BossFight
           dungeonName={selectedDungeon.name}
           bossName={selectedDungeon.description.split("Boss: ")[1] || "Boss"}
@@ -1026,6 +1051,7 @@ export default function AdventureTab() {
           onClose={() => setShowBossFight(false)}
         />
       )}
+      */}
     </div>
   );
 }

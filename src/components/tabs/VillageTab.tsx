@@ -16,7 +16,16 @@ export default function VillageTab() {
   const queryClient = useQueryClient();
   const { character, setCharacter } = useGameStore();
   const [selectedSlot, setSelectedSlot] = useState<
-    "weapon" | "armor" | "helmet" | "gloves" | "shoes" | "ring" | "necklace" | "belt" | "earring" | null
+    | "weapon"
+    | "armor"
+    | "helmet"
+    | "gloves"
+    | "shoes"
+    | "ring"
+    | "necklace"
+    | "belt"
+    | "earring"
+    | null
   >(null);
   const [activeView, setActiveView] = useState<
     "equipment" | "inventory" | "crafting" | "blacksmith"
@@ -55,6 +64,30 @@ export default function VillageTab() {
     },
   });
 
+  const unequipMutation = useMutation({
+    mutationFn: async (slot: string) => {
+      const { data } = await characterApi.unequip(slot);
+      return data;
+    },
+    onSuccess: async () => {
+      // Update character in store immediately
+      const { data: updatedCharacter } = await characterApi.get();
+      setCharacter(updatedCharacter);
+
+      // Refresh queries
+      await queryClient.invalidateQueries({ queryKey: ["character"] });
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      setSelectedItemDetails(null);
+
+      (window as any).showToast?.("Item unequipped successfully!", "success");
+    },
+    onError: (error: any) => {
+      const errorMessage =
+        error.response?.data?.error || "Failed to unequip item";
+      (window as any).showToast?.(errorMessage, "error");
+    },
+  });
+
   // Removed useItemMutation - handled in InventoryTab
 
   if (!character) return null;
@@ -63,50 +96,69 @@ export default function VillageTab() {
     // Convert tier names to numbers (bronze→1, silver→2, gold→3, diamond→4)
     let fileName = spriteId;
     const tierMap: { [key: string]: string } = {
-      'bronze': '1',
-      'silver': '2',
-      'gold': '3',
-      'diamond': '4',
+      bronze: "1",
+      silver: "2",
+      gold: "3",
+      diamond: "4",
     };
-    
+
     for (const [tier, number] of Object.entries(tierMap)) {
       if (fileName.includes(`_${tier}`)) {
         fileName = fileName.replace(`_${tier}`, number);
         break;
       }
     }
-    
+
     // Map to correct file paths
-    if (spriteId === 'guild_key') return `chests_and_keys/key1.png`;
-    if (fileName.startsWith('guild_chest')) return `chests_and_keys/Chest${fileName.replace('guild_chest', '')}.png`;
-    if (fileName.startsWith('guild_sword')) return `weapons/guild_sword/${fileName.replace('guild_sword', 'guildsword')}.png`;
-    if (fileName.startsWith('guild_bow')) return `weapons/guild_bow/${fileName}.png`;
-    if (fileName.startsWith('guild_dagger')) return `weapons/guild_dagger/${fileName}.png`;
-    if (fileName.startsWith('guild_shield')) return `weapons/guild_shield/${fileName}.png`;
-    if (fileName.startsWith('guild_staff')) return `weapons/guild_staff/${fileName}.png`;
-    if (fileName.startsWith('guild_armor')) return `armors/warrior_armors/${fileName}.png`;
+    if (spriteId === "guild_key") return `chests_and_keys/key1.png`;
+    if (fileName.startsWith("guild_chest"))
+      return `chests_and_keys/Chest${fileName.replace("guild_chest", "")}.png`;
+    if (fileName.startsWith("guild_sword"))
+      return `weapons/guild_sword/${fileName.replace(
+        "guild_sword",
+        "guildsword"
+      )}.png`;
+    if (fileName.startsWith("guild_bow"))
+      return `weapons/guild_bow/${fileName}.png`;
+    if (fileName.startsWith("guild_dagger"))
+      return `weapons/guild_dagger/${fileName}.png`;
+    if (fileName.startsWith("guild_shield"))
+      return `weapons/guild_shield/${fileName}.png`;
+    if (fileName.startsWith("guild_staff"))
+      return `weapons/guild_staff/${fileName}.png`;
+    if (fileName.startsWith("guild_armor"))
+      return `armors/warrior_armors/${fileName}.png`;
     // guild_glove1 to guild_glove4
-    if (fileName.includes('glove')) return `guild_armor_pieces/gloves/${fileName}.png`;
+    if (fileName.includes("glove"))
+      return `guild_armor_pieces/gloves/${fileName}.png`;
     // guild_shoe1 → guild_shoes1.png
-    if (fileName.includes('boot') || fileName.includes('shoe')) {
-      const shoeName = fileName.replace('guild_boot', 'guild_shoes').replace('guild_shoe', 'guild_shoes');
+    if (fileName.includes("boot") || fileName.includes("shoe")) {
+      const shoeName = fileName
+        .replace("guild_boot", "guild_shoes")
+        .replace("guild_shoe", "guild_shoes");
       return `guild_armor_pieces/shoes/${shoeName}.png`;
     }
     // Handle accessories (map to Icon files)
-    if (fileName === 'guild_belt') return `guild_accessories/belts/Icon27.png`;
-    if (fileName === 'guild_earring') return `guild_accessories/earrings/Icon12.png`;
-    if (fileName === 'guild_necklace') return `guild_accessories/necklaces/Icon29.png`;
-    if (fileName === 'guild_ring') return `guild_accessories/rings/Icon1.png`;
-    
+    if (fileName === "guild_belt") return `guild_accessories/belts/Icon27.png`;
+    if (fileName === "guild_earring")
+      return `guild_accessories/earrings/Icon12.png`;
+    if (fileName === "guild_necklace")
+      return `guild_accessories/necklaces/Icon29.png`;
+    if (fileName === "guild_ring") return `guild_accessories/rings/Icon1.png`;
+
     // Handle Icon files directly
-    if (fileName.startsWith('Icon')) {
-      const iconNum = parseInt(fileName.match(/\d+/)?.[0] || '0');
-      if (iconNum >= 1 && iconNum <= 11) return `guild_accessories/rings/${fileName}.png`;
-      if (iconNum >= 12 && iconNum <= 20) return `guild_accessories/earrings/${fileName}.png`;
-      if (iconNum >= 29 && iconNum <= 48) return `guild_accessories/necklaces/${fileName}.png`;
-      if (iconNum === 2 || iconNum === 27 || iconNum === 35) return `guild_accessories/belts/${fileName}.png`;
+    if (fileName.startsWith("Icon")) {
+      const iconNum = parseInt(fileName.match(/\d+/)?.[0] || "0");
+      if (iconNum >= 1 && iconNum <= 11)
+        return `guild_accessories/rings/${fileName}.png`;
+      if (iconNum >= 12 && iconNum <= 20)
+        return `guild_accessories/earrings/${fileName}.png`;
+      if (iconNum >= 29 && iconNum <= 48)
+        return `guild_accessories/necklaces/${fileName}.png`;
+      if (iconNum === 2 || iconNum === 27 || iconNum === 35)
+        return `guild_accessories/belts/${fileName}.png`;
     }
-    
+
     return `${fileName}.png`;
   };
 
@@ -115,8 +167,11 @@ export default function VillageTab() {
 
     try {
       // Use eager glob imports to ensure images are bundled
-      const images = import.meta.glob('../../assets/items/**/*.png', { eager: true, as: 'url' });
-      
+      const images = import.meta.glob("../../assets/items/**/*.png", {
+        eager: true,
+        as: "url",
+      });
+
       // Check if it's a potion (numeric sprite ID)
       if (/^\d+$/.test(spriteId)) {
         const num = parseInt(spriteId);
@@ -133,16 +188,20 @@ export default function VillageTab() {
       }
 
       // Check for guild shop items
-      if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
+      if (
+        spriteId.startsWith("guild_") ||
+        spriteId.startsWith("Chest") ||
+        spriteId.startsWith("key")
+      ) {
         return `/assets/items/guildshop_items/${getGuildItemPath(spriteId)}`;
       }
 
       // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
-      if (spriteId.includes('/')) {
+      if (spriteId.includes("/")) {
         // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing'
         // For accessories with woodenSet/, the path is accessories/woodenSet/...
-        const fullPath = spriteId.startsWith('woodenSet/') 
-          ? `accessories/${spriteId}` 
+        const fullPath = spriteId.startsWith("woodenSet/")
+          ? `accessories/${spriteId}`
           : spriteId;
         const path = `../../assets/items/${fullPath}.png`;
         return images[path] || null;
@@ -171,13 +230,27 @@ export default function VillageTab() {
   };
 
   const getSlotItems = (
-    slotType: "weapon" | "armor" | "helmet" | "gloves" | "shoes" | "ring" | "necklace" | "belt" | "earring"
+    slotType:
+      | "weapon"
+      | "armor"
+      | "helmet"
+      | "gloves"
+      | "shoes"
+      | "ring"
+      | "necklace"
+      | "belt"
+      | "earring"
   ) => {
     if (!inventory) return [];
 
     if (slotType === "weapon") {
       return inventory.filter((slot: any) => slot.item.type === "Weapon");
-    } else if (slotType === "armor" || slotType === "helmet" || slotType === "gloves" || slotType === "shoes") {
+    } else if (
+      slotType === "armor" ||
+      slotType === "helmet" ||
+      slotType === "gloves" ||
+      slotType === "shoes"
+    ) {
       // Armor pieces - filter by armorSlot
       const armorSlotMap: Record<string, string> = {
         armor: "Body",
@@ -211,15 +284,15 @@ export default function VillageTab() {
     if (!inventory) return null;
     const slot = inventory.find((s: any) => {
       const item = s.item;
-      if (slotName === 'weapon') return character.weapon?.id === item.id;
-      if (slotName === 'armor') return character.armor?.id === item.id;
-      if (slotName === 'helmet') return character.helmet?.id === item.id;
-      if (slotName === 'gloves') return character.gloves?.id === item.id;
-      if (slotName === 'shoes') return character.shoes?.id === item.id;
-      if (slotName === 'ring') return character.ring?.id === item.id;
-      if (slotName === 'necklace') return character.necklace?.id === item.id;
-      if (slotName === 'belt') return character.belt?.id === item.id;
-      if (slotName === 'earring') return character.earring?.id === item.id;
+      if (slotName === "weapon") return character.weapon?.id === item.id;
+      if (slotName === "armor") return character.armor?.id === item.id;
+      if (slotName === "helmet") return character.helmet?.id === item.id;
+      if (slotName === "gloves") return character.gloves?.id === item.id;
+      if (slotName === "shoes") return character.shoes?.id === item.id;
+      if (slotName === "ring") return character.ring?.id === item.id;
+      if (slotName === "necklace") return character.necklace?.id === item.id;
+      if (slotName === "belt") return character.belt?.id === item.id;
+      if (slotName === "earring") return character.earring?.id === item.id;
       return false;
     });
     return slot || null;
@@ -230,7 +303,16 @@ export default function VillageTab() {
     equippedItem,
     label,
   }: {
-    slotType: "weapon" | "armor" | "helmet" | "gloves" | "shoes" | "ring" | "necklace" | "belt" | "earring";
+    slotType:
+      | "weapon"
+      | "armor"
+      | "helmet"
+      | "gloves"
+      | "shoes"
+      | "ring"
+      | "necklace"
+      | "belt"
+      | "earring";
     equippedItem: any;
     label: string;
   }) => {
@@ -239,72 +321,69 @@ export default function VillageTab() {
     const socketSlots = itemSlot?.socketSlots || 0;
     const socketedGems = itemSlot?.socketedGems || [];
 
+    // Get border color based on rarity
+    const getBorderClass = () => {
+      if (selectedSlot === slotType) return "border-amber-500";
+      if (equippedItem) return getRarityBorder(equippedItem.rarity);
+      return "border-stone-700";
+    };
+
     return (
       <div
         onClick={() => {
           if (equippedItem && itemSlot) {
-            // If item is equipped, show details modal
             setSelectedItemDetails(itemSlot);
           } else {
-            // If slot is empty, open selection directly
             setSelectedSlot(slotType);
           }
         }}
-        className={`relative p-4 bg-stone-900 rounded-lg border-2 cursor-pointer transition ${
-          selectedSlot === slotType
-            ? "border-amber-500 bg-stone-800"
-            : "border-stone-700 hover:border-stone-600"
+        className={`relative aspect-square bg-stone-900 border-2 cursor-pointer transition ${getBorderClass()} ${
+          equippedItem ? "hover:border-amber-500" : "hover:border-amber-600"
         }`}
+        style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}
       >
-        <p className="text-xs text-gray-400 mb-2">{label}</p>
         {equippedItem ? (
-          <div className="flex items-center gap-2">
-            <div className="relative">
+          <div className="absolute inset-0 flex items-center justify-center p-2">
+            <div className="relative w-full h-full">
               {getItemImage(equippedItem.spriteId, equippedItem.type) && (
                 <img
                   src={getItemImage(equippedItem.spriteId, equippedItem.type)!}
                   alt={equippedItem.name}
-                  className="w-12 h-12 object-contain"
+                  className="w-full h-full object-contain"
+                  style={{ imageRendering: 'pixelated' }}
                 />
               )}
               {/* Enhancement Level Badge */}
               {enhancementLevel > 0 && (
-                <div className="absolute -top-1 -right-1 bg-gradient-to-br from-amber-400 to-orange-500 text-black text-xs font-bold px-1 rounded" style={{ textShadow: 'none' }}>
+                <div
+                  className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
+                  style={{ fontFamily: 'monospace' }}
+                >
                   +{enhancementLevel}
                 </div>
               )}
               {/* Socket Indicators */}
               {socketSlots > 0 && (
-                <div className="absolute -bottom-1 -right-1 flex gap-0.5">
+                <div className="absolute bottom-0 right-0 flex gap-0.5 bg-black/50 px-1">
                   {Array.from({ length: socketSlots }).map((_, i) => (
                     <Circle
                       key={i}
-                      size={8}
-                      className={socketedGems[i] ? "fill-green-400 text-green-400" : "fill-stone-700 text-stone-700"}
+                      size={6}
+                      className={
+                        socketedGems[i]
+                          ? "fill-green-400 text-green-400"
+                          : "fill-stone-600 text-stone-600"
+                      }
                     />
                   ))}
                 </div>
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <p
-                className={`font-bold text-sm truncate ${getRarityColor(
-                  equippedItem.rarity
-                )}`}
-              >
-                {equippedItem.name}
-              </p>
-              <p className="text-xs text-gray-400">
-                {equippedItem.attackBonus > 0 &&
-                  `ATK +${equippedItem.attackBonus}`}
-                {equippedItem.defenseBonus > 0 &&
-                  `DEF +${equippedItem.defenseBonus}`}
-              </p>
-            </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-12 text-gray-600">
-            <p className="text-sm">Empty</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
+            <p className="text-xs font-bold" style={{ fontFamily: 'monospace' }}>{label}</p>
+            <p className="text-[10px] text-gray-700 mt-1">Empty</p>
           </div>
         )}
       </div>
@@ -322,14 +401,28 @@ export default function VillageTab() {
     <div className="p-3 pb-20">
       {/* Item Details Modal */}
       {selectedItemDetails && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSelectedItemDetails(null)}>
-          <div className="bg-stone-900 border-4 border-amber-600 rounded-lg p-4 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedItemDetails(null)}
+        >
+          <div
+            className="bg-stone-900 border-4 border-amber-600 rounded-lg p-4 max-w-md w-full max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
                 <div className="relative">
-                  {getItemImage(selectedItemDetails.item.spriteId, selectedItemDetails.item.type) && (
+                  {getItemImage(
+                    selectedItemDetails.item.spriteId,
+                    selectedItemDetails.item.type
+                  ) && (
                     <img
-                      src={getItemImage(selectedItemDetails.item.spriteId, selectedItemDetails.item.type)!}
+                      src={
+                        getItemImage(
+                          selectedItemDetails.item.spriteId,
+                          selectedItemDetails.item.type
+                        )!
+                      }
                       alt={selectedItemDetails.item.name}
                       className="w-16 h-16 object-contain"
                     />
@@ -341,43 +434,62 @@ export default function VillageTab() {
                   )}
                 </div>
                 <div>
-                  <h3 className={`text-xl font-bold ${getRarityColor(selectedItemDetails.item.rarity)}`}>
+                  <h3
+                    className={`text-xl font-bold ${getRarityColor(
+                      selectedItemDetails.item.rarity
+                    )}`}
+                  >
                     {selectedItemDetails.item.name}
                   </h3>
-                  <p className="text-sm text-gray-400">{selectedItemDetails.item.type}</p>
+                  <p className="text-sm text-gray-400">
+                    {selectedItemDetails.item.type}
+                  </p>
                 </div>
               </div>
-              <button onClick={() => setSelectedItemDetails(null)} className="text-gray-400 hover:text-white">
+              <button
+                onClick={() => setSelectedItemDetails(null)}
+                className="text-gray-400 hover:text-white"
+              >
                 <X size={24} />
               </button>
             </div>
 
             {/* Base Stats */}
             <div className="bg-stone-800 p-3 rounded mb-3">
-              <h4 className="text-sm font-bold text-amber-400 mb-2">Base Stats</h4>
+              <h4 className="text-sm font-bold text-amber-400 mb-2">
+                Base Stats
+              </h4>
               <div className="space-y-1 text-sm">
                 {selectedItemDetails.item.attackBonus > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Attack:</span>
-                    <span className="text-red-400">+{selectedItemDetails.item.attackBonus}</span>
+                    <span className="text-red-400">
+                      +{selectedItemDetails.item.attackBonus}
+                    </span>
                   </div>
                 )}
                 {selectedItemDetails.item.defenseBonus > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Defense:</span>
-                    <span className="text-blue-400">+{selectedItemDetails.item.defenseBonus}</span>
+                    <span className="text-blue-400">
+                      +{selectedItemDetails.item.defenseBonus}
+                    </span>
                   </div>
                 )}
                 {selectedItemDetails.item.healthBonus > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Health:</span>
-                    <span className="text-green-400">+{selectedItemDetails.item.healthBonus}</span>
+                    <span className="text-green-400">
+                      +{selectedItemDetails.item.healthBonus}
+                    </span>
                   </div>
                 )}
                 {selectedItemDetails.item.speedBonus > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-400">Speed:</span>
-                    <span className="text-purple-400">+{selectedItemDetails.item.speedBonus}</span>
+                    <span className="text-purple-400">
+                      +{selectedItemDetails.item.speedBonus}
+                    </span>
                   </div>
                 )}
               </div>
@@ -386,11 +498,15 @@ export default function VillageTab() {
             {/* Enhancement Bonus */}
             {selectedItemDetails.enhancementLevel > 0 && (
               <div className="bg-gradient-to-r from-amber-900/50 to-orange-900/50 p-3 rounded mb-3 border border-amber-600">
-                <h4 className="text-sm font-bold text-amber-400 mb-2">Enhancement Bonus (+{selectedItemDetails.enhancementLevel})</h4>
+                <h4 className="text-sm font-bold text-amber-400 mb-2">
+                  Enhancement Bonus (+{selectedItemDetails.enhancementLevel})
+                </h4>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-300">All Stats:</span>
-                    <span className="text-amber-300">+{selectedItemDetails.enhancementLevel * 2}%</span>
+                    <span className="text-amber-300">
+                      +{selectedItemDetails.enhancementLevel * 2}%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -401,83 +517,184 @@ export default function VillageTab() {
               <div className="bg-stone-800 p-3 rounded mb-3">
                 <h4 className="text-sm font-bold text-green-400 mb-2 flex items-center gap-1">
                   <Gem size={16} />
-                  Sockets ({selectedItemDetails.socketedGems?.length || 0}/{selectedItemDetails.socketSlots})
+                  Sockets ({selectedItemDetails.socketedGems?.length || 0}/
+                  {selectedItemDetails.socketSlots})
                 </h4>
                 <div className="space-y-2">
-                  {Array.from({ length: selectedItemDetails.socketSlots }).map((_, i) => {
-                    const gemId = selectedItemDetails.socketedGems?.[i];
-                    const gem = gemId ? getGemDetails(gemId) : null;
-                    return (
-                      <div key={i} className="flex items-center gap-2 bg-stone-900 p-2 rounded border border-stone-700">
-                        {gem ? (
-                          <>
-                            {getItemImage(gem.spriteId, gem.type) && (
-                              <img
-                                src={getItemImage(gem.spriteId, gem.type)!}
-                                alt={gem.name}
-                                className="w-8 h-8 object-contain"
+                  {Array.from({ length: selectedItemDetails.socketSlots }).map(
+                    (_, i) => {
+                      const gemId = selectedItemDetails.socketedGems?.[i];
+                      const gem = gemId ? getGemDetails(gemId) : null;
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 bg-stone-900 p-2 rounded border border-stone-700"
+                        >
+                          {gem ? (
+                            <>
+                              {getItemImage(gem.spriteId, gem.type) && (
+                                <img
+                                  src={getItemImage(gem.spriteId, gem.type)!}
+                                  alt={gem.name}
+                                  className="w-8 h-8 object-contain"
+                                />
+                              )}
+                              <div className="flex-1">
+                                <p
+                                  className={`text-sm font-bold ${getRarityColor(
+                                    gem.rarity
+                                  )}`}
+                                >
+                                  {gem.name}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {gem.healthBonus > 0 &&
+                                    `+${gem.healthBonus} HP `}
+                                  {gem.attackBonus > 0 &&
+                                    `+${gem.attackBonus} ATK `}
+                                  {gem.defenseBonus > 0 &&
+                                    `+${gem.defenseBonus} DEF `}
+                                  {gem.speedBonus > 0 &&
+                                    `+${gem.speedBonus} SPD`}
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <Circle
+                                size={20}
+                                className="fill-stone-700 text-stone-700"
                               />
-                            )}
-                            <div className="flex-1">
-                              <p className={`text-sm font-bold ${getRarityColor(gem.rarity)}`}>{gem.name}</p>
-                              <p className="text-xs text-gray-400">
-                                {gem.healthBonus > 0 && `+${gem.healthBonus} HP `}
-                                {gem.attackBonus > 0 && `+${gem.attackBonus} ATK `}
-                                {gem.defenseBonus > 0 && `+${gem.defenseBonus} DEF `}
-                                {gem.speedBonus > 0 && `+${gem.speedBonus} SPD`}
-                              </p>
+                              <span className="text-sm">Empty Socket</span>
                             </div>
-                          </>
-                        ) : (
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <Circle size={20} className="fill-stone-700 text-stone-700" />
-                            <span className="text-sm">Empty Socket</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                          )}
+                        </div>
+                      );
+                    }
+                  )}
                 </div>
               </div>
             )}
 
             {/* Description */}
             <div className="bg-stone-800 p-3 rounded mb-3">
-              <p className="text-sm text-gray-300">{selectedItemDetails.item.description}</p>
+              <p className="text-sm text-gray-300">
+                {selectedItemDetails.item.description}
+              </p>
             </div>
 
-            {/* Change Equipment Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                // Determine which slot this item belongs to
-                let slotType: "weapon" | "armor" | "helmet" | "gloves" | "shoes" | "ring" | "necklace" | "belt" | "earring" | null = null;
-                if (character.weapon?.id === selectedItemDetails.item.id) slotType = "weapon";
-                else if (character.armor?.id === selectedItemDetails.item.id) slotType = "armor";
-                else if (character.helmet?.id === selectedItemDetails.item.id) slotType = "helmet";
-                else if (character.gloves?.id === selectedItemDetails.item.id) slotType = "gloves";
-                else if (character.shoes?.id === selectedItemDetails.item.id) slotType = "shoes";
-                else if (character.ring?.id === selectedItemDetails.item.id) slotType = "ring";
-                else if (character.necklace?.id === selectedItemDetails.item.id) slotType = "necklace";
-                else if (character.belt?.id === selectedItemDetails.item.id) slotType = "belt";
-                else if (character.earring?.id === selectedItemDetails.item.id) slotType = "earring";
-                
-                setSelectedItemDetails(null);
-                if (slotType) setSelectedSlot(slotType);
-              }}
-              className="w-full py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition relative overflow-hidden"
-              style={{
-                border: '3px solid #92400e',
-                borderRadius: '0',
-                boxShadow: '0 3px 0 #b45309, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-                textShadow: '1px 1px 0 #000',
-                fontFamily: 'monospace',
-                letterSpacing: '1px'
-              }}
-            >
-              <span className="relative z-10">🔄 CHANGE EQUIPMENT</span>
-              <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              {/* Unequip Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Determine which slot this item belongs to
+                  let slotType:
+                    | "weapon"
+                    | "armor"
+                    | "helmet"
+                    | "gloves"
+                    | "shoes"
+                    | "ring"
+                    | "necklace"
+                    | "belt"
+                    | "earring"
+                    | null = null;
+                  if (character.weapon?.id === selectedItemDetails.item.id)
+                    slotType = "weapon";
+                  else if (character.armor?.id === selectedItemDetails.item.id)
+                    slotType = "armor";
+                  else if (character.helmet?.id === selectedItemDetails.item.id)
+                    slotType = "helmet";
+                  else if (character.gloves?.id === selectedItemDetails.item.id)
+                    slotType = "gloves";
+                  else if (character.shoes?.id === selectedItemDetails.item.id)
+                    slotType = "shoes";
+                  else if (character.ring?.id === selectedItemDetails.item.id)
+                    slotType = "ring";
+                  else if (character.necklace?.id === selectedItemDetails.item.id)
+                    slotType = "necklace";
+                  else if (character.belt?.id === selectedItemDetails.item.id)
+                    slotType = "belt";
+                  else if (character.earring?.id === selectedItemDetails.item.id)
+                    slotType = "earring";
+
+                  if (slotType) {
+                    unequipMutation.mutate(slotType);
+                  }
+                }}
+                disabled={unequipMutation.isPending}
+                className="flex-1 py-3 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 text-white font-bold transition relative overflow-hidden"
+                style={{
+                  border: "3px solid #7f1d1d",
+                  borderRadius: "0",
+                  boxShadow:
+                    "0 3px 0 #991b1b, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                  textShadow: "1px 1px 0 #000",
+                  fontFamily: "monospace",
+                  letterSpacing: "1px",
+                }}
+              >
+                <span className="relative z-10">
+                  {unequipMutation.isPending ? "⏳" : "✖️"} UNEQUIP
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-b from-red-400/20 to-transparent"></div>
+              </button>
+
+              {/* Change Equipment Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Determine which slot this item belongs to
+                  let slotType:
+                    | "weapon"
+                    | "armor"
+                    | "helmet"
+                    | "gloves"
+                    | "shoes"
+                    | "ring"
+                    | "necklace"
+                    | "belt"
+                    | "earring"
+                    | null = null;
+                  if (character.weapon?.id === selectedItemDetails.item.id)
+                    slotType = "weapon";
+                  else if (character.armor?.id === selectedItemDetails.item.id)
+                    slotType = "armor";
+                  else if (character.helmet?.id === selectedItemDetails.item.id)
+                    slotType = "helmet";
+                  else if (character.gloves?.id === selectedItemDetails.item.id)
+                    slotType = "gloves";
+                  else if (character.shoes?.id === selectedItemDetails.item.id)
+                    slotType = "shoes";
+                  else if (character.ring?.id === selectedItemDetails.item.id)
+                    slotType = "ring";
+                  else if (character.necklace?.id === selectedItemDetails.item.id)
+                    slotType = "necklace";
+                  else if (character.belt?.id === selectedItemDetails.item.id)
+                    slotType = "belt";
+                  else if (character.earring?.id === selectedItemDetails.item.id)
+                    slotType = "earring";
+
+                  setSelectedItemDetails(null);
+                  if (slotType) setSelectedSlot(slotType);
+                }}
+                className="flex-1 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition relative overflow-hidden"
+                style={{
+                  border: "3px solid #92400e",
+                  borderRadius: "0",
+                  boxShadow:
+                    "0 3px 0 #b45309, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                  textShadow: "1px 1px 0 #000",
+                  fontFamily: "monospace",
+                  letterSpacing: "1px",
+                }}
+              >
+                <span className="relative z-10">🔄 CHANGE</span>
+                <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -632,69 +849,66 @@ export default function VillageTab() {
               </div>
             </div>
 
-            {/* Equipment Slots */}
-            <div className="grid grid-cols-1 gap-3">
-              <EquipmentSlot
-                slotType="weapon"
-                equippedItem={character.weapon}
-                label="⚔️ Weapon"
-              />
-              <EquipmentSlot
-                slotType="armor"
-                equippedItem={character.armor}
-                label="🛡️ Armor"
-              />
-            </div>
-
-            {/* Armor Pieces */}
-            <div className="mt-3">
-              <p className="text-xs text-amber-400 font-bold mb-2">
-                🎩 Armor Pieces
-              </p>
-              <div className="grid grid-cols-3 gap-2">
+            {/* Equipment Slots - Compact Body Layout */}
+            <div className="relative max-w-xs mx-auto">
+              {/* Use CSS Grid for precise positioning */}
+              <div
+                className="grid gap-2"
+                style={{
+                  gridTemplateColumns: "repeat(3, 85px)",
+                  gridTemplateRows: "repeat(3, 85px)",
+                  justifyContent: "center",
+                }}
+              >
+                {/* Row 1: Earring, Helmet, Necklace */}
+                <EquipmentSlot
+                  slotType="earring"
+                  equippedItem={character.earring}
+                  label="Earring"
+                />
                 <EquipmentSlot
                   slotType="helmet"
                   equippedItem={character.helmet}
-                  label="🎩 Helmet"
-                />
-                <EquipmentSlot
-                  slotType="gloves"
-                  equippedItem={character.gloves}
-                  label="🧤 Gloves"
-                />
-                <EquipmentSlot
-                  slotType="shoes"
-                  equippedItem={character.shoes}
-                  label="👟 Shoes"
-                />
-              </div>
-            </div>
-
-            {/* Accessory Slots */}
-            <div className="mt-3">
-              <p className="text-xs text-amber-400 font-bold mb-2">
-                💍 Accessories
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <EquipmentSlot
-                  slotType="ring"
-                  equippedItem={character.ring}
-                  label="💍 Ring"
+                  label="Helmet"
                 />
                 <EquipmentSlot
                   slotType="necklace"
                   equippedItem={character.necklace}
-                  label="📿 Necklace"
+                  label="Necklace"
+                />
+
+                {/* Row 2: Weapon, Armor, Gloves */}
+                <EquipmentSlot
+                  slotType="weapon"
+                  equippedItem={character.weapon}
+                  label="Weapon"
+                />
+                <EquipmentSlot
+                  slotType="armor"
+                  equippedItem={character.armor}
+                  label="Armor"
+                />
+                <EquipmentSlot
+                  slotType="gloves"
+                  equippedItem={character.gloves}
+                  label="Gloves"
+                />
+
+                {/* Row 3: Ring, Shoes, Belt */}
+                <EquipmentSlot
+                  slotType="ring"
+                  equippedItem={character.ring}
+                  label="Ring"
+                />
+                <EquipmentSlot
+                  slotType="shoes"
+                  equippedItem={character.shoes}
+                  label="Shoes"
                 />
                 <EquipmentSlot
                   slotType="belt"
                   equippedItem={character.belt}
-                  label="🔗 Belt"
-                />
-                <EquipmentSlot
-                  slotType="earring"
-                  equippedItem={character.earring}
-                  label="💎 Earring"
+                  label="Belt"
                 />
               </div>
             </div>
@@ -772,7 +986,12 @@ export default function VillageTab() {
                         <div className="flex items-center gap-3">
                           {getItemImage(slot.item.spriteId, slot.item.type) && (
                             <img
-                              src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                              src={
+                                getItemImage(
+                                  slot.item.spriteId,
+                                  slot.item.type
+                                )!
+                              }
                               alt={slot.item.name}
                               className="w-12 h-12 object-contain"
                             />

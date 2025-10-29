@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { guildApi, authApi } from '@/lib/api';
 import { useGameStore } from '@/store/gameStore';
 import { 
-  Users, Plus, TrendingUp, MessageCircle,
-  UserMinus, Shield, Send
+  Users, Plus, TrendingUp,
+  UserMinus, Shield
 } from 'lucide-react';
 import guildIcon from '@/assets/ui/guild.png';
 import guildLeaderIcon from '@/assets/ui/guild/guildLeader.png';
@@ -18,6 +18,7 @@ import guildChatIcon from '@/assets/ui/guild/guildChat.png';
 import guildDonateIcon from '@/assets/ui/guild/guildDonate.png';
 import settingsIcon from '@/assets/ui/settings.png';
 import GuildShop from '@/components/guild/GuildShop';
+import GuildChat from '@/components/guild/GuildChat';
 
 type View = 'browse' | 'my-guild' | 'members' | 'chat' | 'donate' | 'shop' | 'settings';
 
@@ -30,13 +31,12 @@ export default function GuildTab() {
   const [guildTag, setGuildTag] = useState('');
   const [guildDescription, setGuildDescription] = useState('');
   const [selectedEmblem, setSelectedEmblem] = useState('Blank_Gold__Animated_32x32');
-  const [chatMessage, setChatMessage] = useState('');
   const [donateAmount, setDonateAmount] = useState('');
   const [showEditDescription, setShowEditDescription] = useState(false);
   const [newDescription, setNewDescription] = useState('');
   const [showDisbandConfirm, setShowDisbandConfirm] = useState(false);
   const [showEmblemPicker, setShowEmblemPicker] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const [showUpgradeConfirm, setShowUpgradeConfirm] = useState(false);
 
   // Fetch player's guild
   const { data: myGuild, refetch: refetchMyGuild } = useQuery({
@@ -64,10 +64,7 @@ export default function GuildTab() {
     }
   }, [myGuild, view]);
 
-  // Auto-scroll chat
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [myGuild?.chatMessages]);
+  // Chat auto-scroll is now handled by GuildChat component
 
   // Mutations
   const createGuildMutation = useMutation({
@@ -154,17 +151,7 @@ export default function GuildTab() {
     },
   });
 
-  const sendMessageMutation = useMutation({
-    mutationFn: (message: string) => guildApi.sendMessage(message),
-    onSuccess: () => {
-      setChatMessage('');
-      // Refetch guild data to get new messages
-      setTimeout(() => refetchMyGuild(), 100);
-    },
-    onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Failed to send message', 'error');
-    },
-  });
+  // Guild chat now uses Socket.io via GuildChat component
 
   const updateEmblemMutation = useMutation({
     mutationFn: (iconId: string) => guildApi.updateEmblem(iconId),
@@ -191,8 +178,9 @@ export default function GuildTab() {
         });
       }
       
+      const memberCapIncrease = guild.maxMembers - (guild.level - 1) * 20;
       (window as any).showToast?.(
-        `🎉 Guild upgraded to Level ${guild.level}! (-${cost.toLocaleString()} gold)`,
+        `🎉 Guild upgraded to Level ${guild.level}!\n💰 -${cost.toLocaleString()} gold\n👥 Member cap: ${guild.maxMembers} (+${memberCapIncrease})`,
         'success'
       );
       
@@ -538,6 +526,39 @@ export default function GuildTab() {
             </div>
           </div>
 
+          {/* Guild Perks - Retro Style */}
+          <div className="bg-stone-800 border-2 border-purple-600 p-3" style={{ boxShadow: '0 4px 0 #7c3aed' }}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-white text-sm">✨ Guild Perks</h3>
+              {myGuild.level > 1 && (
+                <span className="text-xs bg-purple-600 px-2 py-1 text-white font-bold border border-purple-800">
+                  Active
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-stone-900 border-2 border-blue-600 p-2">
+                <p className="text-blue-400 text-xs font-bold mb-1">📈 EXP Bonus</p>
+                <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace' }}>
+                  {myGuild.expBonus > 0 ? `+${myGuild.expBonus}%` : '0%'}
+                </p>
+              </div>
+              <div className="bg-stone-900 border-2 border-amber-600 p-2">
+                <p className="text-amber-400 text-xs font-bold mb-1">💰 Gold Bonus</p>
+                <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace' }}>
+                  {myGuild.goldBonus > 0 ? `+${myGuild.goldBonus}%` : '0%'}
+                </p>
+              </div>
+            </div>
+            <div className="bg-purple-900 border border-purple-600 mt-2 p-2">
+              <p className="text-xs text-purple-200 text-center font-bold">
+                {myGuild.level === 1 
+                  ? '🎁 Upgrade guild to unlock perks!' 
+                  : '⚡ Applied to all dungeon rewards!'}
+              </p>
+            </div>
+          </div>
+
           <div className="bg-stone-800 rounded-lg p-3">
             <h3 className="font-bold text-white mb-2">Your Rank</h3>
             <div className="flex items-center gap-2">
@@ -602,54 +623,13 @@ export default function GuildTab() {
         </div>
       )}
 
-      {/* Chat */}
+      {/* Chat - Mobile Optimized */}
       {view === 'chat' && (
-        <div className="flex flex-col h-[500px]">
-          <div className="flex-1 bg-stone-800 rounded-lg p-3 overflow-y-auto mb-2">
-            {myGuild.chatMessages && myGuild.chatMessages.length > 0 ? (
-              myGuild.chatMessages.slice().reverse().map((msg: any) => (
-                <div key={msg.id} className="mb-3">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-bold text-purple-400 text-sm">{msg.player.username}</span>
-                    <span className="text-xs text-gray-500">{new Date(msg.createdAt).toLocaleTimeString()}</span>
-                  </div>
-                  <p className="text-white text-sm">{msg.message}</p>
-                </div>
-              ))
-            ) : (
-              <div className="text-center text-gray-400 py-8">
-                <MessageCircle size={48} className="mx-auto mb-2 opacity-50" />
-                <p>No messages yet. Start the conversation!</p>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter' && chatMessage.trim() && !sendMessageMutation.isPending) {
-                  sendMessageMutation.mutate(chatMessage.trim());
-                }
-              }}
-              className="flex-1 px-3 py-2 bg-stone-800 border border-stone-600 rounded text-white text-sm focus:outline-none focus:border-purple-500"
-              placeholder="Type a message..."
-              maxLength={200}
-            />
-            <button
-              onClick={() => {
-                if (chatMessage.trim()) {
-                  sendMessageMutation.mutate(chatMessage.trim());
-                }
-              }}
-              disabled={!chatMessage.trim() || sendMessageMutation.isPending}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-bold disabled:opacity-50"
-            >
-              <Send size={16} />
-            </button>
-          </div>
+        <div className="h-[calc(100vh-240px)] sm:h-[500px]">
+          <GuildChat 
+            initialMessages={myGuild.chatMessages || []} 
+            guildName={myGuild.name}
+          />
         </div>
       )}
 
@@ -796,9 +776,7 @@ export default function GuildTab() {
                           return;
                         }
                         
-                        if (confirm(`Upgrade guild to Level ${currentLevel + 1}?\nCost: ${upgradeCost.toLocaleString()} gold`)) {
-                          upgradeGuildMutation.mutate();
-                        }
+                        setShowUpgradeConfirm(true);
                       }}
                       disabled={upgradeGuildMutation.isPending}
                       className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded font-bold text-sm"
@@ -954,6 +932,89 @@ export default function GuildTab() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Confirmation Modal */}
+      {showUpgradeConfirm && myGuild && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowUpgradeConfirm(false)}>
+          <div className="bg-stone-800 rounded-lg border-4 border-blue-600 p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()} style={{ boxShadow: '0 0 20px rgba(37, 99, 235, 0.5)' }}>
+            <h2 className="text-2xl font-bold text-white mb-4 text-center">⬆️ Upgrade Guild</h2>
+            
+            {/* Current Level */}
+            <div className="bg-stone-900 rounded-lg p-4 mb-4">
+              <div className="text-center mb-3">
+                <span className="text-blue-400 text-lg font-bold">Level {myGuild.level}</span>
+                <span className="text-gray-400 mx-2">→</span>
+                <span className="text-amber-400 text-lg font-bold">Level {myGuild.level + 1}</span>
+              </div>
+              
+              {/* Cost */}
+              <div className="bg-red-900/30 border-2 border-red-600 rounded p-3 mb-3">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-gray-300 text-sm">Cost:</span>
+                  <span className="text-amber-400 font-bold text-lg">
+                    💰 {Math.floor(10000 * Math.pow(2, myGuild.level - 1)).toLocaleString()} Gold
+                  </span>
+                </div>
+              </div>
+
+              {/* Benefits */}
+              <div className="bg-green-900/30 border-2 border-green-600 rounded p-3">
+                <h3 className="text-green-400 font-bold text-sm mb-2 text-center">✨ Benefits</h3>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-400">✓</span>
+                    <span className="text-gray-300">Member Cap:</span>
+                    <span className="text-white font-bold">
+                      {myGuild.level * 20} → {(myGuild.level + 1) * 20}
+                    </span>
+                    <span className="text-green-400">(+20)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-400">✓</span>
+                    <span className="text-gray-300">EXP Bonus:</span>
+                    <span className="text-white font-bold">
+                      {(myGuild.level - 1) * 5}% → {myGuild.level * 5}%
+                    </span>
+                    <span className="text-green-400">(+5%)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-400">✓</span>
+                    <span className="text-gray-300">Gold Bonus:</span>
+                    <span className="text-white font-bold">
+                      {(myGuild.level - 1) * 5}% → {myGuild.level * 5}%
+                    </span>
+                    <span className="text-green-400">(+5%)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-green-400">✓</span>
+                    <span className="text-gray-300">Increased guild prestige</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  upgradeGuildMutation.mutate();
+                  setShowUpgradeConfirm(false);
+                }}
+                disabled={upgradeGuildMutation.isPending}
+                className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-bold rounded-lg text-sm transition"
+              >
+                {upgradeGuildMutation.isPending ? '⏳ Upgrading...' : '⬆️ Upgrade Now'}
+              </button>
+              <button
+                onClick={() => setShowUpgradeConfirm(false)}
+                className="flex-1 py-3 bg-stone-700 hover:bg-stone-600 text-white font-bold rounded-lg text-sm transition"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
