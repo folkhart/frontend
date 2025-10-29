@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { inventoryApi, characterApi, craftingApi } from "@/lib/api";
 import { useGameStore } from "@/store/gameStore";
@@ -6,9 +7,13 @@ import { Check } from "lucide-react";
 import sellItemIcon from "@/assets/ui/sellItemIcon.png";
 import inventoryIcon from "@/assets/ui/inventory.png";
 
+type CategoryFilter = "All" | "Weapons" | "Armor" | "Accessories" | "Consumables" | "Materials";
+
 export default function InventoryTab() {
   const queryClient = useQueryClient();
   const { character, player, setCharacter, setPlayer } = useGameStore();
+  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const getGuildItemPath = (spriteId: string, itemType?: string) => {
     // FIRST: Convert tier names to numbers (bronze→1, silver→2, gold→3, diamond→4)
@@ -354,6 +359,32 @@ export default function InventoryTab() {
     );
   };
 
+  // Filter inventory by category and search
+  const categories: CategoryFilter[] = ["All", "Weapons", "Armor", "Accessories", "Consumables", "Materials"];
+  
+  const filteredInventory = inventory.filter((slot: any) => {
+    // Category filter
+    if (selectedCategory !== "All") {
+      const itemType = slot.item?.type;
+      if (selectedCategory === "Weapons" && itemType !== "Weapon") return false;
+      if (selectedCategory === "Armor" && itemType !== "Armor") return false;
+      if (selectedCategory === "Accessories" && itemType !== "Accessory") return false;
+      if (selectedCategory === "Consumables" && itemType !== "Consumable" && itemType !== "Potion") return false;
+      if (selectedCategory === "Materials" && itemType !== "Material" && itemType !== "Gem") return false;
+    }
+    
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const itemName = slot.item?.name?.toLowerCase() || "";
+      const itemType = slot.item?.type?.toLowerCase() || "";
+      const itemRarity = slot.item?.rarity?.toLowerCase() || "";
+      return itemName.includes(query) || itemType.includes(query) || itemRarity.includes(query);
+    }
+    
+    return true;
+  });
+
   return (
     <div className="p-3 pb-20">
       <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
@@ -363,11 +394,41 @@ export default function InventoryTab() {
           className="w-5 h-5"
           style={{ imageRendering: "pixelated" }}
         />
-        Inventory
+        Inventory ({filteredInventory.length})
       </h2>
 
+      {/* Search Bar */}
+      <div className="mb-3">
+        <input
+          type="text"
+          placeholder="Search items..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full px-3 py-2 bg-stone-800 border-2 border-stone-600 rounded text-white placeholder-gray-500 focus:border-amber-500 focus:outline-none"
+          style={{ fontFamily: "monospace" }}
+        />
+      </div>
+
+      {/* Category Tabs */}
+      <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={`px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition ${
+              selectedCategory === category
+                ? "bg-amber-600 text-white border-2 border-amber-400"
+                : "bg-stone-700 text-gray-300 border-2 border-stone-600 hover:bg-stone-600"
+            }`}
+            style={{ fontFamily: "monospace" }}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 gap-2">
-        {inventory.map((slot: any) => {
+        {filteredInventory.map((slot: any) => {
           const equipped = isEquipped(slot.item?.id);
           const isConsumable =
             slot.item?.type === "Consumable" || slot.item?.type === "Potion";

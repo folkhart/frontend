@@ -183,7 +183,9 @@ export default function TopBar() {
       }
       
       if (spriteId.includes('/')) {
-        const fullPath = spriteId.startsWith('woodenSet/') ? `accessories/${spriteId}` : spriteId;
+        const fullPath = (spriteId.startsWith('woodenSet/') || spriteId.startsWith('ironSet/') || spriteId.startsWith('dungeonDrops/')) 
+          ? `accessories/${spriteId}` 
+          : spriteId;
         const path = `../assets/items/${fullPath}.png`;
         return images[path] || null;
       }

@@ -2,13 +2,16 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { newsApi } from '@/lib/api';
 import { Plus, Edit, Trash2, Eye, EyeOff, Pin, Save, X, Smile } from 'lucide-react';
+import { MDXEditor, headingsPlugin, listsPlugin, quotePlugin, thematicBreakPlugin, markdownShortcutPlugin, linkPlugin, linkDialogPlugin, imagePlugin, tablePlugin, codeBlockPlugin, codeMirrorPlugin, toolbarPlugin, UndoRedo, BoldItalicUnderlineToggles, BlockTypeSelect, CreateLink, InsertImage, InsertTable, InsertThematicBreak, ListsToggle } from '@mdxeditor/editor';
+import '@mdxeditor/editor/style.css';
+import '@/styles/mdx-editor-custom.css';
 
 export default function AdminNewsTab() {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
   const [editingPost, setEditingPost] = useState<any>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const mdxEditorRef = useRef<any>(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -121,25 +124,15 @@ export default function AdminNewsTab() {
   };
 
   const insertEmoji = (emojiId: string) => {
-    const textarea = contentRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = formData.content;
-    const before = text.substring(0, start);
-    const after = text.substring(end);
+    const emojiMarkdown = `![${emojiId}](/src/assets/ui/news/emojis/64x64/${emojiId}.png) `;
+    const currentContent = formData.content || '';
+    const newContent = currentContent + emojiMarkdown;
+    setFormData({ ...formData, content: newContent });
     
-    const emojiCode = `[emoji:${emojiId}]`;
-    const newText = before + emojiCode + after;
-    
-    setFormData({ ...formData, content: newText });
-    
-    // Set cursor position after inserted emoji
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + emojiCode.length, start + emojiCode.length);
-    }, 0);
+    // Force MDXEditor to update
+    if (mdxEditorRef.current) {
+      mdxEditorRef.current.setMarkdown(newContent);
+    }
   };
 
   if (isCreating) {
@@ -201,7 +194,7 @@ export default function AdminNewsTab() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-amber-400 text-sm font-bold" style={{ fontFamily: 'monospace' }}>
-                CONTENT *
+                CONTENT * (Markdown Supported)
               </label>
               <button
                 type="button"
@@ -212,10 +205,10 @@ export default function AdminNewsTab() {
                 {showEmojiPicker ? 'HIDE EMOJIS' : 'ADD EMOJI'}
               </button>
             </div>
-            
+
             {showEmojiPicker && (
               <div className="mb-2 bg-stone-800 border-2 border-blue-600 p-3 max-h-64 overflow-y-auto">
-                <p className="text-xs text-blue-400 mb-2 font-bold">Click an emoji to insert [emoji:ID] code</p>
+                <p className="text-xs text-blue-400 mb-2 font-bold">Click an emoji to insert as image</p>
                 <div className="grid grid-cols-12 gap-1">
                   {emojis.map((emojiId) => (
                     <img
@@ -232,14 +225,43 @@ export default function AdminNewsTab() {
               </div>
             )}
             
-            <textarea
-              ref={contentRef}
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-              className="w-full px-3 py-2 bg-stone-800 border-2 border-stone-700 text-white focus:border-amber-500 outline-none"
-              rows={12}
-              placeholder="Write your post content... Use [emoji:fcXXX] to add emojis!"
-            />
+            <div className="border-2 border-stone-700 bg-stone-800 mdx-editor-wrapper">
+              <MDXEditor
+                key={formData.content}
+                ref={mdxEditorRef}
+                markdown={formData.content}
+                onChange={(value) => setFormData({ ...formData, content: value })}
+                plugins={[
+                  headingsPlugin(),
+                  listsPlugin(),
+                  quotePlugin(),
+                  thematicBreakPlugin(),
+                  linkPlugin(),
+                  linkDialogPlugin(),
+                  imagePlugin(),
+                  tablePlugin(),
+                  codeBlockPlugin({ defaultCodeBlockLanguage: 'js' }),
+                  codeMirrorPlugin({ codeBlockLanguages: { js: 'JavaScript', css: 'CSS', txt: 'Text' } }),
+                  markdownShortcutPlugin(),
+                  toolbarPlugin({
+                    toolbarContents: () => (
+                      <>
+                        <UndoRedo />
+                        <BoldItalicUnderlineToggles />
+                        <BlockTypeSelect />
+                        <CreateLink />
+                        <InsertImage />
+                        <InsertTable />
+                        <InsertThematicBreak />
+                        <ListsToggle />
+                      </>
+                    )
+                  })
+                ]}
+                className="mdx-editor-dark"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Use the toolbar above for formatting. Markdown syntax is fully supported!</p>
           </div>
 
           {/* Image URL */}

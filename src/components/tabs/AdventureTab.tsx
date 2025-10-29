@@ -57,6 +57,19 @@ const getDungeonIcon = (dungeonName: string) => {
   return iconMap[dungeonName] || ratCellarIcon; // Default to rat cellar if not found
 };
 
+// Format time remaining (hours/minutes for >1hr, minutes/seconds for <1hr)
+const formatTimeRemaining = (seconds: number) => {
+  const totalSeconds = Math.floor(seconds);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+  
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}:${String(secs).padStart(2, "0")}`;
+};
+
 // Helper for guild item paths
 const getGuildItemPath = (spriteId: string, itemType?: string) => {
   let fileName = spriteId;
@@ -157,7 +170,7 @@ const getItemImage = (spriteId: string, itemType?: string) => {
     }
 
     if (spriteId.includes("/")) {
-      const fullPath = spriteId.startsWith("woodenSet/")
+      const fullPath = (spriteId.startsWith("woodenSet/") || spriteId.startsWith("ironSet/") || spriteId.startsWith("dungeonDrops/"))
         ? `accessories/${spriteId}`
         : spriteId;
       const path = `../../assets/items/${fullPath}.png`;
@@ -287,10 +300,11 @@ export default function AdventureTab() {
         (Date.now() - new Date(backendActiveDungeonRun.createdAt).getTime()) /
           1000
       );
-      const remaining = Math.max(
-        0,
-        backendActiveDungeonRun.dungeon.duration - elapsed
-      );
+      // For Active mode, calculate display duration (1.5x of actual)
+      const actualDuration = backendActiveDungeonRun.dungeon.duration;
+      const displayDuration = backendActiveDungeonRun.mode === 'Active' ? Math.floor(actualDuration * 1.5) : actualDuration;
+      const displayElapsed = backendActiveDungeonRun.mode === 'Active' ? Math.floor(elapsed * 1.5) : elapsed;
+      const remaining = Math.max(0, displayDuration - displayElapsed);
       setTimeRemaining(remaining);
     } else if (
       !backendActiveDungeonRun &&
@@ -481,13 +495,15 @@ export default function AdventureTab() {
 
       // Only set up timers if there's time remaining
       if (actualTimeRemaining > 0) {
+        // Active mode runs 1.5x faster
+        const speedMultiplier = activeDungeonRun.mode === 'Active' ? 1.5 : 1;
         const interval = setInterval(() => {
           setTimeRemaining((prev) => {
-            if (prev <= 1) {
+            if (prev <= speedMultiplier) {
               clearInterval(interval);
               return 0;
             }
-            return prev - 1;
+            return Math.round(prev - speedMultiplier);
           });
         }, 1000);
 
@@ -590,7 +606,9 @@ export default function AdventureTab() {
 
       // Set active dungeon run and save to localStorage
       setActiveDungeonRun(runWithTime);
-      setTimeRemaining(data.dungeon.duration);
+      // For Active mode, show full duration but it will count down faster
+      const displayDuration = data.mode === 'Active' ? Math.floor(data.dungeon.duration * 1.5) : data.dungeon.duration;
+      setTimeRemaining(displayDuration);
       localStorage.setItem("activeDungeonRun", JSON.stringify(runWithTime));
 
       return data;
@@ -657,8 +675,7 @@ export default function AdventureTab() {
                   textShadow: "2px 2px 0 #000",
                 }}
               >
-                {Math.floor(timeRemaining / 60)}:
-                {String(timeRemaining % 60).padStart(2, "0")}
+                {formatTimeRemaining(timeRemaining)}
               </div>
               <p
                 className="text-xs text-orange-200"
@@ -1062,9 +1079,7 @@ export default function AdventureTab() {
               >
                 {idleStatus.canClaim
                   ? "0:00"
-                  : `${Math.floor(idleTimeRemaining / 60)}:${String(
-                      idleTimeRemaining % 60
-                    ).padStart(2, "0")}`}
+                  : formatTimeRemaining(idleTimeRemaining)}
               </div>
               <p
                 className="text-xs text-green-200"

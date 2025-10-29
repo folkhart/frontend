@@ -10,6 +10,10 @@ import goblinCaveIcon from '@/assets/ui/dungeonIcons/goblinCave.png';
 import slimeDenIcon from '@/assets/ui/dungeonIcons/slimeDen.png';
 import dragonLairIcon from '@/assets/ui/dungeonIcons/dragonLair.png';
 import eclipticThroneIcon from '@/assets/ui/dungeonIcons/eclipticThrone.png';
+import attackIconCP from '@/assets/ui/character_panel/attack.png';
+import defenseIconCP from '@/assets/ui/character_panel/defense.png';
+import hpIconCP from '@/assets/ui/character_panel/hp.png';
+import speedIconCP from '@/assets/ui/character_panel/speed.png';
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -660,14 +664,23 @@ export default function ServerChat() {
                   }}
                 >
                   <div
-                    className="w-16 h-16 bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-3xl border-4 border-amber-500"
+                    className="w-16 h-16 bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-3xl border-4 border-amber-500 overflow-hidden"
                     style={{
                       borderRadius: "50%",
                       boxShadow:
                         "0 4px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.3)",
                     }}
                   >
-                    {getClassIcon(playerCharacter.class)}
+                    {playerCharacter.avatarId ? (
+                      <img
+                        src={getDungeonIcon(playerCharacter.avatarId)}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                    ) : (
+                      getClassIcon(playerCharacter.class)
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
@@ -681,11 +694,14 @@ export default function ServerChat() {
                         />
                       )}
                       <h3
-                        className="text-2xl font-bold text-white"
+                        className={`text-2xl font-bold ${
+                          playerCharacter.isAdmin ? "text-red-500" : "text-white"
+                        }`}
                         style={{
                           fontFamily: "monospace",
-                          textShadow:
-                            "2px 2px 0 #000, 0 0 10px rgba(255,255,255,0.3)",
+                          textShadow: playerCharacter.isAdmin
+                            ? "0 0 15px rgba(239, 68, 68, 1), 0 0 30px rgba(239, 68, 68, 0.7), 0 0 45px rgba(239, 68, 68, 0.4), 2px 2px 0 #000"
+                            : "2px 2px 0 #000, 0 0 10px rgba(255,255,255,0.3)",
                         }}
                       >
                         {playerCharacter.name}
@@ -932,7 +948,7 @@ export default function ServerChat() {
                         className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2"
                         style={{ borderRadius: "8px" }}
                       >
-                        <span className="text-2xl">❤️</span>
+                        <img src={hpIconCP} alt="HP" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
                         <div>
                           <p
                             className="text-[10px] text-gray-400"
@@ -952,7 +968,7 @@ export default function ServerChat() {
                         className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2"
                         style={{ borderRadius: "8px" }}
                       >
-                        <span className="text-2xl">⚔️</span>
+                        <img src={attackIconCP} alt="Attack" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
                         <div>
                           <p
                             className="text-[10px] text-gray-400"
@@ -972,7 +988,7 @@ export default function ServerChat() {
                         className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2"
                         style={{ borderRadius: "8px" }}
                       >
-                        <span className="text-2xl">🛡️</span>
+                        <img src={defenseIconCP} alt="Defense" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
                         <div>
                           <p
                             className="text-[10px] text-gray-400"
@@ -992,7 +1008,7 @@ export default function ServerChat() {
                         className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2"
                         style={{ borderRadius: "8px" }}
                       >
-                        <span className="text-2xl">⚡</span>
+                        <img src={speedIconCP} alt="Speed" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
                         <div>
                           <p
                             className="text-[10px] text-gray-400"

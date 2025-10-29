@@ -127,7 +127,7 @@ export const guildApi = {
   getGuild: (guildId: string) => api.get(`/guild/${guildId}`),
   create: (name: string, tag: string, description?: string, iconId?: string) =>
     api.post('/guild/create', { name, tag, description, iconId }),
-  join: (guildId: string) => api.post(`/guild/join/${guildId}`),
+  join: (guildId: string, message?: string) => api.post(`/guild/join/${guildId}`, { message }),
   leave: () => api.post('/guild/leave'),
   disband: () => api.post('/guild/disband'),
   kick: (playerId: string) => api.post(`/guild/kick/${playerId}`),
@@ -142,6 +142,12 @@ export const guildApi = {
   // Guild Settings
   updateEmblem: (iconId: string) => api.post('/guild/emblem', { iconId }),
   upgrade: () => api.post('/guild/upgrade'),
+  toggleApproval: (guildId: string, requiresApproval: boolean) =>
+    api.patch(`/guild/${guildId}/settings`, { requiresApproval }),
+  // Applications
+  getApplications: (guildId: string) => api.get(`/guild/${guildId}/applications`),
+  approveApplication: (applicationId: string) => api.post(`/guild/applications/${applicationId}/approve`),
+  rejectApplication: (applicationId: string) => api.post(`/guild/applications/${applicationId}/reject`),
 };
 
 // Friend API

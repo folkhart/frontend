@@ -1,12 +1,16 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { newsApi } from "@/lib/api";
-import { Calendar, User, Pin } from "lucide-react";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { newsApi } from '@/lib/api';
+import { X, Calendar, User, Pin } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import newsIcon from "@/assets/ui/news/news.png";
 import redGem from "@/assets/ui/news/red_gem.png";
 import blueGem from "@/assets/ui/news/blue_gem.png";
 import greenGem from "@/assets/ui/news/green_gem.png";
 import goldAnchor from "@/assets/ui/news/goldanchor.png";
+import '@/styles/news-markdown.css';
+
 export default function NewsTab() {
   const [selectedPost, setSelectedPost] = useState<any>(null);
 
@@ -135,8 +139,39 @@ export default function NewsTab() {
           </div>
 
           {/* Content */}
-          <div className="text-gray-300 whitespace-pre-wrap leading-relaxed">
-            {parseEmojis(selectedPost.content)}
+          <div className="news-markdown">
+            {(() => {
+              console.log('Post content:', selectedPost.content);
+              console.log('Content type:', typeof selectedPost.content);
+              return (
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    img: ({ node, ...props }) => {
+                      console.log('Rendering image:', props.src);
+                      return (
+                        <img
+                          {...props}
+                          style={{ 
+                            imageRendering: 'pixelated',
+                            display: 'inline-block',
+                            verticalAlign: 'middle',
+                            margin: '0 2px',
+                            width: '24px',
+                            height: '24px'
+                          }}
+                          onError={() => {
+                            console.error('Failed to load emoji:', props.src);
+                          }}
+                        />
+                      );
+                    }
+                  }}
+                >
+                  {selectedPost.content}
+                </ReactMarkdown>
+              );
+            })()}
           </div>
         </div>
       </div>

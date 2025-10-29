@@ -185,7 +185,7 @@ export default function ShopTab() {
           );
       }
       if (spriteId.includes("/")) {
-        const fullPath = spriteId.startsWith("woodenSet/")
+        const fullPath = spriteId.startsWith("woodenSet/") || spriteId.startsWith("ironSet/")
           ? `accessories/${spriteId}`
           : spriteId;
         return images[`../../assets/items/${fullPath}.png`] || null;
