@@ -90,6 +90,7 @@ export const dungeonApi = {
   getRuns: (limit?: number) => api.get('/dungeon/runs', { params: { limit } }),
   getActive: () => api.get('/dungeon/active'),
   complete: (runId: string) => api.post(`/dungeon/complete/${runId}`),
+  fastFinish: (runId: string) => api.post(`/dungeon/fast-finish/${runId}`),
 };
 
 // Inventory API

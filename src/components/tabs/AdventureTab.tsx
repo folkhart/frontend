@@ -146,6 +146,7 @@ const getItemImage = (spriteId: string, itemType?: string) => {
 export default function AdventureTab() {
   const queryClient = useQueryClient();
   const { character, player, setPlayer, setCharacter } = useGameStore();
+  const fastFinishCost = 10; // gems
   const [view, setView] = useState<"dungeons" | "history">("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showBossFight, setShowBossFight] = useState(false);
@@ -307,6 +308,55 @@ export default function AdventureTab() {
       return () => clearInterval(interval);
     }
   }, [idleStatus]);
+
+  const fastFinishMutation = useMutation({
+    mutationFn: (runId: string) => dungeonApi.fastFinish(runId),
+    onMutate: async () => {
+      // Optimistically update gems
+      if (player) {
+        setPlayer({ ...player, gems: player.gems - fastFinishCost });
+      }
+    },
+    onSuccess: async (response) => {
+      // Get the dungeon result data
+      const result = response.data;
+      
+      // Save unclaimed reward for modal display
+      const rewardData = {
+        dungeonName: activeDungeonRun?.dungeon?.name || 'Dungeon',
+        result: {
+          success: result.success,
+          goldEarned: result.goldEarned,
+          expEarned: result.expEarned,
+          itemsDropped: result.itemsDropped || [],
+          hpLoss: result.hpLoss || 0,
+        },
+        timestamp: Date.now(),
+      };
+      setUnclaimedReward(rewardData);
+      localStorage.setItem("unclaimedDungeonReward", JSON.stringify(rewardData));
+      
+      // Clear active dungeon
+      setActiveDungeonRun(null);
+      localStorage.removeItem("activeDungeonRun");
+      
+      // Refresh character and player data
+      await queryClient.invalidateQueries({ queryKey: ["character"] });
+      const { data: profile } = await authApi.getProfile();
+      setPlayer(profile);
+      
+      // Update character state for HP/stats
+      const { data: updatedChar } = await characterApi.get();
+      setCharacter(updatedChar);
+    },
+    onError: (error: any) => {
+      // Revert gems on error
+      if (player) {
+        setPlayer({ ...player, gems: player.gems + fastFinishCost });
+      }
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to fast finish', 'error');
+    },
+  });
 
   const startIdleMutation = useMutation({
     mutationFn: (durationHours: number = 1) => idleApi.start(undefined, durationHours),
@@ -512,7 +562,7 @@ export default function AdventureTab() {
               <p className="text-xs text-orange-200" style={{ fontFamily: 'monospace' }}>Remaining</p>
             </div>
           </div>
-          <div className="w-full bg-stone-900 h-3 overflow-hidden" style={{ borderRadius: '0', border: '2px solid #78350f' }}>
+          <div className="w-full bg-stone-900 h-3 overflow-hidden mb-3" style={{ borderRadius: '0', border: '2px solid #78350f' }}>
             <div
               className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-1000"
               style={{
@@ -525,6 +575,26 @@ export default function AdventureTab() {
               }}
             />
           </div>
+          
+          {/* Fast Finish Button */}
+          <button
+            onClick={() => fastFinishMutation.mutate(activeDungeonRun.id)}
+            disabled={!player || player.gems < fastFinishCost || fastFinishMutation.isPending}
+            className="w-full px-4 py-3 bg-purple-700 hover:bg-purple-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+            style={{
+              border: '3px solid #6b21a8',
+              borderRadius: '8px',
+              boxShadow: '0 3px 0 #7e22ce, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+              textShadow: '1px 1px 0 #000',
+              fontFamily: 'monospace',
+              letterSpacing: '1px'
+            }}
+          >
+            <span className="relative z-10">
+              {fastFinishMutation.isPending ? '⏳ FINISHING...' : `⚡ FAST FINISH (${fastFinishCost} 💎)`}
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-400/20 to-transparent"></div>
+          </button>
         </div>
       )}
 
