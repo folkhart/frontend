@@ -1,7 +1,30 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { leaderboardApi } from '@/lib/api';
+import { leaderboardApi, dungeonApi } from '@/lib/api';
 import { Trophy, Swords, Users } from 'lucide-react';
+import ratCellarIcon from '@/assets/ui/dungeonIcons/ratCellar.png';
+import goblinCaveIcon from '@/assets/ui/dungeonIcons/goblinCave.png';
+import slimeDenIcon from '@/assets/ui/dungeonIcons/slimeDen.png';
+import dragonLairIcon from '@/assets/ui/dungeonIcons/dragonLair.png';
+import eclipticThroneIcon from '@/assets/ui/dungeonIcons/eclipticThrone.png';
+
+const getDungeonIconByName = (dungeonName: string) => {
+  const iconMap: Record<string, string> = {
+    "Rat Cellar": ratCellarIcon,
+    "Goblin Cave": goblinCaveIcon,
+    "Slime Den": slimeDenIcon,
+    "Dark Forest": goblinCaveIcon,
+    "Dragon's Lair": dragonLairIcon,
+    "Shattered Obsidian Vault": ratCellarIcon,
+    "Hollowroot Sanctuary": slimeDenIcon,
+    "The Maw of Silence": goblinCaveIcon,
+    "The Clockwork Necropolis": ratCellarIcon,
+    "The Pale Citadel": eclipticThroneIcon,
+    "The Abyssal Spire": dragonLairIcon,
+    "The Ecliptic Throne": eclipticThroneIcon,
+  };
+  return iconMap[dungeonName] || ratCellarIcon;
+};
 
 export default function LeaderboardTab() {
   const [activeBoard, setActiveBoard] = useState<'level' | 'combat' | 'guilds'>('level');
@@ -32,6 +55,24 @@ export default function LeaderboardTab() {
     },
     enabled: activeBoard === 'guilds',
   });
+
+  // Fetch all dungeons for avatar icon mapping
+  const { data: allDungeons } = useQuery({
+    queryKey: ['dungeons'],
+    queryFn: async () => {
+      const { data } = await dungeonApi.getAll();
+      return data;
+    },
+    staleTime: Infinity, // Dungeons don't change, cache forever
+  });
+  
+  // Helper function to get dungeon icon by dungeon ID
+  const getDungeonIcon = (dungeonId: string) => {
+    if (!allDungeons) return ratCellarIcon;
+    const dungeon = allDungeons.find((d: any) => d.id === dungeonId);
+    if (!dungeon) return ratCellarIcon;
+    return getDungeonIconByName(dungeon.name);
+  };
 
   const getRankColor = (rank: number) => {
     if (rank === 1) return 'text-yellow-400';
@@ -154,6 +195,27 @@ export default function LeaderboardTab() {
               >
                 <div className={`text-2xl font-bold ${getRankColor(entry.rank)} min-w-[50px]`}>
                   {getRankEmoji(entry.rank)}
+                </div>
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-amber-500 overflow-hidden bg-stone-900">
+                  {entry.avatarId ? (
+                    <img
+                      src={getDungeonIcon(entry.avatarId)}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                      style={{ imageRendering: 'pixelated' }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `/assets/ui/chat/classIcons/${entry.class?.toLowerCase() || 'warrior'}.png`;
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={`/assets/ui/chat/classIcons/${entry.class?.toLowerCase() || 'warrior'}.png`}
+                      alt={entry.class}
+                      className="w-6 h-6"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-white">{entry.characterName}</p>

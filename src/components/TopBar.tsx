@@ -1,28 +1,54 @@
 import { useState, useEffect } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { formatGold, getClassIcon, getRarityColor, getRarityBorder } from '@/utils/format';
-import { X, Clock, Circle } from 'lucide-react';
+import { X, Circle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryApi, achievementApi } from '@/lib/api';
+import { inventoryApi, achievementApi, avatarApi, dungeonApi } from '@/lib/api';
 import energyIcon from '@/assets/ui/energy.png';
 import hpIcon from '@/assets/ui/hp.png';
 import goldIcon from '@/assets/ui/gold.png';
 import gemIcon from '@/assets/ui/gem.png';
+import clockIcon from '@/assets/ui/clock.png';
 import attackIconCP from '@/assets/ui/character_panel/attack.png';
 import defenseIconCP from '@/assets/ui/character_panel/defense.png';
 import hpIconCP from '@/assets/ui/character_panel/hp.png';
 import speedIconCP from '@/assets/ui/character_panel/speed.png';
 import cpIconCP from '@/assets/ui/character_panel/cp.png';
 import titleIcon from '@/assets/ui/title.png';
+import lockedIcon from '@/assets/ui/locked.png';
+import ratCellarIcon from '@/assets/ui/dungeonIcons/ratCellar.png';
+import goblinCaveIcon from '@/assets/ui/dungeonIcons/goblinCave.png';
+import slimeDenIcon from '@/assets/ui/dungeonIcons/slimeDen.png';
+import dragonLairIcon from '@/assets/ui/dungeonIcons/dragonLair.png';
+import eclipticThroneIcon from '@/assets/ui/dungeonIcons/eclipticThrone.png';
+
+const getDungeonIconByName = (dungeonName: string) => {
+  const iconMap: Record<string, string> = {
+    "Rat Cellar": ratCellarIcon,
+    "Goblin Cave": goblinCaveIcon,
+    "Slime Den": slimeDenIcon,
+    "Dark Forest": goblinCaveIcon,
+    "Dragon's Lair": dragonLairIcon,
+    "Shattered Obsidian Vault": ratCellarIcon,
+    "Hollowroot Sanctuary": slimeDenIcon,
+    "The Maw of Silence": goblinCaveIcon,
+    "The Clockwork Necropolis": ratCellarIcon,
+    "The Pale Citadel": eclipticThroneIcon,
+    "The Abyssal Spire": dragonLairIcon,
+    "The Ecliptic Throne": eclipticThroneIcon,
+  };
+  return iconMap[dungeonName] || ratCellarIcon;
+};
 
 export default function TopBar() {
-  const { player, character } = useGameStore();
+  const { player, character, setCharacter } = useGameStore();
   const queryClient = useQueryClient();
   const [showStats, setShowStats] = useState(false);
   const [showEnergyTimer, setShowEnergyTimer] = useState(false);
   const [timeUntilNextEnergy, setTimeUntilNextEnergy] = useState('');
   const [selectedItemDetails, setSelectedItemDetails] = useState<any>(null);
   const [showTitleChooser, setShowTitleChooser] = useState(false);
+  const [showAvatarChooser, setShowAvatarChooser] = useState(false);
 
   const { data: inventory } = useQuery({
     queryKey: ['inventory'],
@@ -40,6 +66,54 @@ export default function TopBar() {
       return data;
     },
     enabled: showStats || showTitleChooser,
+  });
+
+  const { data: avatarData } = useQuery({
+    queryKey: ['avatars'],
+    queryFn: async () => {
+      const { data } = await avatarApi.getUnlocked();
+      return data;
+    },
+    enabled: showAvatarChooser,
+  });
+
+  const { data: allDungeons } = useQuery({
+    queryKey: ['dungeons'],
+    queryFn: async () => {
+      const { data } = await dungeonApi.getAll();
+      return data;
+    },
+    staleTime: Infinity, // Dungeons don't change, cache forever
+  });
+
+  // Helper function to get dungeon icon by dungeon ID
+  const getDungeonIcon = (dungeonId: string) => {
+    if (!allDungeons) return ratCellarIcon;
+    const dungeon = allDungeons.find((d: any) => d.id === dungeonId);
+    if (!dungeon) return ratCellarIcon;
+    return getDungeonIconByName(dungeon.name);
+  };
+
+  const setAvatarMutation = useMutation({
+    mutationFn: async (avatarId: string | null) => {
+      const { data } = await avatarApi.setAvatar(avatarId);
+      return data;
+    },
+    onSuccess: (data) => {
+      // Immediately update character state
+      if (character) {
+        setCharacter({ ...character, avatarId: data.avatarId } as any);
+      }
+      // Invalidate all queries that show avatars
+      queryClient.invalidateQueries({ queryKey: ['character'] });
+      queryClient.invalidateQueries({ queryKey: ['avatars'] });
+      queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.invalidateQueries({ queryKey: ['guild'] });
+      queryClient.invalidateQueries({ queryKey: ['guild-chat'] });
+      queryClient.invalidateQueries({ queryKey: ['server-chat'] });
+      (window as any).showToast?.('Avatar changed!', 'success');
+      setShowAvatarChooser(false);
+    },
   });
 
   const equipTitleMutation = useMutation({
@@ -226,9 +300,24 @@ export default function TopBar() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowStats(true)}
-            className="w-12 h-12 bg-gradient-to-br from-amber-600 to-amber-800 rounded-full flex items-center justify-center text-2xl border-2 border-amber-500 hover:border-amber-400 transition cursor-pointer"
+            className="w-12 h-12 bg-stone-900 rounded-full flex items-center justify-center border-2 border-amber-500 hover:border-amber-400 transition cursor-pointer overflow-hidden"
+            title="View Character"
           >
-            {getClassIcon(character.class)}
+            {(character as any).avatarId ? (
+              <img
+                src={getDungeonIcon((character as any).avatarId)}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            ) : (
+              <img
+                src={`/assets/ui/chat/classIcons/${character.class.toLowerCase()}.png`}
+                alt={character.class}
+                className="w-8 h-8"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            )}
           </button>
           <div>
             <button
@@ -271,7 +360,7 @@ export default function TopBar() {
           {showEnergyTimer && (
             <div className="absolute top-6 right-0 bg-stone-900 border-2 border-blue-600 p-3 shadow-lg z-50 min-w-[180px]" style={{ borderRadius: '0', boxShadow: '0 4px 0 rgba(0,0,0,0.3)' }}>
               <div className="flex items-center gap-2 mb-2">
-                <Clock size={16} className="text-blue-400" />
+                <img src={clockIcon} alt="Clock" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
                 <span className="text-white font-bold text-sm" style={{ fontFamily: 'monospace' }}>Energy Regen</span>
               </div>
               <div className="text-gray-300 text-xs space-y-1">
@@ -307,9 +396,28 @@ export default function TopBar() {
             </div>
 
             <div className="flex items-center gap-4 mb-6 bg-stone-950 border-2 border-amber-700 p-4" style={{ borderRadius: '8px', boxShadow: 'inset 0 2px 0 rgba(0,0,0,0.5), 0 4px 0 #78350f' }}>
-              <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-3xl border-4 border-amber-500" style={{ borderRadius: '50%', boxShadow: '0 4px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.3)' }}>
-                {getClassIcon(character.class)}
-              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowAvatarChooser(true); }}
+                className="w-16 h-16 bg-stone-900 rounded-full flex items-center justify-center border-4 border-amber-500 hover:border-amber-400 transition cursor-pointer overflow-hidden"
+                style={{ boxShadow: '0 4px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.3)' }}
+                title="Change Avatar"
+              >
+                {(character as any).avatarId ? (
+                  <img
+                    src={getDungeonIcon((character as any).avatarId)}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                ) : (
+                  <img
+                    src={`/assets/ui/chat/classIcons/${character.class.toLowerCase()}.png`}
+                    alt={character.class}
+                    className="w-10 h-10"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                )}
+              </button>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   {equippedTitle && equippedTitle.iconId && (
@@ -735,6 +843,86 @@ export default function TopBar() {
                   );
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Avatar Chooser Modal */}
+      {showAvatarChooser && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[70] p-4" onClick={() => setShowAvatarChooser(false)}>
+          <div className="bg-stone-800 border-4 border-amber-600 p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" style={{ borderRadius: '0', boxShadow: '0 8px 0 rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-amber-600">
+              <h2 className="text-3xl font-bold text-amber-400" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000, 0 0 10px rgba(251, 191, 36, 0.5)' }}>CHOOSE AVATAR</h2>
+              <button onClick={() => setShowAvatarChooser(false)} className="text-amber-400 hover:text-amber-300 transition">
+                <X size={28} strokeWidth={3} />
+              </button>
+            </div>
+
+            <p className="text-gray-300 text-sm mb-6" style={{ fontFamily: 'monospace' }}>
+              Select your chat avatar. Unlock more by completing dungeons for the first time!
+            </p>
+
+            <div className="grid grid-cols-4 gap-4">
+              {/* Default Class Icon */}
+              <button
+                onClick={() => setAvatarMutation.mutate(null)}
+                disabled={setAvatarMutation.isPending}
+                className={`relative aspect-square bg-stone-900 border-2 ${
+                  !(character as any).avatarId ? 'border-amber-500' : 'border-stone-700 hover:border-amber-500'
+                } transition p-2 disabled:opacity-50`}
+                style={{ borderRadius: '0', boxShadow: !(character as any).avatarId ? '0 3px 0 #d97706' : '0 2px 0 rgba(0,0,0,0.3)' }}
+              >
+                <img
+                  src={`/assets/ui/chat/classIcons/${character.class.toLowerCase()}.png`}
+                  alt={character.class}
+                  className="w-full h-full object-contain"
+                  style={{ imageRendering: 'pixelated' }}
+                />
+                {!(character as any).avatarId && (
+                  <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-xs font-bold px-2 py-1" style={{ fontFamily: 'monospace' }}>
+                    ✓
+                  </div>
+                )}
+                <p className="text-xs text-gray-400 mt-2 text-center" style={{ fontFamily: 'monospace' }}>Default</p>
+              </button>
+
+              {/* All dungeon avatars */}
+              {allDungeons && allDungeons.map((dungeon: any) => {
+                const isUnlocked = avatarData?.unlockedAvatars?.includes(dungeon.id);
+                const isSelected = (character as any).avatarId === dungeon.id;
+                
+                return (
+                  <button
+                    key={dungeon.id}
+                    onClick={() => isUnlocked && setAvatarMutation.mutate(dungeon.id)}
+                    disabled={!isUnlocked || setAvatarMutation.isPending}
+                    className={`relative aspect-square bg-stone-900 border-2 ${
+                      isSelected ? 'border-amber-500' : isUnlocked ? 'border-stone-700 hover:border-amber-500' : 'border-stone-800'
+                    } transition p-2 disabled:cursor-not-allowed`}
+                    style={{ borderRadius: '0', boxShadow: isSelected ? '0 3px 0 #d97706' : '0 2px 0 rgba(0,0,0,0.3)', opacity: isUnlocked ? 1 : 0.5 }}
+                    title={isUnlocked ? dungeon.name : `Complete ${dungeon.name} to unlock`}
+                  >
+                    {isUnlocked ? (
+                      <img
+                        src={getDungeonIconByName(dungeon.name)}
+                        alt={dungeon.name}
+                        className="w-full h-full object-cover"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <img src={lockedIcon} alt="Locked" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
+                      </div>
+                    )}
+                    {isSelected && (
+                      <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-xs font-bold px-2 py-1" style={{ fontFamily: 'monospace' }}>
+                        ✓
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

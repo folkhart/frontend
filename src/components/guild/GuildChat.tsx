@@ -3,6 +3,30 @@ import { Send, Smile, X, Circle } from 'lucide-react';
 import { useSocket } from '@/lib/socket';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { dungeonApi } from '@/lib/api';
+import ratCellarIcon from '@/assets/ui/dungeonIcons/ratCellar.png';
+import goblinCaveIcon from '@/assets/ui/dungeonIcons/goblinCave.png';
+import slimeDenIcon from '@/assets/ui/dungeonIcons/slimeDen.png';
+import dragonLairIcon from '@/assets/ui/dungeonIcons/dragonLair.png';
+import eclipticThroneIcon from '@/assets/ui/dungeonIcons/eclipticThrone.png';
+
+const getDungeonIconByName = (dungeonName: string) => {
+  const iconMap: Record<string, string> = {
+    "Rat Cellar": ratCellarIcon,
+    "Goblin Cave": goblinCaveIcon,
+    "Slime Den": slimeDenIcon,
+    "Dark Forest": goblinCaveIcon,
+    "Dragon's Lair": dragonLairIcon,
+    "Shattered Obsidian Vault": ratCellarIcon,
+    "Hollowroot Sanctuary": slimeDenIcon,
+    "The Maw of Silence": goblinCaveIcon,
+    "The Clockwork Necropolis": ratCellarIcon,
+    "The Pale Citadel": eclipticThroneIcon,
+    "The Abyssal Spire": dragonLairIcon,
+    "The Ecliptic Throne": eclipticThroneIcon,
+  };
+  return iconMap[dungeonName] || ratCellarIcon;
+};
 
 interface ChatMessage {
   id: string;
@@ -13,6 +37,7 @@ interface ChatMessage {
     level: number;
     class?: string;
     titleIcon?: string;
+    avatarId?: string;
   };
 }
 
@@ -41,6 +66,24 @@ export default function GuildChat({ initialMessages = [], guildName }: GuildChat
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket();
+
+  // Fetch all dungeons for avatar icon mapping
+  const { data: allDungeons } = useQuery({
+    queryKey: ['dungeons'],
+    queryFn: async () => {
+      const { data } = await dungeonApi.getAll();
+      return data;
+    },
+    staleTime: Infinity, // Dungeons don't change, cache forever
+  });
+  
+  // Helper function to get dungeon icon by dungeon ID
+  const getDungeonIcon = (dungeonId: string) => {
+    if (!allDungeons) return ratCellarIcon;
+    const dungeon = allDungeons.find((d: any) => d.id === dungeonId);
+    if (!dungeon) return ratCellarIcon;
+    return getDungeonIconByName(dungeon.name);
+  };
 
   // Fetch player character data when selected
   const { data: playerCharacter } = useQuery({
@@ -269,14 +312,29 @@ export default function GuildChat({ initialMessages = [], guildName }: GuildChat
               className="bg-stone-800 border border-stone-700 p-2 rounded"
             >
               <div className="flex items-start gap-2">
-                {/* Player Avatar - Class Based Color - Clickable */}
-                <div 
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${getClassColor(msg.player.class)} cursor-pointer hover:opacity-80 transition`}
+                {/* Player Avatar */}
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-amber-500 cursor-pointer hover:opacity-80 transition overflow-hidden bg-stone-900"
                   onClick={() => handlePlayerClick(msg.player.username)}
                 >
-                  <span className="text-white text-xs font-bold">
-                    {msg.player.username.charAt(0).toUpperCase()}
-                  </span>
+                  {msg.player.avatarId ? (
+                    <img
+                      src={getDungeonIcon(msg.player.avatarId)}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                      style={{ imageRendering: 'pixelated' }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `/assets/ui/chat/classIcons/${msg.player.class?.toLowerCase() || 'warrior'}.png`;
+                      }}
+                    />
+                  ) : (
+                    <img
+                      src={`/assets/ui/chat/classIcons/${msg.player.class?.toLowerCase() || 'warrior'}.png`}
+                      alt={msg.player.class}
+                      className="w-6 h-6"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
                 </div>
 
                 {/* Message Content */}
@@ -292,15 +350,19 @@ export default function GuildChat({ initialMessages = [], guildName }: GuildChat
                       />
                     )}
                     <span 
-                      className="text-amber-400 font-bold text-sm cursor-pointer hover:text-amber-300 transition"
+                      className="text-amber-400 font-bold cursor-pointer hover:text-amber-300 transition"
                       onClick={() => handlePlayerClick(msg.player.username)}
                     >
                       {msg.player.username}
                     </span>
                     {msg.player.class && (
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-stone-700 text-gray-300">
-                        {msg.player.class}
-                      </span>
+                      <img
+                        src={`/assets/ui/chat/classIcons/${msg.player.class.toLowerCase()}.png`}
+                        alt={msg.player.class}
+                        className="w-4 h-4"
+                        style={{ imageRendering: 'pixelated' }}
+                        title={msg.player.class}
+                      />
                     )}
                     <span className="text-gray-500 text-xs">
                       Lv.{msg.player.level}

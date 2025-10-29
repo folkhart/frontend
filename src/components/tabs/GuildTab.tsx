@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { guildApi, authApi } from '@/lib/api';
+import { guildApi, authApi, dungeonApi } from '@/lib/api';
 import { useGameStore } from '@/store/gameStore';
 import { 
   Users, Plus, TrendingUp,
@@ -19,6 +19,29 @@ import guildDonateIcon from '@/assets/ui/guild/guildDonate.png';
 import settingsIcon from '@/assets/ui/settings.png';
 import GuildShop from '@/components/guild/GuildShop';
 import GuildChat from '@/components/guild/GuildChat';
+import ratCellarIcon from '@/assets/ui/dungeonIcons/ratCellar.png';
+import goblinCaveIcon from '@/assets/ui/dungeonIcons/goblinCave.png';
+import slimeDenIcon from '@/assets/ui/dungeonIcons/slimeDen.png';
+import dragonLairIcon from '@/assets/ui/dungeonIcons/dragonLair.png';
+import eclipticThroneIcon from '@/assets/ui/dungeonIcons/eclipticThrone.png';
+
+const getDungeonIconByName = (dungeonName: string) => {
+  const iconMap: Record<string, string> = {
+    "Rat Cellar": ratCellarIcon,
+    "Goblin Cave": goblinCaveIcon,
+    "Slime Den": slimeDenIcon,
+    "Dark Forest": goblinCaveIcon,
+    "Dragon's Lair": dragonLairIcon,
+    "Shattered Obsidian Vault": ratCellarIcon,
+    "Hollowroot Sanctuary": slimeDenIcon,
+    "The Maw of Silence": goblinCaveIcon,
+    "The Clockwork Necropolis": ratCellarIcon,
+    "The Pale Citadel": eclipticThroneIcon,
+    "The Abyssal Spire": dragonLairIcon,
+    "The Ecliptic Throne": eclipticThroneIcon,
+  };
+  return iconMap[dungeonName] || ratCellarIcon;
+};
 
 type View = 'browse' | 'my-guild' | 'members' | 'chat' | 'donate' | 'shop' | 'settings';
 
@@ -46,6 +69,24 @@ export default function GuildTab() {
       return data;
     },
   });
+
+  // Fetch all dungeons for avatar icon mapping
+  const { data: allDungeons } = useQuery({
+    queryKey: ['dungeons'],
+    queryFn: async () => {
+      const { data } = await dungeonApi.getAll();
+      return data;
+    },
+    staleTime: Infinity, // Dungeons don't change, cache forever
+  });
+  
+  // Helper function to get dungeon icon by dungeon ID
+  const getDungeonIcon = (dungeonId: string) => {
+    if (!allDungeons) return ratCellarIcon;
+    const dungeon = allDungeons.find((d: any) => d.id === dungeonId);
+    if (!dungeon) return ratCellarIcon;
+    return getDungeonIconByName(dungeon.name);
+  };
 
   // Fetch guild list
   const { data: guildList } = useQuery({
@@ -611,19 +652,42 @@ export default function GuildTab() {
           {myGuild.members?.map((member: any) => (
             <div key={member.id} className="bg-stone-800 rounded-lg p-3">
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    {getRankIcon(member.rank) && (
-                      <img src={getRankIcon(member.rank)!} alt={member.rank} className="w-4 h-4" />
+                <div className="flex items-center gap-3 flex-1">
+                  {/* Avatar */}
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-amber-500 overflow-hidden bg-stone-900">
+                    {member.player.character?.avatarId ? (
+                      <img
+                        src={getDungeonIcon(member.player.character.avatarId)}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `/assets/ui/chat/classIcons/${member.player.character?.class?.toLowerCase() || 'warrior'}.png`;
+                        }}
+                      />
+                    ) : (
+                      <img
+                        src={`/assets/ui/chat/classIcons/${member.player.character?.class?.toLowerCase() || 'warrior'}.png`}
+                        alt={member.player.character?.class}
+                        className="w-6 h-6"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
                     )}
-                    <p className="font-bold text-white">{member.player.username}</p>
-                    <span className={`text-xs font-bold ${getRankColor(member.rank)}`}>
-                      {member.rank}
-                    </span>
                   </div>
-                  <p className="text-xs text-gray-400">
-                    {member.player.character?.name} • Lv.{member.player.character?.level} • CP: {member.player.character?.combatPower}
-                  </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      {getRankIcon(member.rank) && (
+                        <img src={getRankIcon(member.rank)!} alt={member.rank} className="w-4 h-4" />
+                      )}
+                      <p className="font-bold text-white">{member.player.username}</p>
+                      <span className={`text-xs font-bold ${getRankColor(member.rank)}`}>
+                        {member.rank}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      {member.player.character?.name} • Lv.{member.player.character?.level} • CP: {member.player.character?.combatPower}
+                    </p>
+                  </div>
                 </div>
                 {canManage() && member.playerId !== player?.id && member.rank !== 'Leader' && (
                   <div className="flex gap-1">

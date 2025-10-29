@@ -205,3 +205,9 @@ export const achievementApi = {
   claimStep: (achievementId: string, stepIndex: number) => api.post(`/achievements/claim-step/${achievementId}/${stepIndex}`),
   sync: () => api.post('/achievements/sync'),
 };
+
+// Avatar API
+export const avatarApi = {
+  setAvatar: (avatarId: string | null) => api.post('/avatar/set', { avatarId }),
+  getUnlocked: () => api.get('/avatar/unlocked'),
+};
