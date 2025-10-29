@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '@/store/gameStore';
 import { authApi, characterApi } from '@/lib/api';
-import { onIdleComplete, onDungeonComplete, onLevelUp } from '@/lib/socket';
+import { onIdleComplete, onDungeonComplete, onLevelUp, getSocket } from '@/lib/socket';
 import LoadingScreen from '@/components/LoadingScreen';
 import TopBar from '@/components/TopBar';
 import BottomNav from '@/components/BottomNav';
@@ -22,7 +22,7 @@ import LevelUpModal from '@/components/modals/LevelUpModal';
 
 export default function GamePage() {
   const navigate = useNavigate();
-  const { activeTab, setPlayer, setCharacter, character, player } = useGameStore();
+  const { activeTab, setPlayer, setCharacter, character, player, setHasUnreadGuildMessages } = useGameStore();
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<any>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'warning' | 'info' } | null>(null);
@@ -118,6 +118,16 @@ export default function GamePage() {
       // Refresh character data
       loadPlayerData();
     });
+
+    // Listen for guild chat messages globally
+    // Note: GuildTab will handle clearing notifications when chat view is open
+    const socket = getSocket();
+    if (socket) {
+      socket.on('guild_chat_message', () => {
+        // Always set unread flag - GuildTab will clear it if chat is open
+        setHasUnreadGuildMessages(true);
+      });
+    }
   };
 
   if (loading) {

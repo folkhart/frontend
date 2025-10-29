@@ -6,7 +6,7 @@ import shopIcon from "@/assets/ui/shop.png";
 import settingsIcon from "@/assets/ui/settings.png";
 
 export default function BottomNav() {
-  const { activeTab, setActiveTab } = useGameStore();
+  const { activeTab, setActiveTab, hasUnreadGuildMessages } = useGameStore();
 
   const tabs = [
     { id: "village" as const, icon: villageIcon, label: "Village" },
@@ -20,16 +20,21 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-stone-800 border-t-2 border-stone-700 flex justify-around py-2">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
+        const showNotification = tab.id === 'guild' && hasUnreadGuildMessages && !isActive;
+        
         return (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex flex-col items-center gap-1 px-3 py-2 rounded transition btn-press ${
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded transition btn-press relative ${
               isActive
                 ? "bg-amber-700 text-white"
                 : "text-gray-400 hover:text-gray-300"
             }`}
           >
+            {showNotification && (
+              <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-stone-800 animate-pulse" />
+            )}
             <img
               src={tab.icon}
               alt={tab.label}

@@ -24,7 +24,7 @@ type View = 'browse' | 'my-guild' | 'members' | 'chat' | 'donate' | 'shop' | 'se
 
 export default function GuildTab() {
   const queryClient = useQueryClient();
-  const { player, setPlayer } = useGameStore();
+  const { player, setPlayer, hasUnreadGuildMessages, setHasUnreadGuildMessages } = useGameStore();
   const [view, setView] = useState<View>('browse');
   const [showCreateGuild, setShowCreateGuild] = useState(false);
   const [guildName, setGuildName] = useState('');
@@ -63,6 +63,32 @@ export default function GuildTab() {
       setView('my-guild');
     }
   }, [myGuild, view]);
+
+  // Clear notifications when opening chat
+  useEffect(() => {
+    if (view === 'chat') {
+      setHasUnreadGuildMessages(false);
+    }
+  }, [view, setHasUnreadGuildMessages]);
+
+  // Clear notifications for incoming messages when chat is visible
+  useEffect(() => {
+    if (view !== 'chat') return;
+
+    const socket = (window as any).socket;
+    if (!socket) return;
+
+    const handleGuildMessage = () => {
+      // Clear notification immediately since user is viewing chat
+      setHasUnreadGuildMessages(false);
+    };
+
+    socket.on('guild_chat_message', handleGuildMessage);
+
+    return () => {
+      socket.off('guild_chat_message', handleGuildMessage);
+    };
+  }, [view, setHasUnreadGuildMessages]);
 
   // Chat auto-scroll is now handled by GuildChat component
 
@@ -473,8 +499,11 @@ export default function GuildTab() {
         </button>
         <button
           onClick={() => setView('chat')}
-          className={`py-2 rounded font-bold text-xs ${view === 'chat' ? 'bg-purple-600 text-white' : 'bg-stone-800 text-gray-400'}`}
+          className={`py-2 rounded font-bold text-xs relative ${view === 'chat' ? 'bg-purple-600 text-white' : 'bg-stone-800 text-gray-400'}`}
         >
+          {hasUnreadGuildMessages && view !== 'chat' && (
+            <div className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-stone-800 animate-pulse" />
+          )}
           <img src={guildChatIcon} alt="Chat" className="w-4 h-4 mx-auto mb-1" />
           Chat
         </button>

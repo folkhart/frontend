@@ -54,6 +54,7 @@ interface GameState {
   // UI State
   activeTab: 'village' | 'adventure' | 'guild' | 'shop' | 'leaderboard' | 'friends' | 'news' | 'admin' | 'settings';
   isLoading: boolean;
+  hasUnreadGuildMessages: boolean;
   
   // Actions
   setAuth: (accessToken: string, refreshToken: string) => void;
@@ -65,6 +66,7 @@ interface GameState {
   updatePlayerGold: (amount: number) => void;
   updatePlayerEnergy: (amount: number) => void;
   updateCharacterExp: (amount: number) => void;
+  setHasUnreadGuildMessages: (hasUnread: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -76,6 +78,7 @@ export const useGameStore = create<GameState>((set) => ({
   character: null,
   activeTab: 'adventure',
   isLoading: false,
+  hasUnreadGuildMessages: false,
 
   // Actions
   setAuth: (accessToken, refreshToken) => {
@@ -127,4 +130,6 @@ export const useGameStore = create<GameState>((set) => ({
         ? { ...state.character, experience: state.character.experience + amount }
         : null,
     })),
+
+  setHasUnreadGuildMessages: (hasUnread) => set({ hasUnreadGuildMessages: hasUnread }),
 }));

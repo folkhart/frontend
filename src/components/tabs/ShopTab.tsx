@@ -12,6 +12,7 @@ export default function ShopTab() {
   const { player, setPlayer, character } = useGameStore();
   const [dailyGemsClaimed, setDailyGemsClaimed] = useState(false);
   const [timeUntilNextClaim, setTimeUntilNextClaim] = useState('');
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const refreshCost = 50; // gems
 
   // Fetch shop items from backend
@@ -238,7 +239,8 @@ export default function ShopTab() {
           return (
           <div
             key={shopItem.id}
-            className={`p-2 bg-stone-800 rounded-lg border-2 ${getRarityBorder(item.rarity)} relative`}
+            onClick={() => setSelectedItem(shopItem)}
+            className={`p-2 bg-stone-800 rounded-lg border-2 ${getRarityBorder(item.rarity)} relative cursor-pointer hover:bg-stone-700 transition`}
           >
             {/* Item Image */}
             <div className="w-full aspect-square bg-stone-900 rounded mb-2 flex items-center justify-center p-3">
@@ -301,6 +303,137 @@ export default function ShopTab() {
         );
         })}
       </div>
+      )}
+
+      {/* Item Detail Modal */}
+      {selectedItem && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedItem(null)}
+        >
+          <div
+            className={`bg-stone-800 rounded-lg border-4 ${getRarityBorder(selectedItem.item.rarity)} p-6 max-w-md w-full`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start gap-4 mb-4">
+              {/* Item Image */}
+              <div className="w-24 h-24 bg-stone-900 rounded-lg flex items-center justify-center flex-shrink-0">
+                {getItemImage(selectedItem.item.spriteId, selectedItem.item.type) ? (
+                  <img
+                    src={getItemImage(selectedItem.item.spriteId, selectedItem.item.type)!}
+                    alt={selectedItem.item.name}
+                    className="max-w-full max-h-full object-contain p-2"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                ) : (
+                  <span className="text-4xl">
+                    {selectedItem.item.type === 'Weapon' && '⚔️'}
+                    {selectedItem.item.type === 'Armor' && '🛡️'}
+                    {selectedItem.item.type === 'Accessory' && '💍'}
+                    {selectedItem.item.type === 'Consumable' && '🧪'}
+                  </span>
+                )}
+              </div>
+
+              {/* Item Name & Type */}
+              <div className="flex-1">
+                <h2 className={`text-xl font-bold mb-1 ${getRarityColor(selectedItem.item.rarity)}`}>
+                  {selectedItem.item.name}
+                </h2>
+                <p className="text-sm text-gray-400">{selectedItem.item.type}</p>
+                {selectedItem.item.rarity && (
+                  <p className={`text-xs ${getRarityColor(selectedItem.item.rarity)} mt-1`}>
+                    {selectedItem.item.rarity}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            {selectedItem.item.description && (
+              <div className="bg-stone-900 rounded p-3 mb-4">
+                <p className="text-sm text-gray-300 italic">"{selectedItem.item.description}"</p>
+              </div>
+            )}
+
+            {/* Stats */}
+            <div className="bg-stone-900 rounded p-3 mb-4">
+              <h3 className="text-sm font-bold text-amber-400 mb-2">Stats</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                {selectedItem.item.attackBonus > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-orange-400">⚔️ Attack:</span>
+                    <span className="text-white font-bold">+{selectedItem.item.attackBonus}</span>
+                  </div>
+                )}
+                {selectedItem.item.defenseBonus > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-400">🛡️ Defense:</span>
+                    <span className="text-white font-bold">+{selectedItem.item.defenseBonus}</span>
+                  </div>
+                )}
+                {selectedItem.item.healthBonus > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-400">❤️ Health:</span>
+                    <span className="text-white font-bold">+{selectedItem.item.healthBonus}</span>
+                  </div>
+                )}
+                {selectedItem.item.speedBonus > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">⚡ Speed:</span>
+                    <span className="text-white font-bold">+{selectedItem.item.speedBonus}</span>
+                  </div>
+                )}
+                {!selectedItem.item.attackBonus && !selectedItem.item.defenseBonus && !selectedItem.item.healthBonus && !selectedItem.item.speedBonus && (
+                  <p className="text-gray-500 col-span-2 text-center">No stat bonuses</p>
+                )}
+              </div>
+            </div>
+
+            {/* Price & Buy Button */}
+            <div className="flex gap-2">
+              {selectedItem.purchased ? (
+                <button
+                  disabled
+                  className="flex-1 py-3 bg-gray-600 text-white font-bold rounded opacity-50 cursor-not-allowed"
+                >
+                  ✓ ALREADY BOUGHT
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleBuy(selectedItem);
+                    setSelectedItem(null);
+                  }}
+                  disabled={
+                    buyMutation.isPending ||
+                    (selectedItem.currency === 'gold' ? player.gold < selectedItem.price : player.gems < selectedItem.price)
+                  }
+                  className={`flex-1 py-3 text-white font-bold rounded transition flex items-center justify-center gap-2 ${
+                    selectedItem.currency === 'gold'
+                      ? 'bg-yellow-600 hover:bg-yellow-700 active:bg-yellow-800'
+                      : 'bg-purple-600 hover:bg-purple-700 active:bg-purple-800'
+                  } disabled:opacity-50`}
+                  style={{
+                    border: '3px solid ' + (selectedItem.currency === 'gold' ? '#b45309' : '#6b21a8'),
+                    boxShadow: '0 3px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                    textShadow: '1px 1px 0 #000',
+                  }}
+                >
+                  {selectedItem.currency === 'gold' ? <Coins size={20} /> : <Gem size={20} />}
+                  BUY FOR {selectedItem.price}
+                </button>
+              )}
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="px-6 py-3 bg-stone-700 hover:bg-stone-600 text-white font-bold rounded transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
