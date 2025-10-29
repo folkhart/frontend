@@ -40,9 +40,112 @@ const getDungeonIcon = (dungeonName: string) => {
   return iconMap[dungeonName] || ratCellarIcon; // Default to rat cellar if not found
 };
 
+// Helper for guild item paths
+const getGuildItemPath = (spriteId: string, itemType?: string) => {
+  let fileName = spriteId;
+  const tierMap: { [key: string]: string } = {
+    'bronze': '1',
+    'silver': '2',
+    'gold': '3',
+    'diamond': '4',
+  };
+  
+  for (const [tier, number] of Object.entries(tierMap)) {
+    if (fileName.includes(`_${tier}`)) {
+      fileName = fileName.replace(`_${tier}`, number);
+      break;
+    }
+  }
+  
+  if (spriteId === 'guild_key') return `chests_and_keys/key1.png`;
+  if (fileName.startsWith('guild_chest')) {
+    const num = fileName.replace('guild_chest', '');
+    return `chests_and_keys/Chest${num}.png`;
+  }
+  if (fileName.startsWith('guild_sword')) {
+    const finalName = fileName.replace('guild_sword', 'guildsword');
+    return `weapons/guild_sword/${finalName}.png`;
+  }
+  if (fileName.startsWith('guild_bow')) return `weapons/guild_bow/${fileName}.png`;
+  if (fileName.startsWith('guild_dagger')) return `weapons/guild_dagger/${fileName}.png`;
+  if (fileName.startsWith('guild_shield')) return `weapons/guild_shield/${fileName}.png`;
+  if (fileName.startsWith('guild_staff')) return `weapons/guild_staff/${fileName}.png`;
+  if (fileName.startsWith('guild_armor')) return `armors/warrior_armors/${fileName}.png`;
+  if (fileName.includes('glove')) return `guild_armor_pieces/gloves/${fileName}.png`;
+  if (fileName.includes('boot') || fileName.includes('shoe')) {
+    const shoeName = fileName.replace('guild_boot', 'guild_shoes').replace('guild_shoe', 'guild_shoes');
+    return `guild_armor_pieces/shoes/${shoeName}.png`;
+  }
+  if (fileName === 'guild_belt') return `guild_accessories/belts/Icon27.png`;
+  if (fileName === 'guild_earring') return `guild_accessories/earrings/Icon12.png`;
+  if (fileName === 'guild_necklace') return `guild_accessories/necklaces/Icon29.png`;
+  if (fileName === 'guild_ring') return `guild_accessories/rings/Icon1.png`;
+  if (fileName.startsWith('Icon')) {
+    const iconNum = parseInt(fileName.match(/\d+/)?.[0] || '0');
+    if (iconNum >= 1 && iconNum <= 11) return `guild_accessories/rings/${fileName}.png`;
+    if (iconNum >= 12 && iconNum <= 20) return `guild_accessories/earrings/${fileName}.png`;
+    if (iconNum >= 29 && iconNum <= 48) return `guild_accessories/necklaces/${fileName}.png`;
+    if (iconNum === 2 || iconNum === 27 || iconNum === 35) return `guild_accessories/belts/${fileName}.png`;
+  }
+  return `${fileName}.png`;
+};
+
+// Helper to get item images
+const getItemImage = (spriteId: string, itemType?: string) => {
+  if (!spriteId) return null;
+  
+  try {
+    const images = import.meta.glob('../../assets/items/**/*.png', { eager: true, as: 'url' });
+    
+    if (/^\d+$/.test(spriteId)) {
+      const num = parseInt(spriteId);
+      if (num >= 985 && num <= 992) {
+        const path = `../../assets/items/potions/hp/${spriteId}.png`;
+        return images[path] || null;
+      } else if (num >= 1001 && num <= 1008) {
+        const path = `../../assets/items/potions/mp/${spriteId}.png`;
+        return images[path] || null;
+      } else if (num >= 1033 && num <= 1040) {
+        const path = `../../assets/items/potions/attack/${spriteId}.png`;
+        return images[path] || null;
+      }
+    }
+    
+    if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
+      return `/assets/items/guildshop_items/${getGuildItemPath(spriteId, itemType)}`;
+    }
+    
+    if (spriteId.includes('/')) {
+      const fullPath = spriteId.startsWith('woodenSet/') 
+        ? `accessories/${spriteId}` 
+        : spriteId;
+      const path = `../../assets/items/${fullPath}.png`;
+      return images[path] || null;
+    }
+    
+    let folder = "weapons";
+    if (itemType === "Armor") {
+      folder = "armors";
+    } else if (itemType === "Accessory") {
+      folder = "accessories";
+    } else if (itemType === "Consumable") {
+      folder = "consumables";
+    } else if (itemType === "Material" || itemType === "Gem") {
+      const path = `../../assets/items/craft/gems/${spriteId}.png`;
+      return images[path] || null;
+    }
+    
+    const path = `../../assets/items/${folder}/${spriteId}.png`;
+    return images[path] || null;
+  } catch (e) {
+    console.error("Failed to load image:", spriteId, itemType, e);
+    return null;
+  }
+};
+
 export default function AdventureTab() {
   const queryClient = useQueryClient();
-  const { character, player, setPlayer } = useGameStore();
+  const { character, player, setPlayer, setCharacter } = useGameStore();
   const [view, setView] = useState<"dungeons" | "history">("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showBossFight, setShowBossFight] = useState(false);
@@ -230,7 +333,7 @@ export default function AdventureTab() {
       const rewardData = {
         goldEarned: response.data.goldEarned,
         expEarned: response.data.expEarned,
-        itemsDropped: response.data.itemsEarned || [],
+        itemsDropped: response.data.itemsDropped || [],
         timestamp: Date.now(),
       };
       setUnclaimedIdleReward(rewardData);
@@ -290,6 +393,10 @@ export default function AdventureTab() {
             };
             setUnclaimedReward(rewardData);
             localStorage.setItem("unclaimedDungeonReward", JSON.stringify(rewardData));
+            
+            // Update character state immediately for HP/stats
+            const { data: updatedChar } = await characterApi.get();
+            setCharacter(updatedChar);
             
             // Send browser notification
             if ('Notification' in window && Notification.permission === 'granted') {
@@ -441,8 +548,29 @@ export default function AdventureTab() {
             <h3 className="text-xl font-bold text-amber-400 mb-4">{unclaimedReward.dungeonName}</h3>
             {unclaimedReward.result?.success ? (
               <>
-                <div className="text-6xl mb-4">🎉</div>
-                <h2 className="text-3xl font-bold text-green-400 mb-4">
+                <div className="relative w-32 h-32 mx-auto mb-4">
+                  {/* Animated sparkles */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute w-2 h-2 bg-yellow-300 rounded-full animate-ping" style={{ animationDuration: '1s', top: '20%', left: '30%' }}></div>
+                    <div className="absolute w-3 h-3 bg-amber-400 rounded-full animate-pulse" style={{ animationDuration: '1.5s', top: '30%', right: '20%' }}></div>
+                    <div className="absolute w-2 h-2 bg-yellow-200 rounded-full animate-ping" style={{ animationDuration: '2s', bottom: '30%', left: '20%' }}></div>
+                    <div className="absolute w-3 h-3 bg-amber-300 rounded-full animate-pulse" style={{ animationDuration: '1.2s', bottom: '20%', right: '30%' }}></div>
+                  </div>
+                  {/* Central glow */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 rounded-full animate-pulse" style={{
+                      boxShadow: '0 0 40px rgba(251, 191, 36, 0.8), 0 0 80px rgba(251, 191, 36, 0.4)',
+                      animationDuration: '2s'
+                    }}></div>
+                  </div>
+                  {/* Star shape in center */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-white animate-spin" style={{ animationDuration: '4s' }} fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 mb-4 animate-pulse" style={{ textShadow: '0 0 20px rgba(251, 191, 36, 0.5)' }}>
                   Victory!
                 </h2>
                 <div className="bg-stone-900 rounded-lg p-4 mb-4">
@@ -476,8 +604,17 @@ export default function AdventureTab() {
                               key={idx}
                               className="bg-stone-800 p-2 rounded border-2 border-amber-600 text-center"
                             >
-                              <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center">
-                                <span className="text-3xl">📦</span>
+                              <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center p-1">
+                                {item.spriteId && getItemImage(item.spriteId, item.type) ? (
+                                  <img 
+                                    src={getItemImage(item.spriteId, item.type)!}
+                                    alt={item.name}
+                                    className="max-w-full max-h-full object-contain"
+                                    style={{ imageRendering: 'pixelated' }}
+                                  />
+                                ) : (
+                                  <span className="text-3xl">📦</span>
+                                )}
                               </div>
                               <p className="text-xs text-white font-bold truncate" style={{ fontFamily: 'monospace' }}>
                                 {item.name}
@@ -580,8 +717,17 @@ export default function AdventureTab() {
                           key={idx}
                           className="bg-stone-800 p-2 rounded border-2 border-green-600 text-center"
                         >
-                          <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center">
-                            <span className="text-3xl">📦</span>
+                          <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center p-1">
+                            {item.spriteId && getItemImage(item.spriteId, item.type) ? (
+                              <img 
+                                src={getItemImage(item.spriteId, item.type)!}
+                                alt={item.name}
+                                className="max-w-full max-h-full object-contain"
+                                style={{ imageRendering: 'pixelated' }}
+                              />
+                            ) : (
+                              <span className="text-3xl">📦</span>
+                            )}
                           </div>
                           <p className="text-xs text-white font-bold truncate" style={{ fontFamily: 'monospace' }}>
                             {item.name}
@@ -868,13 +1014,13 @@ export default function AdventureTab() {
                   </div>
                 </div>
 
-                {/* Loot Preview - Show class-specific items */}
+                {/* Loot Preview - Show actual items with images */}
                 {character && dungeon.lootTable && (
                   <div className="border-t-2 border-stone-700 pt-2 mt-2">
                     <p className="text-xs font-bold text-amber-400 mb-2" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
                       💎 POSSIBLE REWARDS:
                     </p>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="grid grid-cols-4 gap-2">
                       {dungeon.lootTable
                         .filter(
                           (entry: any) =>
@@ -885,28 +1031,35 @@ export default function AdventureTab() {
                         .map((entry: any, idx: number) => (
                           <div
                             key={idx}
-                            className="text-xs px-2 py-1 bg-stone-950 text-amber-300 font-bold"
+                            className="bg-stone-950 p-1 text-center relative"
                             style={{
-                              fontFamily: 'monospace',
                               border: '2px solid #78350f',
-                              borderRadius: '4px',
+                              borderRadius: '6px',
                               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
                             }}
                           >
-                            {Math.round(entry.dropRate * 100)}% Drop
+                            <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center">
+                              {entry.item?.spriteId && getItemImage(entry.item.spriteId, entry.item.type) ? (
+                                <img 
+                                  src={getItemImage(entry.item.spriteId, entry.item.type)!}
+                                  alt={entry.item.name}
+                                  className="max-w-full max-h-full object-contain p-1"
+                                  style={{ imageRendering: 'pixelated' }}
+                                />
+                              ) : (
+                                <span className="text-2xl">📦</span>
+                              )}
+                            </div>
+                            <div className="absolute top-0 right-0 bg-amber-600 text-white text-[8px] px-1 rounded-bl font-bold">
+                              {Math.round(entry.dropRate * 100)}%
+                            </div>
+                            {entry.item && (
+                              <p className="text-[10px] text-amber-300 font-bold truncate" style={{ fontFamily: 'monospace' }}>
+                                {entry.item.name}
+                              </p>
+                            )}
                           </div>
                         ))}
-                      <div
-                        className="text-xs px-2 py-1 bg-green-950 text-green-300 font-bold"
-                        style={{
-                          fontFamily: 'monospace',
-                          border: '2px solid #15803d',
-                          borderRadius: '4px',
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
-                        }}
-                      >
-                        🌾 Gems
-                      </div>
                     </div>
                   </div>
                 )}
