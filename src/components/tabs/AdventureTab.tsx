@@ -3,7 +3,22 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useGameStore } from "@/store/gameStore";
 import { dungeonApi, idleApi, authApi, characterApi } from "@/lib/api";
 import { formatGold, getRarityColor, getDifficultyColor } from "@/utils/format";
-import { Clock, Zap, Trophy } from "lucide-react";
+import {
+  Clock,
+  Zap,
+  Trophy,
+  ChevronDown,
+  ChevronUp,
+  Skull,
+} from "lucide-react";
+import energyIcon from "@/assets/ui/energy.png";
+import hpIcon from "@/assets/ui/hp.png";
+import expIcon from "@/assets/ui/exp.png";
+import clockIcon from "@/assets/ui/clock.png";
+import goldIcon from "@/assets/ui/gold.png";
+import rewardIcon from "@/assets/ui/reward.png";
+import monstersIcon from "@/assets/ui/monsters.png";
+import cpIcon from "@/assets/ui/cp.png";
 import BossFight from "@/components/BossFight";
 import dungeonsIcon from "@/assets/ui/dungeons.png";
 import historyIcon from "@/assets/ui/history.png";
@@ -35,7 +50,7 @@ const getDungeonIcon = (dungeonName: string) => {
     "The Clockwork Necropolis": clockworkNecropolisIcon,
     "The Pale Citadel": paleCitadelIcon,
     "The Abyssal Spire": theAbyssalSpireIcon,
-    "The Ecliptic Throne": eclipticThroneIcon
+    "The Ecliptic Throne": eclipticThroneIcon,
   };
   return iconMap[dungeonName] || ratCellarIcon; // Default to rat cellar if not found
 };
@@ -44,48 +59,62 @@ const getDungeonIcon = (dungeonName: string) => {
 const getGuildItemPath = (spriteId: string, itemType?: string) => {
   let fileName = spriteId;
   const tierMap: { [key: string]: string } = {
-    'bronze': '1',
-    'silver': '2',
-    'gold': '3',
-    'diamond': '4',
+    bronze: "1",
+    silver: "2",
+    gold: "3",
+    diamond: "4",
   };
-  
+
   for (const [tier, number] of Object.entries(tierMap)) {
     if (fileName.includes(`_${tier}`)) {
       fileName = fileName.replace(`_${tier}`, number);
       break;
     }
   }
-  
-  if (spriteId === 'guild_key') return `chests_and_keys/key1.png`;
-  if (fileName.startsWith('guild_chest')) {
-    const num = fileName.replace('guild_chest', '');
+
+  if (spriteId === "guild_key") return `chests_and_keys/key1.png`;
+  if (fileName.startsWith("guild_chest")) {
+    const num = fileName.replace("guild_chest", "");
     return `chests_and_keys/Chest${num}.png`;
   }
-  if (fileName.startsWith('guild_sword')) {
-    const finalName = fileName.replace('guild_sword', 'guildsword');
+  if (fileName.startsWith("guild_sword")) {
+    const finalName = fileName.replace("guild_sword", "guildsword");
     return `weapons/guild_sword/${finalName}.png`;
   }
-  if (fileName.startsWith('guild_bow')) return `weapons/guild_bow/${fileName}.png`;
-  if (fileName.startsWith('guild_dagger')) return `weapons/guild_dagger/${fileName}.png`;
-  if (fileName.startsWith('guild_shield')) return `weapons/guild_shield/${fileName}.png`;
-  if (fileName.startsWith('guild_staff')) return `weapons/guild_staff/${fileName}.png`;
-  if (fileName.startsWith('guild_armor')) return `armors/warrior_armors/${fileName}.png`;
-  if (fileName.includes('glove')) return `guild_armor_pieces/gloves/${fileName}.png`;
-  if (fileName.includes('boot') || fileName.includes('shoe')) {
-    const shoeName = fileName.replace('guild_boot', 'guild_shoes').replace('guild_shoe', 'guild_shoes');
+  if (fileName.startsWith("guild_bow"))
+    return `weapons/guild_bow/${fileName}.png`;
+  if (fileName.startsWith("guild_dagger"))
+    return `weapons/guild_dagger/${fileName}.png`;
+  if (fileName.startsWith("guild_shield"))
+    return `weapons/guild_shield/${fileName}.png`;
+  if (fileName.startsWith("guild_staff"))
+    return `weapons/guild_staff/${fileName}.png`;
+  if (fileName.startsWith("guild_armor"))
+    return `armors/warrior_armors/${fileName}.png`;
+  if (fileName.includes("glove"))
+    return `guild_armor_pieces/gloves/${fileName}.png`;
+  if (fileName.includes("boot") || fileName.includes("shoe")) {
+    const shoeName = fileName
+      .replace("guild_boot", "guild_shoes")
+      .replace("guild_shoe", "guild_shoes");
     return `guild_armor_pieces/shoes/${shoeName}.png`;
   }
-  if (fileName === 'guild_belt') return `guild_accessories/belts/Icon27.png`;
-  if (fileName === 'guild_earring') return `guild_accessories/earrings/Icon12.png`;
-  if (fileName === 'guild_necklace') return `guild_accessories/necklaces/Icon29.png`;
-  if (fileName === 'guild_ring') return `guild_accessories/rings/Icon1.png`;
-  if (fileName.startsWith('Icon')) {
-    const iconNum = parseInt(fileName.match(/\d+/)?.[0] || '0');
-    if (iconNum >= 1 && iconNum <= 11) return `guild_accessories/rings/${fileName}.png`;
-    if (iconNum >= 12 && iconNum <= 20) return `guild_accessories/earrings/${fileName}.png`;
-    if (iconNum >= 29 && iconNum <= 48) return `guild_accessories/necklaces/${fileName}.png`;
-    if (iconNum === 2 || iconNum === 27 || iconNum === 35) return `guild_accessories/belts/${fileName}.png`;
+  if (fileName === "guild_belt") return `guild_accessories/belts/Icon27.png`;
+  if (fileName === "guild_earring")
+    return `guild_accessories/earrings/Icon12.png`;
+  if (fileName === "guild_necklace")
+    return `guild_accessories/necklaces/Icon29.png`;
+  if (fileName === "guild_ring") return `guild_accessories/rings/Icon1.png`;
+  if (fileName.startsWith("Icon")) {
+    const iconNum = parseInt(fileName.match(/\d+/)?.[0] || "0");
+    if (iconNum >= 1 && iconNum <= 11)
+      return `guild_accessories/rings/${fileName}.png`;
+    if (iconNum >= 12 && iconNum <= 20)
+      return `guild_accessories/earrings/${fileName}.png`;
+    if (iconNum >= 29 && iconNum <= 48)
+      return `guild_accessories/necklaces/${fileName}.png`;
+    if (iconNum === 2 || iconNum === 27 || iconNum === 35)
+      return `guild_accessories/belts/${fileName}.png`;
   }
   return `${fileName}.png`;
 };
@@ -93,10 +122,13 @@ const getGuildItemPath = (spriteId: string, itemType?: string) => {
 // Helper to get item images
 const getItemImage = (spriteId: string, itemType?: string) => {
   if (!spriteId) return null;
-  
+
   try {
-    const images = import.meta.glob('../../assets/items/**/*.png', { eager: true, as: 'url' });
-    
+    const images = import.meta.glob("../../assets/items/**/*.png", {
+      eager: true,
+      as: "url",
+    });
+
     if (/^\d+$/.test(spriteId)) {
       const num = parseInt(spriteId);
       if (num >= 985 && num <= 992) {
@@ -110,19 +142,26 @@ const getItemImage = (spriteId: string, itemType?: string) => {
         return images[path] || null;
       }
     }
-    
-    if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
-      return `/assets/items/guildshop_items/${getGuildItemPath(spriteId, itemType)}`;
+
+    if (
+      spriteId.startsWith("guild_") ||
+      spriteId.startsWith("Chest") ||
+      spriteId.startsWith("key")
+    ) {
+      return `/assets/items/guildshop_items/${getGuildItemPath(
+        spriteId,
+        itemType
+      )}`;
     }
-    
-    if (spriteId.includes('/')) {
-      const fullPath = spriteId.startsWith('woodenSet/') 
-        ? `accessories/${spriteId}` 
+
+    if (spriteId.includes("/")) {
+      const fullPath = spriteId.startsWith("woodenSet/")
+        ? `accessories/${spriteId}`
         : spriteId;
       const path = `../../assets/items/${fullPath}.png`;
       return images[path] || null;
     }
-    
+
     let folder = "weapons";
     if (itemType === "Armor") {
       folder = "armors";
@@ -134,7 +173,7 @@ const getItemImage = (spriteId: string, itemType?: string) => {
       const path = `../../assets/items/craft/gems/${spriteId}.png`;
       return images[path] || null;
     }
-    
+
     const path = `../../assets/items/${folder}/${spriteId}.png`;
     return images[path] || null;
   } catch (e) {
@@ -149,25 +188,26 @@ export default function AdventureTab() {
   const fastFinishCost = 10; // gems
   const [view, setView] = useState<"dungeons" | "history">("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
+  const [showRewards, setShowRewards] = useState(false);
   const [showBossFight, setShowBossFight] = useState(false);
   const [activeDungeonRun, setActiveDungeonRun] = useState<any>(() => {
     // Restore from localStorage on mount
     const saved = localStorage.getItem("activeDungeonRun");
     return saved ? JSON.parse(saved) : null;
   });
-  
+
   // Separate state for unclaimed rewards (persists even after run is cleared)
   const [unclaimedReward, setUnclaimedReward] = useState<any>(() => {
     const saved = localStorage.getItem("unclaimedDungeonReward");
     return saved ? JSON.parse(saved) : null;
   });
-  
+
   // Idle farming reward state
   const [unclaimedIdleReward, setUnclaimedIdleReward] = useState<any>(() => {
     const saved = localStorage.getItem("unclaimedIdleReward");
     return saved ? JSON.parse(saved) : null;
   });
-  
+
   const [timeRemaining, setTimeRemaining] = useState<number>(() => {
     const saved = localStorage.getItem("activeDungeonRun");
     if (saved) {
@@ -175,7 +215,10 @@ export default function AdventureTab() {
       // Use completesAt if available, otherwise calculate from startTime
       if (run.completesAt) {
         const completesAt = new Date(run.completesAt).getTime();
-        const remaining = Math.max(0, Math.floor((completesAt - Date.now()) / 1000));
+        const remaining = Math.max(
+          0,
+          Math.floor((completesAt - Date.now()) / 1000)
+        );
         return remaining;
       } else {
         const elapsed = Math.floor(
@@ -229,28 +272,37 @@ export default function AdventureTab() {
   useEffect(() => {
     if (backendActiveDungeonRun && !activeDungeonRun) {
       // Backend has an active run but local state doesn't - sync it
-      const runWithTime = { 
-        ...backendActiveDungeonRun, 
-        startTime: backendActiveDungeonRun.createdAt 
+      const runWithTime = {
+        ...backendActiveDungeonRun,
+        startTime: backendActiveDungeonRun.createdAt,
       };
       setActiveDungeonRun(runWithTime);
       localStorage.setItem("activeDungeonRun", JSON.stringify(runWithTime));
-      
+
       const elapsed = Math.floor(
-        (Date.now() - new Date(backendActiveDungeonRun.createdAt).getTime()) / 1000
+        (Date.now() - new Date(backendActiveDungeonRun.createdAt).getTime()) /
+          1000
       );
-      const remaining = Math.max(0, backendActiveDungeonRun.dungeon.duration - elapsed);
+      const remaining = Math.max(
+        0,
+        backendActiveDungeonRun.dungeon.duration - elapsed
+      );
       setTimeRemaining(remaining);
-    } else if (!backendActiveDungeonRun && activeDungeonRun && !activeDungeonRun.completed) {
+    } else if (
+      !backendActiveDungeonRun &&
+      activeDungeonRun &&
+      !activeDungeonRun.completed
+    ) {
       // Backend doesn't have an active run but local state does
       // Check if the dungeon time has actually expired before completing
       const completesAt = new Date(activeDungeonRun.completesAt).getTime();
       const now = Date.now();
       const hasExpired = now >= completesAt;
-      
+
       if (hasExpired) {
         // Time has expired, try to complete it
-        dungeonApi.complete(activeDungeonRun.id)
+        dungeonApi
+          .complete(activeDungeonRun.id)
           .then(({ data: result }) => {
             const completedRun = {
               ...activeDungeonRun,
@@ -258,8 +310,11 @@ export default function AdventureTab() {
               result: result,
             };
             setActiveDungeonRun(completedRun);
-            localStorage.setItem("activeDungeonRun", JSON.stringify(completedRun));
-            
+            localStorage.setItem(
+              "activeDungeonRun",
+              JSON.stringify(completedRun)
+            );
+
             // Save unclaimed reward for persistent notification
             const rewardData = {
               dungeonName: activeDungeonRun.dungeon.name,
@@ -267,14 +322,19 @@ export default function AdventureTab() {
               timestamp: Date.now(),
             };
             setUnclaimedReward(rewardData);
-            localStorage.setItem("unclaimedDungeonReward", JSON.stringify(rewardData));
-            
+            localStorage.setItem(
+              "unclaimedDungeonReward",
+              JSON.stringify(rewardData)
+            );
+
             queryClient.invalidateQueries({ queryKey: ["character"] });
-            
+
             // Show notification
             (window as any).showToast?.(
-              result.success ? 'Dungeon completed successfully!' : 'Dungeon failed!',
-              result.success ? 'success' : 'error'
+              result.success
+                ? "Dungeon completed successfully!"
+                : "Dungeon failed!",
+              result.success ? "success" : "error"
             );
           })
           .catch((error) => {
@@ -320,10 +380,10 @@ export default function AdventureTab() {
     onSuccess: async (response) => {
       // Get the dungeon result data
       const result = response.data;
-      
+
       // Save unclaimed reward for modal display
       const rewardData = {
-        dungeonName: activeDungeonRun?.dungeon?.name || 'Dungeon',
+        dungeonName: activeDungeonRun?.dungeon?.name || "Dungeon",
         result: {
           success: result.success,
           goldEarned: result.goldEarned,
@@ -334,17 +394,20 @@ export default function AdventureTab() {
         timestamp: Date.now(),
       };
       setUnclaimedReward(rewardData);
-      localStorage.setItem("unclaimedDungeonReward", JSON.stringify(rewardData));
-      
+      localStorage.setItem(
+        "unclaimedDungeonReward",
+        JSON.stringify(rewardData)
+      );
+
       // Clear active dungeon
       setActiveDungeonRun(null);
       localStorage.removeItem("activeDungeonRun");
-      
+
       // Refresh character and player data
       await queryClient.invalidateQueries({ queryKey: ["character"] });
       const { data: profile } = await authApi.getProfile();
       setPlayer(profile);
-      
+
       // Update character state for HP/stats
       const { data: updatedChar } = await characterApi.get();
       setCharacter(updatedChar);
@@ -354,12 +417,16 @@ export default function AdventureTab() {
       if (player) {
         setPlayer({ ...player, gems: player.gems + fastFinishCost });
       }
-      (window as any).showToast?.(error.response?.data?.error || 'Failed to fast finish', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Failed to fast finish",
+        "error"
+      );
     },
   });
 
   const startIdleMutation = useMutation({
-    mutationFn: (durationHours: number = 1) => idleApi.start(undefined, durationHours),
+    mutationFn: (durationHours: number = 1) =>
+      idleApi.start(undefined, durationHours),
     onSuccess: async () => {
       refetchIdle();
       // Refresh player data to update energy
@@ -388,7 +455,7 @@ export default function AdventureTab() {
       };
       setUnclaimedIdleReward(rewardData);
       localStorage.setItem("unclaimedIdleReward", JSON.stringify(rewardData));
-      
+
       refetchIdle();
       queryClient.invalidateQueries({ queryKey: ["character"] });
     },
@@ -400,11 +467,14 @@ export default function AdventureTab() {
       // Calculate actual time remaining from completesAt
       const completesAt = new Date(activeDungeonRun.completesAt).getTime();
       const now = Date.now();
-      const actualTimeRemaining = Math.max(0, Math.floor((completesAt - now) / 1000));
-      
+      const actualTimeRemaining = Math.max(
+        0,
+        Math.floor((completesAt - now) / 1000)
+      );
+
       // Update state with actual time
       setTimeRemaining(actualTimeRemaining);
-      
+
       // Only set up timers if there's time remaining
       if (actualTimeRemaining > 0) {
         const interval = setInterval(() => {
@@ -434,7 +504,7 @@ export default function AdventureTab() {
               "activeDungeonRun",
               JSON.stringify(completedRun)
             );
-            
+
             // Save unclaimed reward for persistent notification
             const rewardData = {
               dungeonName: activeDungeonRun.dungeon.name,
@@ -442,25 +512,35 @@ export default function AdventureTab() {
               timestamp: Date.now(),
             };
             setUnclaimedReward(rewardData);
-            localStorage.setItem("unclaimedDungeonReward", JSON.stringify(rewardData));
-            
+            localStorage.setItem(
+              "unclaimedDungeonReward",
+              JSON.stringify(rewardData)
+            );
+
             // Update character state immediately for HP/stats
             const { data: updatedChar } = await characterApi.get();
             setCharacter(updatedChar);
-            
+
             // Send browser notification
-            if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('Dungeon Complete!', {
-                body: `${activeDungeonRun.dungeon.name} completed! ${result.data.success ? '✅ Victory!' : '❌ Defeated'}`,
-                icon: '/icon.png',
-                badge: '/icon.png',
+            if (
+              "Notification" in window &&
+              Notification.permission === "granted"
+            ) {
+              new Notification("Dungeon Complete!", {
+                body: `${activeDungeonRun.dungeon.name} completed! ${
+                  result.data.success ? "✅ Victory!" : "❌ Defeated"
+                }`,
+                icon: "/icon.png",
+                badge: "/icon.png",
               });
             }
-            
+
             // Show toast
             (window as any).showToast?.(
-              result.data.success ? 'Dungeon completed successfully!' : 'Dungeon failed!',
-              result.data.success ? 'success' : 'error'
+              result.data.success
+                ? "Dungeon completed successfully!"
+                : "Dungeon failed!",
+              result.data.success ? "success" : "error"
             );
           } catch (error: any) {
             console.error("Failed to complete dungeon:", error);
@@ -531,38 +611,63 @@ export default function AdventureTab() {
     <div className="p-4 pb-20 relative">
       {/* Active Dungeon Banner (non-blocking) */}
       {activeDungeonRun && !activeDungeonRun.completed && (
-        <div 
+        <div
           className="mb-4 p-4 bg-gradient-to-b from-orange-800 to-red-900 border-4 border-amber-600"
           style={{
-            borderRadius: '12px',
-            boxShadow: '0 4px 0 #92400e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)',
+            borderRadius: "12px",
+            boxShadow:
+              "0 4px 0 #92400e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
           }}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <img 
-                src={getDungeonIcon(activeDungeonRun.dungeon.name)} 
-                alt={activeDungeonRun.dungeon.name} 
-                className="w-10 h-10 rounded border-2 border-amber-500" 
-                style={{ imageRendering: 'pixelated' }}
+              <img
+                src={getDungeonIcon(activeDungeonRun.dungeon.name)}
+                alt={activeDungeonRun.dungeon.name}
+                className="w-10 h-10 rounded border-2 border-amber-500"
+                style={{ imageRendering: "pixelated" }}
               />
               <div>
-                <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+                <p
+                  className="text-white font-bold text-lg"
+                  style={{
+                    fontFamily: "monospace",
+                    textShadow: "2px 2px 0 #000",
+                  }}
+                >
                   {activeDungeonRun.dungeon.name}
                 </p>
-                <p className="text-xs text-orange-200" style={{ fontFamily: 'monospace' }}>
+                <p
+                  className="text-xs text-orange-200"
+                  style={{ fontFamily: "monospace" }}
+                >
                   {activeDungeonRun.mode} Mode - In Progress
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-amber-300" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
-                {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, "0")}
+              <div
+                className="text-3xl font-bold text-amber-300"
+                style={{
+                  fontFamily: "monospace",
+                  textShadow: "2px 2px 0 #000",
+                }}
+              >
+                {Math.floor(timeRemaining / 60)}:
+                {String(timeRemaining % 60).padStart(2, "0")}
               </div>
-              <p className="text-xs text-orange-200" style={{ fontFamily: 'monospace' }}>Remaining</p>
+              <p
+                className="text-xs text-orange-200"
+                style={{ fontFamily: "monospace" }}
+              >
+                Remaining
+              </p>
             </div>
           </div>
-          <div className="w-full bg-stone-900 h-3 overflow-hidden mb-3" style={{ borderRadius: '0', border: '2px solid #78350f' }}>
+          <div
+            className="w-full bg-stone-900 h-3 overflow-hidden mb-3"
+            style={{ borderRadius: "0", border: "2px solid #78350f" }}
+          >
             <div
               className="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-1000"
               style={{
@@ -571,27 +676,34 @@ export default function AdventureTab() {
                     activeDungeonRun.dungeon.duration) *
                   100
                 }%`,
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
               }}
             />
           </div>
-          
+
           {/* Fast Finish Button */}
           <button
             onClick={() => fastFinishMutation.mutate(activeDungeonRun.id)}
-            disabled={!player || player.gems < fastFinishCost || fastFinishMutation.isPending}
+            disabled={
+              !player ||
+              player.gems < fastFinishCost ||
+              fastFinishMutation.isPending
+            }
             className="w-full px-4 py-3 bg-purple-700 hover:bg-purple-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
             style={{
-              border: '3px solid #6b21a8',
-              borderRadius: '8px',
-              boxShadow: '0 3px 0 #7e22ce, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-              textShadow: '1px 1px 0 #000',
-              fontFamily: 'monospace',
-              letterSpacing: '1px'
+              border: "3px solid #6b21a8",
+              borderRadius: "8px",
+              boxShadow:
+                "0 3px 0 #7e22ce, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+              textShadow: "1px 1px 0 #000",
+              fontFamily: "monospace",
+              letterSpacing: "1px",
             }}
           >
             <span className="relative z-10">
-              {fastFinishMutation.isPending ? '⏳ FINISHING...' : `⚡ FAST FINISH (${fastFinishCost} 💎)`}
+              {fastFinishMutation.isPending
+                ? "⏳ FINISHING..."
+                : `⚡ FAST FINISH (${fastFinishCost} 💎)`}
             </span>
             <div className="absolute inset-0 bg-gradient-to-b from-purple-400/20 to-transparent"></div>
           </button>
@@ -615,32 +727,74 @@ export default function AdventureTab() {
             className="bg-stone-800 rounded-lg border-2 border-amber-600 p-8 max-w-md w-full text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-xl font-bold text-amber-400 mb-4">{unclaimedReward.dungeonName}</h3>
+            <h3 className="text-xl font-bold text-amber-400 mb-4">
+              {unclaimedReward.dungeonName}
+            </h3>
             {unclaimedReward.result?.success ? (
               <>
                 <div className="relative w-32 h-32 mx-auto mb-4">
                   {/* Animated sparkles */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="absolute w-2 h-2 bg-yellow-300 rounded-full animate-ping" style={{ animationDuration: '1s', top: '20%', left: '30%' }}></div>
-                    <div className="absolute w-3 h-3 bg-amber-400 rounded-full animate-pulse" style={{ animationDuration: '1.5s', top: '30%', right: '20%' }}></div>
-                    <div className="absolute w-2 h-2 bg-yellow-200 rounded-full animate-ping" style={{ animationDuration: '2s', bottom: '30%', left: '20%' }}></div>
-                    <div className="absolute w-3 h-3 bg-amber-300 rounded-full animate-pulse" style={{ animationDuration: '1.2s', bottom: '20%', right: '30%' }}></div>
+                    <div
+                      className="absolute w-2 h-2 bg-yellow-300 rounded-full animate-ping"
+                      style={{
+                        animationDuration: "1s",
+                        top: "20%",
+                        left: "30%",
+                      }}
+                    ></div>
+                    <div
+                      className="absolute w-3 h-3 bg-amber-400 rounded-full animate-pulse"
+                      style={{
+                        animationDuration: "1.5s",
+                        top: "30%",
+                        right: "20%",
+                      }}
+                    ></div>
+                    <div
+                      className="absolute w-2 h-2 bg-yellow-200 rounded-full animate-ping"
+                      style={{
+                        animationDuration: "2s",
+                        bottom: "30%",
+                        left: "20%",
+                      }}
+                    ></div>
+                    <div
+                      className="absolute w-3 h-3 bg-amber-300 rounded-full animate-pulse"
+                      style={{
+                        animationDuration: "1.2s",
+                        bottom: "20%",
+                        right: "30%",
+                      }}
+                    ></div>
                   </div>
                   {/* Central glow */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-20 h-20 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 rounded-full animate-pulse" style={{
-                      boxShadow: '0 0 40px rgba(251, 191, 36, 0.8), 0 0 80px rgba(251, 191, 36, 0.4)',
-                      animationDuration: '2s'
-                    }}></div>
+                    <div
+                      className="w-20 h-20 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 rounded-full animate-pulse"
+                      style={{
+                        boxShadow:
+                          "0 0 40px rgba(251, 191, 36, 0.8), 0 0 80px rgba(251, 191, 36, 0.4)",
+                        animationDuration: "2s",
+                      }}
+                    ></div>
                   </div>
                   {/* Star shape in center */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <svg className="w-12 h-12 text-white animate-spin" style={{ animationDuration: '4s' }} fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="w-12 h-12 text-white animate-spin"
+                      style={{ animationDuration: "4s" }}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                   </div>
                 </div>
-                <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 mb-4 animate-pulse" style={{ textShadow: '0 0 20px rgba(251, 191, 36, 0.5)' }}>
+                <h2
+                  className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 mb-4 animate-pulse"
+                  style={{ textShadow: "0 0 20px rgba(251, 191, 36, 0.5)" }}
+                >
                   Victory!
                 </h2>
                 <div className="bg-stone-900 rounded-lg p-4 mb-4">
@@ -664,7 +818,13 @@ export default function AdventureTab() {
                 {unclaimedReward.result.itemsDropped &&
                   unclaimedReward.result.itemsDropped.length > 0 && (
                     <div className="bg-stone-900 rounded-lg p-4 mb-4">
-                      <h3 className="text-sm font-bold text-amber-400 mb-3" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+                      <h3
+                        className="text-sm font-bold text-amber-400 mb-3"
+                        style={{
+                          fontFamily: "monospace",
+                          textShadow: "1px 1px 0 #000",
+                        }}
+                      >
                         💎 ITEMS OBTAINED:
                       </h3>
                       <div className="grid grid-cols-3 gap-2">
@@ -675,21 +835,30 @@ export default function AdventureTab() {
                               className="bg-stone-800 p-2 rounded border-2 border-amber-600 text-center"
                             >
                               <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center p-1">
-                                {item.spriteId && getItemImage(item.spriteId, item.type) ? (
-                                  <img 
-                                    src={getItemImage(item.spriteId, item.type)!}
+                                {item.spriteId &&
+                                getItemImage(item.spriteId, item.type) ? (
+                                  <img
+                                    src={
+                                      getItemImage(item.spriteId, item.type)!
+                                    }
                                     alt={item.name}
                                     className="max-w-full max-h-full object-contain"
-                                    style={{ imageRendering: 'pixelated' }}
+                                    style={{ imageRendering: "pixelated" }}
                                   />
                                 ) : (
                                   <span className="text-3xl">📦</span>
                                 )}
                               </div>
-                              <p className="text-xs text-white font-bold truncate" style={{ fontFamily: 'monospace' }}>
+                              <p
+                                className="text-xs text-white font-bold truncate"
+                                style={{ fontFamily: "monospace" }}
+                              >
                                 {item.name}
                               </p>
-                              <p className="text-xs text-amber-400" style={{ fontFamily: 'monospace' }}>
+                              <p
+                                className="text-xs text-amber-400"
+                                style={{ fontFamily: "monospace" }}
+                              >
                                 x{item.quantity}
                               </p>
                             </div>
@@ -736,7 +905,7 @@ export default function AdventureTab() {
           </div>
         </div>
       )}
-      
+
       {/* Idle Farming Complete Modal */}
       {unclaimedIdleReward && (
         <div
@@ -751,11 +920,16 @@ export default function AdventureTab() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-6xl mb-4">🌾</div>
-            <h3 className="text-xl font-bold text-green-400 mb-2" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+            <h3
+              className="text-xl font-bold text-green-400 mb-2"
+              style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
+            >
               Idle Farming Complete!
             </h3>
-            <p className="text-sm text-gray-400 mb-4">You've been busy while away!</p>
-            
+            <p className="text-sm text-gray-400 mb-4">
+              You've been busy while away!
+            </p>
+
             <div className="bg-stone-900 rounded-lg p-4 mb-4">
               <div className="space-y-2 text-lg">
                 <div className="flex justify-between">
@@ -777,7 +951,13 @@ export default function AdventureTab() {
             {unclaimedIdleReward.itemsDropped &&
               unclaimedIdleReward.itemsDropped.length > 0 && (
                 <div className="bg-stone-900 rounded-lg p-4 mb-4">
-                  <h3 className="text-sm font-bold text-green-400 mb-3" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+                  <h3
+                    className="text-sm font-bold text-green-400 mb-3"
+                    style={{
+                      fontFamily: "monospace",
+                      textShadow: "1px 1px 0 #000",
+                    }}
+                  >
                     💎 ITEMS OBTAINED:
                   </h3>
                   <div className="grid grid-cols-3 gap-2">
@@ -788,21 +968,28 @@ export default function AdventureTab() {
                           className="bg-stone-800 p-2 rounded border-2 border-green-600 text-center"
                         >
                           <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center p-1">
-                            {item.spriteId && getItemImage(item.spriteId, item.type) ? (
-                              <img 
+                            {item.spriteId &&
+                            getItemImage(item.spriteId, item.type) ? (
+                              <img
                                 src={getItemImage(item.spriteId, item.type)!}
                                 alt={item.name}
                                 className="max-w-full max-h-full object-contain"
-                                style={{ imageRendering: 'pixelated' }}
+                                style={{ imageRendering: "pixelated" }}
                               />
                             ) : (
                               <span className="text-3xl">📦</span>
                             )}
                           </div>
-                          <p className="text-xs text-white font-bold truncate" style={{ fontFamily: 'monospace' }}>
+                          <p
+                            className="text-xs text-white font-bold truncate"
+                            style={{ fontFamily: "monospace" }}
+                          >
                             {item.name}
                           </p>
-                          <p className="text-xs text-green-400" style={{ fontFamily: 'monospace' }}>
+                          <p
+                            className="text-xs text-green-400"
+                            style={{ fontFamily: "monospace" }}
+                          >
                             x{item.quantity}
                           </p>
                         </div>
@@ -811,7 +998,7 @@ export default function AdventureTab() {
                   </div>
                 </div>
               )}
-            
+
             <button
               onClick={() => {
                 setUnclaimedIdleReward(null);
@@ -824,51 +1011,76 @@ export default function AdventureTab() {
           </div>
         </div>
       )}
-      
+
       {/* Idle Status Banner */}
       {idleStatus?.active && (
-        <div 
+        <div
           className="mb-4 p-4 bg-gradient-to-b from-green-800 to-green-900 border-4 border-green-600"
           style={{
-            borderRadius: '12px',
-            boxShadow: '0 4px 0 #15803d, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)',
+            borderRadius: "12px",
+            boxShadow:
+              "0 4px 0 #15803d, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
           }}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <img 
-                src={idleFarmingIcon} 
-                alt="Idle Farming" 
-                className="w-10 h-10 rounded border-2 border-green-500" 
-                style={{ imageRendering: 'pixelated' }}
+              <img
+                src={idleFarmingIcon}
+                alt="Idle Farming"
+                className="w-10 h-10 rounded border-2 border-green-500"
+                style={{ imageRendering: "pixelated" }}
               />
               <div>
-                <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+                <p
+                  className="text-white font-bold text-lg"
+                  style={{
+                    fontFamily: "monospace",
+                    textShadow: "2px 2px 0 #000",
+                  }}
+                >
                   Idle Farming Active
                 </p>
-                <p className="text-xs text-green-200" style={{ fontFamily: 'monospace' }}>
+                <p
+                  className="text-xs text-green-200"
+                  style={{ fontFamily: "monospace" }}
+                >
                   {idleStatus.canClaim ? "Ready to claim!" : "In Progress"}
                 </p>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-green-300" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
-                {idleStatus.canClaim 
+              <div
+                className="text-3xl font-bold text-green-300"
+                style={{
+                  fontFamily: "monospace",
+                  textShadow: "2px 2px 0 #000",
+                }}
+              >
+                {idleStatus.canClaim
                   ? "0:00"
-                  : `${Math.floor(idleTimeRemaining / 60)}:${String(idleTimeRemaining % 60).padStart(2, "0")}`
-                }
+                  : `${Math.floor(idleTimeRemaining / 60)}:${String(
+                      idleTimeRemaining % 60
+                    ).padStart(2, "0")}`}
               </div>
-              <p className="text-xs text-green-200" style={{ fontFamily: 'monospace' }}>Remaining</p>
+              <p
+                className="text-xs text-green-200"
+                style={{ fontFamily: "monospace" }}
+              >
+                Remaining
+              </p>
             </div>
           </div>
-          <div className="w-full bg-stone-900 h-3 overflow-hidden mb-3" style={{ borderRadius: '0', border: '2px solid #15803d' }}>
+          <div
+            className="w-full bg-stone-900 h-3 overflow-hidden mb-3"
+            style={{ borderRadius: "0", border: "2px solid #15803d" }}
+          >
             <div
               className="bg-gradient-to-r from-green-500 to-lime-400 h-full transition-all duration-1000"
               style={{
-                width: idleStatus.canClaim 
-                  ? '100%' 
+                width: idleStatus.canClaim
+                  ? "100%"
                   : `${((3600 - idleTimeRemaining) / 3600) * 100}%`,
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
               }}
             />
           </div>
@@ -877,15 +1089,17 @@ export default function AdventureTab() {
             disabled={!idleStatus.canClaim || claimIdleMutation.isPending}
             className="w-full px-4 py-3 bg-green-700 hover:bg-green-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
             style={{
-              border: '3px solid #15803d',
-              borderRadius: '0',
-              boxShadow: '0 3px 0 #166534, inset 0 1px 0 rgba(255,255,255,0.2)',
-              textShadow: '1px 1px 0 #000',
-              fontFamily: 'monospace',
-              letterSpacing: '1px'
+              border: "3px solid #15803d",
+              borderRadius: "0",
+              boxShadow: "0 3px 0 #166534, inset 0 1px 0 rgba(255,255,255,0.2)",
+              textShadow: "1px 1px 0 #000",
+              fontFamily: "monospace",
+              letterSpacing: "1px",
             }}
           >
-            <span className="relative z-10">{claimIdleMutation.isPending ? "CLAIMING..." : "CLAIM REWARDS"}</span>
+            <span className="relative z-10">
+              {claimIdleMutation.isPending ? "CLAIMING..." : "CLAIM REWARDS"}
+            </span>
             <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>
           </button>
         </div>
@@ -893,21 +1107,29 @@ export default function AdventureTab() {
 
       {/* Start Idle Farming */}
       {!idleStatus?.active && (
-        <div 
+        <div
           className="mb-4 p-4 bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600"
           style={{
-            borderRadius: '12px',
-            boxShadow: '0 4px 0 #57534e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)',
+            borderRadius: "12px",
+            boxShadow:
+              "0 4px 0 #57534e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
           }}
         >
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">💤</span>
-            <p className="text-white font-bold text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+            <p
+              className="text-white font-bold text-lg"
+              style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
+            >
               Start Idle Farming
             </p>
           </div>
-          <p className="text-sm text-gray-300 mb-3" style={{ fontFamily: 'monospace' }}>
-            Let your character farm resources while you're away. Earn gold, exp, and items!
+          <p
+            className="text-sm text-gray-300 mb-3"
+            style={{ fontFamily: "monospace" }}
+          >
+            Let your character farm resources while you're away. Earn gold, exp,
+            and items!
           </p>
           {character && character.level >= 10 ? (
             <div className="grid grid-cols-2 gap-3">
@@ -916,12 +1138,13 @@ export default function AdventureTab() {
                 disabled={startIdleMutation.isPending}
                 className="px-4 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
                 style={{
-                  border: '3px solid #92400e',
-                  borderRadius: '0',
-                  boxShadow: '0 3px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)',
-                  textShadow: '1px 1px 0 #000',
-                  fontFamily: 'monospace',
-                  letterSpacing: '1px'
+                  border: "3px solid #92400e",
+                  borderRadius: "0",
+                  boxShadow:
+                    "0 3px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)",
+                  textShadow: "1px 1px 0 #000",
+                  fontFamily: "monospace",
+                  letterSpacing: "1px",
                 }}
               >
                 <span className="relative z-10 text-sm">
@@ -934,12 +1157,13 @@ export default function AdventureTab() {
                 disabled={startIdleMutation.isPending}
                 className="px-4 py-3 bg-purple-700 hover:bg-purple-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
                 style={{
-                  border: '3px solid #581c87',
-                  borderRadius: '0',
-                  boxShadow: '0 3px 0 #7e22ce, inset 0 1px 0 rgba(255,255,255,0.2)',
-                  textShadow: '1px 1px 0 #000',
-                  fontFamily: 'monospace',
-                  letterSpacing: '1px'
+                  border: "3px solid #581c87",
+                  borderRadius: "0",
+                  boxShadow:
+                    "0 3px 0 #7e22ce, inset 0 1px 0 rgba(255,255,255,0.2)",
+                  textShadow: "1px 1px 0 #000",
+                  fontFamily: "monospace",
+                  letterSpacing: "1px",
                 }}
               >
                 <span className="relative z-10 text-sm">3 HOURS</span>
@@ -952,16 +1176,19 @@ export default function AdventureTab() {
               disabled={startIdleMutation.isPending}
               className="w-full px-4 py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
               style={{
-                border: '3px solid #92400e',
-                borderRadius: '0',
-                boxShadow: '0 3px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)',
-                textShadow: '1px 1px 0 #000',
-                fontFamily: 'monospace',
-                letterSpacing: '1px'
+                border: "3px solid #92400e",
+                borderRadius: "0",
+                boxShadow:
+                  "0 3px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)",
+                textShadow: "1px 1px 0 #000",
+                fontFamily: "monospace",
+                letterSpacing: "1px",
               }}
             >
               <span className="relative z-10">
-                {startIdleMutation.isPending ? "STARTING..." : "START IDLE FARMING (1 HOUR)"}
+                {startIdleMutation.isPending
+                  ? "STARTING..."
+                  : "START IDLE FARMING (1 HOUR)"}
               </span>
               <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
             </button>
@@ -979,16 +1206,26 @@ export default function AdventureTab() {
               : "bg-stone-800 text-gray-400 hover:bg-stone-700"
           }`}
           style={{
-            border: '2px solid #92400e',
-            borderRadius: '0',
-            boxShadow: view === "dungeons" ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
-            textShadow: view === "dungeons" ? '1px 1px 0 #000' : 'none',
-            fontFamily: 'monospace',
+            border: "2px solid #92400e",
+            borderRadius: "0",
+            boxShadow:
+              view === "dungeons"
+                ? "0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)"
+                : "none",
+            textShadow: view === "dungeons" ? "1px 1px 0 #000" : "none",
+            fontFamily: "monospace",
           }}
         >
-          <img src={dungeonsIcon} alt="Dungeons" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
+          <img
+            src={dungeonsIcon}
+            alt="Dungeons"
+            className="w-5 h-5"
+            style={{ imageRendering: "pixelated" }}
+          />
           <span className="relative z-10">Dungeons</span>
-          {view === "dungeons" && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
+          {view === "dungeons" && (
+            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+          )}
         </button>
         <button
           onClick={() => setView("history")}
@@ -998,16 +1235,26 @@ export default function AdventureTab() {
               : "bg-stone-800 text-gray-400 hover:bg-stone-700"
           }`}
           style={{
-            border: '2px solid #92400e',
-            borderRadius: '0',
-            boxShadow: view === "history" ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
-            textShadow: view === "history" ? '1px 1px 0 #000' : 'none',
-            fontFamily: 'monospace',
+            border: "2px solid #92400e",
+            borderRadius: "0",
+            boxShadow:
+              view === "history"
+                ? "0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)"
+                : "none",
+            textShadow: view === "history" ? "1px 1px 0 #000" : "none",
+            fontFamily: "monospace",
           }}
         >
-          <img src={historyIcon} alt="History" className="w-5 h-5" style={{ imageRendering: 'pixelated' }} />
+          <img
+            src={historyIcon}
+            alt="History"
+            className="w-5 h-5"
+            style={{ imageRendering: "pixelated" }}
+          />
           <span className="relative z-10">History</span>
-          {view === "history" && <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>}
+          {view === "history" && (
+            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+          )}
         </button>
       </div>
 
@@ -1016,132 +1263,115 @@ export default function AdventureTab() {
         <div className="space-y-3">
           {dungeons && dungeons.length > 0 ? (
             dungeons
-              .filter((dungeon: any) => character && character.level >= dungeon.recommendedLevel)
+              .filter(
+                (dungeon: any) =>
+                  character && character.level >= dungeon.recommendedLevel
+              )
               .map((dungeon: any) => (
-              <div
-                key={dungeon.id}
-                className="p-4 bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600 hover:border-amber-600 transition-all cursor-pointer active:translate-y-1"
-                onClick={() => setSelectedDungeon(dungeon)}
-                style={{
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 0 #57534e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)',
-                }}
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  <img 
-                    src={getDungeonIcon(dungeon.name)} 
-                    alt={dungeon.name} 
-                    className="w-14 h-14 border-2 border-stone-500" 
-                    style={{ imageRendering: 'pixelated', borderRadius: '8px' }}
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-white text-lg" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
-                            {dungeon.name}
-                          </h3>
-                          <span 
-                            className="text-xs font-bold px-2 py-0.5 bg-blue-600 text-white border-2 border-blue-800"
-                            style={{ fontFamily: 'monospace' }}
-                          >
-                            Lv.{dungeon.recommendedLevel}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-400" style={{ fontFamily: 'monospace' }}>{dungeon.zone.name}</p>
-                      </div>
-                      <span
-                        className={`text-sm font-bold px-2 py-1 ${getDifficultyColor(dungeon.difficulty)}`}
-                        style={{
-                          fontFamily: 'monospace',
-                          textShadow: '1px 1px 0 #000',
-                          border: '2px solid rgba(0,0,0,0.3)',
-                          borderRadius: '4px',
-                          backgroundColor: 'rgba(0,0,0,0.3)'
-                        }}
-                      >
-                        {dungeon.difficulty}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                  <div className="flex items-center gap-1 text-amber-400" style={{ fontFamily: 'monospace' }}>
-                    <Trophy size={14} />
-                    <span>{formatGold(dungeon.baseGoldReward)} Gold</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-blue-400" style={{ fontFamily: 'monospace' }}>
-                    <Zap size={14} />
-                    <span>{dungeon.energyCost} Energy</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-green-400" style={{ fontFamily: 'monospace' }}>
-                    <Clock size={14} />
-                    <span>{Math.floor(dungeon.duration / 60)} min</span>
-                  </div>
-                  <div className="flex items-center gap-1 text-purple-400" style={{ fontFamily: 'monospace' }}>
-                    <span>⚔️ CP: {dungeon.recommendedCP}</span>
-                  </div>
-                </div>
-
-                {/* Loot Preview - Show actual items with images */}
-                {character && dungeon.lootTable && (
-                  <div className="border-t-2 border-stone-700 pt-2 mt-2">
-                    <p className="text-xs font-bold text-amber-400 mb-2" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
-                      💎 POSSIBLE REWARDS:
-                    </p>
-                    <div className="grid grid-cols-4 gap-2">
-                      {dungeon.lootTable
-                        .filter(
-                          (entry: any) =>
-                            !entry.classRestriction ||
-                            entry.classRestriction === character.class
-                        )
-                        .slice(0, 4)
-                        .map((entry: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className="bg-stone-950 p-1 text-center relative"
-                            style={{
-                              border: '2px solid #78350f',
-                              borderRadius: '6px',
-                              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1)'
-                            }}
-                          >
-                            <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center">
-                              {entry.item?.spriteId && getItemImage(entry.item.spriteId, entry.item.type) ? (
-                                <img 
-                                  src={getItemImage(entry.item.spriteId, entry.item.type)!}
-                                  alt={entry.item.name}
-                                  className="max-w-full max-h-full object-contain p-1"
-                                  style={{ imageRendering: 'pixelated' }}
-                                />
-                              ) : (
-                                <span className="text-2xl">📦</span>
-                              )}
-                            </div>
-                            <div className="absolute top-0 right-0 bg-amber-600 text-white text-[8px] px-1 rounded-bl font-bold">
-                              {Math.round(entry.dropRate * 100)}%
-                            </div>
-                            {entry.item && (
-                              <p className="text-[10px] text-amber-300 font-bold truncate" style={{ fontFamily: 'monospace' }}>
-                                {entry.item.name}
-                              </p>
-                            )}
+                <div
+                  key={dungeon.id}
+                  className="p-4 bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600 hover:border-amber-600 transition-all cursor-pointer active:translate-y-1"
+                  onClick={() => setSelectedDungeon(dungeon)}
+                  style={{
+                    borderRadius: "12px",
+                    boxShadow:
+                      "0 4px 0 #57534e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
+                  }}
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <img
+                      src={getDungeonIcon(dungeon.name)}
+                      alt={dungeon.name}
+                      className="w-14 h-14 border-2 border-stone-500"
+                      style={{
+                        imageRendering: "pixelated",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3
+                              className="font-bold text-white text-lg"
+                              style={{
+                                fontFamily: "monospace",
+                                textShadow: "2px 2px 0 #000",
+                              }}
+                            >
+                              {dungeon.name}
+                            </h3>
+                            <span
+                              className="text-xs font-bold px-2 py-0.5 bg-blue-600 text-white border-2 border-blue-800"
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              Lv.{dungeon.recommendedLevel}
+                            </span>
                           </div>
-                        ))}
+                          <p
+                            className="text-sm text-gray-400"
+                            style={{ fontFamily: "monospace" }}
+                          >
+                            {dungeon.zone.name}
+                          </p>
+                        </div>
+                        <span
+                          className={`text-sm font-bold px-2 py-1 ${getDifficultyColor(
+                            dungeon.difficulty
+                          )}`}
+                          style={{
+                            fontFamily: "monospace",
+                            textShadow: "1px 1px 0 #000",
+                            border: "2px solid rgba(0,0,0,0.3)",
+                            borderRadius: "4px",
+                            backgroundColor: "rgba(0,0,0,0.3)",
+                          }}
+                        >
+                          {dungeon.difficulty}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                )}
 
-                {character &&
-                  character.combatPower < dungeon.recommendedCP * 0.8 && (
-                    <div className="text-xs text-red-400 font-bold">
-                      ⚠️ Combat Power too low!
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div
+                      className="flex items-center gap-1 text-amber-400"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      <img src={goldIcon} alt="Gold" className="w-4 h-4" style={{ imageRendering: "pixelated" }} />
+                      <span>{formatGold(dungeon.baseGoldReward)} Gold</span>
                     </div>
-                  )}
-              </div>
-            ))
+                    <div
+                      className="flex items-center gap-1 text-blue-400"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      <img src={energyIcon} alt="Energy" className="w-4 h-4" style={{ imageRendering: "pixelated" }} />
+                      <span>{dungeon.energyCost} Energy</span>
+                    </div>
+                    <div
+                      className="flex items-center gap-1 text-green-400"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      <img src={clockIcon} alt="Time" className="w-4 h-4" style={{ imageRendering: "pixelated" }} />
+                      <span>{Math.floor(dungeon.duration / 60)} min</span>
+                    </div>
+                    <div
+                      className="flex items-center gap-1 text-purple-400"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      <img src={cpIcon} alt="CP" className="w-4 h-4" style={{ imageRendering: "pixelated" }} />
+                      <span>CP: {dungeon.recommendedCP}</span>
+                    </div>
+                  </div>
+
+                  {character &&
+                    character.combatPower < dungeon.recommendedCP * 0.8 && (
+                      <div className="text-xs text-red-400 font-bold">
+                        ⚠️ Combat Power too low!
+                      </div>
+                    )}
+                </div>
+              ))
           ) : (
             <div className="text-center text-gray-400 py-8">
               <p>No dungeons available. Check back later!</p>
@@ -1158,19 +1388,19 @@ export default function AdventureTab() {
               <div
                 key={run.id}
                 className={`p-4 bg-stone-800 rounded-lg border-2 ${
-                  run.status === 'Completed' 
-                    ? 'border-green-700' 
-                    : run.status === 'Failed' 
-                    ? 'border-red-700' 
-                    : 'border-stone-700'
+                  run.status === "Completed"
+                    ? "border-green-700"
+                    : run.status === "Failed"
+                    ? "border-red-700"
+                    : "border-stone-700"
                 }`}
               >
                 <div className="flex items-start gap-3 mb-2">
-                  <img 
-                    src={getDungeonIcon(run.dungeon.name)} 
-                    alt={run.dungeon.name} 
-                    className="w-12 h-12 rounded border-2 border-stone-600" 
-                    style={{ imageRendering: 'pixelated' }}
+                  <img
+                    src={getDungeonIcon(run.dungeon.name)}
+                    alt={run.dungeon.name}
+                    className="w-12 h-12 rounded border-2 border-stone-600"
+                    style={{ imageRendering: "pixelated" }}
                   />
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
@@ -1178,15 +1408,17 @@ export default function AdventureTab() {
                         <h3 className="font-bold text-white text-lg">
                           {run.dungeon.name}
                         </h3>
-                        <p className="text-sm text-gray-400">{run.dungeon.zone.name}</p>
+                        <p className="text-sm text-gray-400">
+                          {run.dungeon.zone.name}
+                        </p>
                       </div>
                       <span
                         className={`text-sm font-bold ${
-                          run.status === 'Completed' 
-                            ? 'text-green-400' 
-                            : run.status === 'Failed' 
-                            ? 'text-red-400' 
-                            : 'text-yellow-400'
+                          run.status === "Completed"
+                            ? "text-green-400"
+                            : run.status === "Failed"
+                            ? "text-red-400"
+                            : "text-yellow-400"
                         }`}
                       >
                         {run.status}
@@ -1222,7 +1454,9 @@ export default function AdventureTab() {
                       {run.itemsEarned.map((item: any, idx: number) => (
                         <span
                           key={idx}
-                          className={`text-xs px-2 py-1 bg-stone-900 rounded ${getRarityColor(item.rarity)}`}
+                          className={`text-xs px-2 py-1 bg-stone-900 rounded ${getRarityColor(
+                            item.rarity
+                          )}`}
                         >
                           {item.name}
                         </span>
@@ -1234,7 +1468,10 @@ export default function AdventureTab() {
             ))
           ) : (
             <div className="text-center text-gray-400 py-8">
-              <p>No dungeon history yet. Complete some dungeons to see your history!</p>
+              <p>
+                No dungeon history yet. Complete some dungeons to see your
+                history!
+              </p>
             </div>
           )}
         </div>
@@ -1242,51 +1479,237 @@ export default function AdventureTab() {
 
       {/* Dungeon Modal */}
       {selectedDungeon && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-stone-800 rounded-lg border-2 border-amber-600 p-6 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-white mb-2">
-              {selectedDungeon.name}
-            </h2>
-            <p className="text-gray-300 text-sm mb-4">
-              {selectedDungeon.description}
-            </p>
-
-            <div className="space-y-2 mb-4 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Difficulty:</span>
-                <span
-                  className={`font-bold ${getDifficultyColor(
-                    selectedDungeon.difficulty
-                  )}`}
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+          <div
+            className="bg-stone-800 border-4 border-amber-600 p-6 max-w-lg w-full"
+            style={{
+              borderRadius: "0",
+              boxShadow:
+                "0 6px 0 #78350f, 0 12px 0 rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.2)",
+              fontFamily: "monospace",
+            }}
+          >
+            {/* Header with Dungeon Icon */}
+            <div className="flex items-start gap-4 mb-4 pb-4 border-b-2 border-stone-700">
+              <img
+                src={getDungeonIcon(selectedDungeon.name)}
+                alt={selectedDungeon.name}
+                className="w-20 h-20 border-3 border-amber-600"
+                style={{
+                  imageRendering: "pixelated",
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 0 #78350f",
+                }}
+              />
+              <div className="flex-1">
+                <h2
+                  className="text-2xl font-bold text-amber-400 mb-1"
+                  style={{ textShadow: "2px 2px 0 #000" }}
                 >
-                  {selectedDungeon.difficulty}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Duration:</span>
-                <span className="text-white">
-                  {Math.floor(selectedDungeon.duration / 60)} minutes
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Energy Cost:</span>
-                <span className="text-blue-400">
-                  {selectedDungeon.energyCost}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Gold Reward:</span>
-                <span className="text-yellow-400">
-                  {formatGold(selectedDungeon.baseGoldReward)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">EXP Reward:</span>
-                <span className="text-purple-400">
-                  {selectedDungeon.baseExpReward}
-                </span>
+                  {selectedDungeon.name}
+                </h2>
+                <p className="text-xs text-gray-400 mb-2">
+                  {selectedDungeon.zone?.name || "Unknown Zone"}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`text-sm font-bold px-2 py-1 ${getDifficultyColor(
+                      selectedDungeon.difficulty
+                    )}`}
+                    style={{
+                      textShadow: "1px 1px 0 #000",
+                      border: "2px solid rgba(0,0,0,0.5)",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    {selectedDungeon.difficulty}
+                  </span>
+                  <span className="text-xs font-bold px-2 py-1 bg-blue-600 text-white border-2 border-blue-800">
+                    Lv.{selectedDungeon.recommendedLevel}
+                  </span>
+                </div>
               </div>
             </div>
+
+            <p className="text-sm text-gray-300 mb-4 italic">
+              "{selectedDungeon.description}"
+            </p>
+
+            {/* Stats Grid with Icons */}
+            <div
+              className="bg-stone-900 border-2 border-stone-700 p-4 mb-4"
+              style={{ borderRadius: "8px" }}
+            >
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="flex items-center gap-1 flex-nowrap">
+                  <img
+                    src={energyIcon}
+                    alt="Energy"
+                    className="w-5 h-5 flex-shrink-0"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  <span className="text-gray-400 whitespace-nowrap">Energy:</span>
+                  <span className="text-blue-400 font-bold whitespace-nowrap">
+                    {selectedDungeon.energyCost}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 flex-nowrap">
+                  <img
+                    src={hpIcon}
+                    alt="HP"
+                    className="w-5 h-5 flex-shrink-0"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  <span className="text-gray-400 whitespace-nowrap">HP Cost:</span>
+                  <span className="text-red-400 font-bold whitespace-nowrap">
+                    ~{Math.round(selectedDungeon.recommendedCP * 0.2)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 flex-nowrap">
+                  <img src={clockIcon} alt="Time" className="w-5 h-5 flex-shrink-0" style={{ imageRendering: "pixelated" }} />
+                  <span className="text-gray-400 whitespace-nowrap">Duration:</span>
+                  <span className="text-green-400 font-bold whitespace-nowrap">
+                    {Math.floor(selectedDungeon.duration / 60)} min
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 flex-nowrap">
+                  <img src={goldIcon} alt="Gold" className="w-5 h-5 flex-shrink-0" style={{ imageRendering: "pixelated" }} />
+                  <span className="text-gray-400 whitespace-nowrap">Gold:</span>
+                  <span className="text-yellow-400 font-bold whitespace-nowrap">
+                    {selectedDungeon.baseGoldReward}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 flex-nowrap col-span-2">
+                  <img
+                    src={expIcon}
+                    alt="EXP"
+                    className="w-5 h-5 flex-shrink-0"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  <span className="text-gray-400 whitespace-nowrap">EXP Reward:</span>
+                  <span className="text-purple-400 font-bold whitespace-nowrap">
+                    {selectedDungeon.baseExpReward}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Monsters Section */}
+            {selectedDungeon.description && (
+              <div
+                className="bg-red-950/30 border-2 border-red-900 p-3 mb-4"
+                style={{ borderRadius: "8px" }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <img src={monstersIcon} alt="Monsters" className="w-5 h-5" style={{ imageRendering: "pixelated" }} />
+                  <span className="text-sm font-bold text-red-400">
+                    MONSTERS:
+                  </span>
+                </div>
+                <p className="text-xs text-gray-300">
+                  {selectedDungeon.description.includes("Boss:")
+                    ? selectedDungeon.description.split("Boss:")[1]?.trim()
+                    : "Various enemies"}
+                </p>
+              </div>
+            )}
+
+            {/* Collapsible Possible Rewards */}
+            {character &&
+              selectedDungeon.lootTable &&
+              selectedDungeon.lootTable.length > 0 && (
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowRewards(!showRewards)}
+                    className="w-full py-2 bg-amber-900/50 hover:bg-amber-900/70 border-2 border-amber-700 text-amber-400 font-bold flex items-center justify-between px-3 transition"
+                    style={{
+                      borderRadius: "6px",
+                      textShadow: "1px 1px 0 #000",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <img src={rewardIcon} alt="Rewards" className="w-4 h-4" style={{ imageRendering: "pixelated" }} />
+                      POSSIBLE REWARDS (
+                      {
+                        selectedDungeon.lootTable.filter(
+                          (e: any) =>
+                            !e.classRestriction ||
+                            e.classRestriction === character.class
+                        ).length
+                      }
+                      )
+                    </span>
+                    {showRewards ? (
+                      <ChevronUp size={20} />
+                    ) : (
+                      <ChevronDown size={20} />
+                    )}
+                  </button>
+
+                  {showRewards && (
+                    <div
+                      className="mt-2 bg-stone-950 border-2 border-stone-700 p-3"
+                      style={{ borderRadius: "6px" }}
+                    >
+                      <div className="grid grid-cols-4 gap-2">
+                        {selectedDungeon.lootTable
+                          .filter(
+                            (entry: any) =>
+                              !entry.classRestriction ||
+                              entry.classRestriction === character.class
+                          )
+                          .map((entry: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className="bg-stone-900 p-2 relative"
+                              style={{
+                                border: "2px solid #78350f",
+                                borderRadius: "6px",
+                                boxShadow:
+                                  "inset 0 1px 0 rgba(255,255,255,0.1)",
+                              }}
+                            >
+                              <div className="w-full aspect-square bg-stone-800 rounded mb-1 flex items-center justify-center">
+                                {entry.item?.spriteId &&
+                                getItemImage(
+                                  entry.item.spriteId,
+                                  entry.item.type
+                                ) ? (
+                                  <img
+                                    src={
+                                      getItemImage(
+                                        entry.item.spriteId,
+                                        entry.item.type
+                                      )!
+                                    }
+                                    alt={entry.item.name}
+                                    className="max-w-full max-h-full object-contain p-1"
+                                    style={{ imageRendering: "pixelated" }}
+                                  />
+                                ) : (
+                                  <span className="text-2xl">📦</span>
+                                )}
+                              </div>
+                              <div className="absolute top-1 right-1 bg-amber-600 text-white text-[9px] px-1.5 py-0.5 rounded font-bold">
+                                {Math.round(entry.dropRate * 100)}%
+                              </div>
+                              {entry.item && (
+                                <p
+                                  className={`text-[9px] font-bold text-center truncate ${getRarityColor(
+                                    entry.item.rarity
+                                  )}`}
+                                >
+                                  {entry.item.name}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-3">
@@ -1307,12 +1730,13 @@ export default function AdventureTab() {
                   disabled={startDungeonMutation.isPending}
                   className="py-3 bg-blue-700 hover:bg-blue-600 text-white font-bold transition relative overflow-hidden group disabled:opacity-50"
                   style={{
-                    border: '3px solid #1e3a8a',
-                    borderRadius: '0',
-                    boxShadow: '0 3px 0 #1e40af, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-                    textShadow: '1px 1px 0 #000',
-                    fontFamily: 'monospace',
-                    letterSpacing: '1px'
+                    border: "3px solid #1e3a8a",
+                    borderRadius: "0",
+                    boxShadow:
+                      "0 3px 0 #1e40af, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                    textShadow: "1px 1px 0 #000",
+                    fontFamily: "monospace",
+                    letterSpacing: "1px",
                   }}
                 >
                   <span className="relative z-10">💤 IDLE RUN</span>
@@ -1335,12 +1759,13 @@ export default function AdventureTab() {
                   disabled={startDungeonMutation.isPending}
                   className="py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition relative overflow-hidden group disabled:opacity-50"
                   style={{
-                    border: '3px solid #92400e',
-                    borderRadius: '0',
-                    boxShadow: '0 3px 0 #b45309, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
-                    textShadow: '1px 1px 0 #000',
-                    fontFamily: 'monospace',
-                    letterSpacing: '1px'
+                    border: "3px solid #92400e",
+                    borderRadius: "0",
+                    boxShadow:
+                      "0 3px 0 #b45309, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                    textShadow: "1px 1px 0 #000",
+                    fontFamily: "monospace",
+                    letterSpacing: "1px",
                   }}
                 >
                   <span className="relative z-10">⚡ ACTIVE 1.5x</span>

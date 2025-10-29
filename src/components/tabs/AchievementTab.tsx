@@ -255,7 +255,19 @@ export default function AchievementTab() {
                   achievement.completed ? 'bg-amber-900/50' : 'bg-stone-900'
                 }`}
               >
-                {achievement.iconId === 'achievement' ? (
+                {achievement.iconId && achievement.iconId !== 'achievement' ? (
+                  <img
+                    src={`/assets/ui/titleIcons/${achievement.iconId}.png`}
+                    alt={achievement.name}
+                    className="w-10 h-10"
+                    style={{ imageRendering: 'pixelated' }}
+                    onError={(e) => {
+                      // Fallback to generic icon if title icon doesn't exist
+                      (e.target as HTMLImageElement).src = achievementIcon;
+                      (e.target as HTMLImageElement).className = "w-8 h-8";
+                    }}
+                  />
+                ) : achievement.iconId === 'achievement' ? (
                   <img
                     src={achievementIcon}
                     alt="Achievement"

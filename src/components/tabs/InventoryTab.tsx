@@ -11,77 +11,94 @@ export default function InventoryTab() {
   const { character, player, setCharacter, setPlayer } = useGameStore();
 
   const getGuildItemPath = (spriteId: string, itemType?: string) => {
-    console.log('🖼️ [INVENTORY] Getting guild item path for:', spriteId);
-    
     // FIRST: Convert tier names to numbers (bronze→1, silver→2, gold→3, diamond→4)
     let fileName = spriteId;
     const tierMap: { [key: string]: string } = {
-      'bronze': '1',
-      'silver': '2',
-      'gold': '3',
-      'diamond': '4',
+      bronze: "1",
+      silver: "2",
+      gold: "3",
+      diamond: "4",
     };
-    
+
     for (const [tier, number] of Object.entries(tierMap)) {
       if (fileName.includes(`_${tier}`)) {
         fileName = fileName.replace(`_${tier}`, number);
         break;
       }
     }
-    
-    console.log('   → After tier mapping:', fileName);
-    
+
+    console.log("   → After tier mapping:", fileName);
+
     // Handle guild_key (no tier, maps to key1.png)
-    if (spriteId === 'guild_key') {
+    if (spriteId === "guild_key") {
       return `chests_and_keys/key1.png`;
     }
-    
+
     // Handle guild_chest# (maps to Chest#.png with capital C)
-    if (fileName.startsWith('guild_chest')) {
-      const num = fileName.replace('guild_chest', '');
+    if (fileName.startsWith("guild_chest")) {
+      const num = fileName.replace("guild_chest", "");
       return `chests_and_keys/Chest${num}.png`;
     }
-    
+
     // Handle guild_sword# (maps to guildsword#.png - no underscore)
-    if (fileName.startsWith('guild_sword')) {
-      const finalName = fileName.replace('guild_sword', 'guildsword');
+    if (fileName.startsWith("guild_sword")) {
+      const finalName = fileName.replace("guild_sword", "guildsword");
       return `weapons/guild_sword/${finalName}.png`;
     }
-    
+
     // Handle other weapons
-    if (fileName.startsWith('guild_bow')) return `weapons/guild_bow/${fileName}.png`;
-    if (fileName.startsWith('guild_dagger')) return `weapons/guild_dagger/${fileName}.png`;
-    if (fileName.startsWith('guild_shield')) return `weapons/guild_shield/${fileName}.png`;
-    if (fileName.startsWith('guild_staff')) return `weapons/guild_staff/${fileName}.png`;
-    
+    if (fileName.startsWith("guild_bow"))
+      return `weapons/guild_bow/${fileName}.png`;
+    if (fileName.startsWith("guild_dagger"))
+      return `weapons/guild_dagger/${fileName}.png`;
+    if (fileName.startsWith("guild_shield"))
+      return `weapons/guild_shield/${fileName}.png`;
+    if (fileName.startsWith("guild_staff"))
+      return `weapons/guild_staff/${fileName}.png`;
+
     // Handle armors
-    if (fileName.startsWith('guild_armor')) return `armors/warrior_armors/${fileName}.png`;
-    
+    if (fileName.startsWith("guild_armor"))
+      return `armors/warrior_armors/${fileName}.png`;
+
     // Handle armor pieces
     // guild_glove1 to guild_glove4
-    if (fileName.includes('glove')) return `guild_armor_pieces/gloves/${fileName}.png`;
+    if (fileName.includes("glove"))
+      return `guild_armor_pieces/gloves/${fileName}.png`;
     // guild_shoe1 → guild_shoes1.png
-    if (fileName.includes('boot') || fileName.includes('shoe')) {
-      const shoeName = fileName.replace('guild_boot', 'guild_shoes').replace('guild_shoe', 'guild_shoes');
+    if (fileName.includes("boot") || fileName.includes("shoe")) {
+      const shoeName = fileName
+        .replace("guild_boot", "guild_shoes")
+        .replace("guild_shoe", "guild_shoes");
       return `guild_armor_pieces/shoes/${shoeName}.png`;
     }
-    
+
     // Handle accessories (map to Icon files)
-    if (fileName === 'guild_belt') return `guild_accessories/belts/Icon27.png`;
-    if (fileName === 'guild_earring') return `guild_accessories/earrings/Icon12.png`;
-    if (fileName === 'guild_necklace') return `guild_accessories/necklaces/Icon29.png`;
-    if (fileName === 'guild_ring') return `guild_accessories/rings/Icon1.png`;
-    
+    if (fileName === "guild_belt") return `guild_accessories/belts/Icon27.png`;
+    if (fileName === "guild_earring")
+      return `guild_accessories/earrings/Icon12.png`;
+    if (fileName === "guild_necklace")
+      return `guild_accessories/necklaces/Icon29.png`;
+    if (fileName === "guild_ring") return `guild_accessories/rings/Icon1.png`;
+
     // Handle Icon files directly
-    if (fileName.startsWith('Icon')) {
-      const iconNum = parseInt(fileName.match(/\d+/)?.[0] || '0');
-      if (iconNum >= 1 && iconNum <= 11) return `guild_accessories/rings/${fileName}.png`;
-      if (iconNum >= 12 && iconNum <= 20) return `guild_accessories/earrings/${fileName}.png`;
-      if (iconNum >= 29 && iconNum <= 48) return `guild_accessories/necklaces/${fileName}.png`;
-      if (iconNum === 2 || iconNum === 27 || iconNum === 35) return `guild_accessories/belts/${fileName}.png`;
+    if (fileName.startsWith("Icon")) {
+      const iconNum = parseInt(fileName.match(/\d+/)?.[0] || "0");
+      if (iconNum >= 1 && iconNum <= 11)
+        return `guild_accessories/rings/${fileName}.png`;
+      if (iconNum >= 12 && iconNum <= 20)
+        return `guild_accessories/earrings/${fileName}.png`;
+      if (iconNum >= 29 && iconNum <= 48)
+        return `guild_accessories/necklaces/${fileName}.png`;
+      if (iconNum === 2 || iconNum === 27 || iconNum === 35)
+        return `guild_accessories/belts/${fileName}.png`;
     }
-    
-    console.warn('⚠️ [INVENTORY] No mapping found for guild item:', spriteId, '→', fileName);
+
+    console.warn(
+      "⚠️ [INVENTORY] No mapping found for guild item:",
+      spriteId,
+      "→",
+      fileName
+    );
     return `${fileName}.png`; // fallback
   };
 
@@ -90,8 +107,11 @@ export default function InventoryTab() {
 
     try {
       // Use eager glob imports to ensure images are bundled
-      const images = import.meta.glob('../../assets/items/**/*.png', { eager: true, as: 'url' });
-      
+      const images = import.meta.glob("../../assets/items/**/*.png", {
+        eager: true,
+        as: "url",
+      });
+
       // Check if it's a potion (numeric sprite ID)
       if (/^\d+$/.test(spriteId)) {
         const num = parseInt(spriteId);
@@ -108,17 +128,24 @@ export default function InventoryTab() {
       }
 
       // Check for guild shop items (guild_sword, guild_dagger, Chest, key, etc.)
-      if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
+      if (
+        spriteId.startsWith("guild_") ||
+        spriteId.startsWith("Chest") ||
+        spriteId.startsWith("key")
+      ) {
         // Guild items need special path handling
-        return `/assets/items/guildshop_items/${getGuildItemPath(spriteId, itemType)}`;
+        return `/assets/items/guildshop_items/${getGuildItemPath(
+          spriteId,
+          itemType
+        )}`;
       }
 
       // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
-      if (spriteId.includes('/')) {
+      if (spriteId.includes("/")) {
         // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing'
         // For accessories with woodenSet/, the path is accessories/woodenSet/...
-        const fullPath = spriteId.startsWith('woodenSet/') 
-          ? `accessories/${spriteId}` 
+        const fullPath = spriteId.startsWith("woodenSet/")
+          ? `accessories/${spriteId}`
           : spriteId;
         const path = `../../assets/items/${fullPath}.png`;
         return images[path] || null;
@@ -186,18 +213,23 @@ export default function InventoryTab() {
     mutationFn: (itemId: string) => inventoryApi.use(itemId),
     onSuccess: async (response) => {
       // Handle chest opening rewards
-      if (response.data?.effect === 'chest_opened' && response.data?.reward) {
+      if (response.data?.effect === "chest_opened" && response.data?.reward) {
         const reward = response.data.reward;
-        const rarityEmoji = 
-          reward.rarity === 'Legendary' ? '⭐' :
-          reward.rarity === 'Epic' ? '💜' :
-          reward.rarity === 'Rare' ? '💙' :
-          reward.rarity === 'Uncommon' ? '💚' : '⚪';
-        
+        const rarityEmoji =
+          reward.rarity === "Legendary"
+            ? "⭐"
+            : reward.rarity === "Epic"
+            ? "💜"
+            : reward.rarity === "Rare"
+            ? "💙"
+            : reward.rarity === "Uncommon"
+            ? "💚"
+            : "⚪";
+
         // Show special chest opening notification
         (window as any).showToast?.(
           `🎁 CHEST OPENED!\n${rarityEmoji} ${reward.name} (${reward.rarity})\n📦 ${reward.type} added to inventory!`,
-          'success'
+          "success"
         );
       } else {
         // Update character immediately with new HP
@@ -206,13 +238,16 @@ export default function InventoryTab() {
         }
         (window as any).showToast?.("Item used successfully!", "success");
       }
-      
+
       // Refresh queries
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || "Failed to use item", "error");
+      (window as any).showToast?.(
+        error.response?.data?.error || "Failed to use item",
+        "error"
+      );
     },
   });
 
@@ -248,17 +283,17 @@ export default function InventoryTab() {
       // Convert "Ring" -> "ring", "Necklace" -> "necklace", etc.
       return item.accessoryType.toLowerCase();
     }
-    
+
     // For armor pieces, use the armorSlot field
     if (item.type === "Armor" && item.armorSlot) {
       // Convert "Body" -> "armor", "Helmet" -> "helmet", etc.
       if (item.armorSlot === "Body") return "armor";
       return item.armorSlot.toLowerCase(); // helmet, gloves, shoes
     }
-    
+
     // For weapons
     if (item.type === "Weapon") return "weapon";
-    
+
     // Fallback for old items without sub-types
     const mapping: Record<string, string> = {
       Weapon: "weapon",
@@ -333,19 +368,10 @@ export default function InventoryTab() {
 
       <div className="grid grid-cols-2 gap-2">
         {inventory.map((slot: any) => {
-          console.log("Full slot data:", slot);
-          console.log("Item data:", slot.item);
           const equipped = isEquipped(slot.item?.id);
           const isConsumable =
             slot.item?.type === "Consumable" || slot.item?.type === "Potion";
-          console.log(
-            "Item:",
-            slot.item?.name,
-            "Type:",
-            slot.item?.type,
-            "IsConsumable:",
-            isConsumable
-          );
+
           return (
             <div
               key={slot.id}
@@ -499,7 +525,10 @@ export default function InventoryTab() {
                           slot: slotType,
                         });
                       } else {
-                        (window as any).showToast?.("Cannot determine equipment slot", "error");
+                        (window as any).showToast?.(
+                          "Cannot determine equipment slot",
+                          "error"
+                        );
                       }
                     }}
                     disabled={equipMutation.isPending}

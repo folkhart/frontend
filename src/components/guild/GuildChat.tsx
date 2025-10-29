@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Smile } from 'lucide-react';
+import { Send, Smile, X, Circle } from 'lucide-react';
 import { useSocket } from '@/lib/socket';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 interface ChatMessage {
   id: string;
@@ -10,6 +12,7 @@ interface ChatMessage {
     username: string;
     level: number;
     class?: string;
+    titleIcon?: string;
   };
 }
 
@@ -33,9 +36,22 @@ export default function GuildChat({ initialMessages = [], guildName }: GuildChat
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedPlayerUsername, setSelectedPlayerUsername] = useState<string | null>(null);
+  const [selectedItemDetails, setSelectedItemDetails] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket();
+
+  // Fetch player character data when selected
+  const { data: playerCharacter } = useQuery({
+    queryKey: ['player-character', selectedPlayerUsername],
+    queryFn: async () => {
+      if (!selectedPlayerUsername) return null;
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/api/players/${selectedPlayerUsername}/character`);
+      return data;
+    },
+    enabled: !!selectedPlayerUsername,
+  });
 
   // Scroll to bottom when new messages arrive
   useEffect(() => {
@@ -100,6 +116,107 @@ export default function GuildChat({ initialMessages = [], guildName }: GuildChat
     }
   };
 
+  const getClassIcon = (playerClass?: string) => {
+    switch (playerClass) {
+      case 'Mage': return '🔮';
+      case 'Warrior': return '⚔️';
+      case 'Rogue': return '🗡️';
+      case 'Ranger': return '🏹';
+      case 'Cleric': return '✨';
+      default: return '👤';
+    }
+  };
+
+  const handlePlayerClick = (username: string) => {
+    setSelectedPlayerUsername(username);
+  };
+
+  // Helper functions for equipment display
+  const getItemImage = (spriteId: string, itemType?: string) => {
+    if (!spriteId) return null;
+    try {
+      const images = import.meta.glob('../../assets/items/**/*.png', { eager: true, as: 'url' });
+      
+      if (/^\d+$/.test(spriteId)) {
+        const num = parseInt(spriteId);
+        if (num >= 985 && num <= 992) {
+          const potsPath = `../../assets/items/consumables/${spriteId}.png`;
+          return images[potsPath] || null;
+        }
+      }
+      
+      if (spriteId.startsWith('guild_') || spriteId.startsWith('Chest') || spriteId.startsWith('key')) {
+        return `/assets/items/guildshop_items/${getGuildItemPath(spriteId, itemType)}`;
+      }
+      
+      if (spriteId.includes('/')) {
+        const fullPath = spriteId.startsWith('woodenSet/') ? `accessories/${spriteId}` : spriteId;
+        const path = `../../assets/items/${fullPath}.png`;
+        return images[path] || null;
+      }
+      
+      let folder = 'weapons';
+      if (itemType === 'Armor') folder = 'armors';
+      else if (itemType === 'Accessory') folder = 'accessories';
+      else if (itemType === 'Consumable') folder = 'consumables';
+      else if (itemType === 'Material' || itemType === 'Gem') {
+        const path = `../../assets/items/craft/gems/${spriteId}.png`;
+        return images[path] || null;
+      }
+      
+      const path = `../../assets/items/${folder}/${spriteId}.png`;
+      return images[path] || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const getGuildItemPath = (spriteId: string, itemType?: string) => {
+    let fileName = spriteId;
+    const tierMap: { [key: string]: string } = { bronze: '1', silver: '2', gold: '3', diamond: '4' };
+    for (const [tier, number] of Object.entries(tierMap)) {
+      if (fileName.includes(`_${tier}`)) {
+        fileName = fileName.replace(`_${tier}`, number);
+        break;
+      }
+    }
+    if (spriteId === 'guild_key') return `chests_and_keys/key1.png`;
+    if (fileName.startsWith('guild_chest')) return `chests_and_keys/Chest${fileName.replace('guild_chest', '')}.png`;
+    if (fileName.startsWith('guild_sword')) return `weapons/guild_sword/${fileName.replace('guild_sword', 'guildsword')}.png`;
+    if (fileName.startsWith('guild_bow')) return `weapons/guild_bow/${fileName}.png`;
+    if (fileName.startsWith('guild_dagger')) return `weapons/guild_dagger/${fileName}.png`;
+    if (fileName.startsWith('guild_shield')) return `weapons/guild_shield/${fileName}.png`;
+    if (fileName.startsWith('guild_staff')) return `weapons/guild_staff/${fileName}.png`;
+    if (fileName.startsWith('guild_armor')) return `armors/warrior_armors/${fileName}.png`;
+    if (fileName.includes('glove')) return `guild_armor_pieces/gloves/${fileName}.png`;
+    if (fileName.includes('boot') || fileName.includes('shoe')) {
+      return `guild_armor_pieces/shoes/${fileName.replace('guild_boot', 'guild_shoes').replace('guild_shoe', 'guild_shoes')}.png`;
+    }
+    return `${fileName}.png`;
+  };
+
+  const getRarityBorder = (rarity: string) => {
+    switch (rarity) {
+      case 'Common': return 'border-gray-500';
+      case 'Uncommon': return 'border-green-500';
+      case 'Rare': return 'border-blue-500';
+      case 'Epic': return 'border-purple-500';
+      case 'Legendary': return 'border-orange-500';
+      default: return 'border-stone-700';
+    }
+  };
+
+  const getRarityColor = (rarity: string) => {
+    switch (rarity) {
+      case 'Common': return 'text-gray-400';
+      case 'Uncommon': return 'text-green-400';
+      case 'Rare': return 'text-blue-400';
+      case 'Epic': return 'text-purple-400';
+      case 'Legendary': return 'text-orange-400';
+      default: return 'text-gray-400';
+    }
+  };
+
   const insertEmoji = (emoji: string) => {
     const emojiCode = `:${emoji}:`;
     setInputMessage(prev => prev + emojiCode);
@@ -152,8 +269,11 @@ export default function GuildChat({ initialMessages = [], guildName }: GuildChat
               className="bg-stone-800 border border-stone-700 p-2 rounded"
             >
               <div className="flex items-start gap-2">
-                {/* Player Avatar - Class Based Color */}
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${getClassColor(msg.player.class)}`}>
+                {/* Player Avatar - Class Based Color - Clickable */}
+                <div 
+                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${getClassColor(msg.player.class)} cursor-pointer hover:opacity-80 transition`}
+                  onClick={() => handlePlayerClick(msg.player.username)}
+                >
                   <span className="text-white text-xs font-bold">
                     {msg.player.username.charAt(0).toUpperCase()}
                   </span>
@@ -163,7 +283,18 @@ export default function GuildChat({ initialMessages = [], guildName }: GuildChat
                 <div className="flex-1 min-w-0">
                   {/* Username, Class & Level */}
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-amber-400 font-bold text-sm">
+                    {msg.player.titleIcon && (
+                      <img
+                        src={`/assets/ui/titleIcons/${msg.player.titleIcon}.png`}
+                        alt="Title"
+                        className="w-4 h-4"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    )}
+                    <span 
+                      className="text-amber-400 font-bold text-sm cursor-pointer hover:text-amber-300 transition"
+                      onClick={() => handlePlayerClick(msg.player.username)}
+                    >
                       {msg.player.username}
                     </span>
                     {msg.player.class && (
@@ -266,6 +397,214 @@ export default function GuildChat({ initialMessages = [], guildName }: GuildChat
           </div>
         </form>
       </div>
+
+      {/* Player Character Stats Modal */}
+      {selectedPlayerUsername && playerCharacter && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4" onClick={() => setSelectedPlayerUsername(null)}>
+          <div className="bg-stone-800 border-4 border-amber-600 p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" style={{ borderRadius: '0', boxShadow: '0 8px 0 rgba(0,0,0,0.5)' }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-amber-600">
+              <h2 className="text-3xl font-bold text-amber-400" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000, 0 0 10px rgba(251, 191, 36, 0.5)' }}>CHARACTER STATS</h2>
+              <button onClick={() => setSelectedPlayerUsername(null)} className="text-amber-400 hover:text-amber-300 transition">
+                <X size={28} strokeWidth={3} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 mb-6 bg-stone-950 border-2 border-amber-700 p-4" style={{ borderRadius: '8px', boxShadow: 'inset 0 2px 0 rgba(0,0,0,0.5), 0 4px 0 #78350f' }}>
+              <div className="w-16 h-16 bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center text-3xl border-4 border-amber-500" style={{ borderRadius: '50%', boxShadow: '0 4px 0 #92400e, inset 0 2px 0 rgba(255,255,255,0.3)' }}>
+                {getClassIcon(playerCharacter.class)}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  {playerCharacter.equippedTitle?.iconId && (
+                    <img
+                      src={`/assets/ui/titleIcons/${playerCharacter.equippedTitle.iconId}.png`}
+                      alt={playerCharacter.equippedTitle.title}
+                      className="w-5 h-5"
+                      style={{ imageRendering: 'pixelated' }}
+                      title={playerCharacter.equippedTitle.title}
+                    />
+                  )}
+                  <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000, 0 0 10px rgba(255,255,255,0.3)' }}>{playerCharacter.name}</h3>
+                </div>
+                <p className="text-amber-400 font-bold text-sm" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>Lv.{playerCharacter.level} {playerCharacter.class}</p>
+                <p className="text-xs text-gray-300 font-bold" style={{ fontFamily: 'monospace' }}>CP: {playerCharacter.combatPower}</p>
+              </div>
+            </div>
+
+            {/* Experience Bar */}
+            <div className="mb-6 bg-stone-950 border-2 border-purple-700 p-3" style={{ borderRadius: '8px' }}>
+              <div className="flex justify-between text-sm font-bold mb-2" style={{ fontFamily: 'monospace' }}>
+                <span className="text-purple-400" style={{ textShadow: '1px 1px 0 #000' }}>EXPERIENCE</span>
+                <span className="text-purple-300" style={{ textShadow: '1px 1px 0 #000' }}>{playerCharacter.experience} / {playerCharacter.level * 100}</span>
+              </div>
+              <div className="w-full bg-stone-900 h-4 border-2 border-purple-900" style={{ borderRadius: '0', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.5)' }}>
+                <div 
+                  className="bg-gradient-to-r from-purple-600 to-purple-400 h-full transition-all"
+                  style={{ width: `${(playerCharacter.experience / (playerCharacter.level * 100)) * 100}%`, boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), 0 0 10px rgba(168, 85, 247, 0.5)' }}
+                />
+              </div>
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Left Side - Equipment Grid */}
+              <div>
+                <h3 className="text-lg font-bold text-amber-400 mb-3" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>Equipment</h3>
+                <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 70px)', gridTemplateRows: 'repeat(3, 70px)', justifyContent: 'center' }}>
+                  {/* Row 1 */}
+                  {[['earring', playerCharacter.earring, 'Earring'], ['helmet', playerCharacter.helmet, 'Helmet'], ['necklace', playerCharacter.necklace, 'Necklace']].map(([slot, item, label]) => (
+                    <div 
+                      key={slot as string} 
+                      className={`relative aspect-square bg-stone-900 border-2 ${item ? getRarityBorder((item as any).rarity) + ' cursor-pointer hover:border-amber-500' : 'border-stone-700'}`} 
+                      style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}
+                      onClick={() => item && setSelectedItemDetails(item)}
+                    >
+                      {item ? (
+                        <div className="absolute inset-0 flex items-center justify-center p-1">
+                          {getItemImage((item as any).spriteId, (item as any).type) && <img src={getItemImage((item as any).spriteId, (item as any).type)!} alt={(item as any).name} className="w-full h-full object-contain" style={{ imageRendering: 'pixelated' }} />}
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600"><p className="text-[9px] font-bold" style={{ fontFamily: 'monospace' }}>{label as string}</p></div>
+                      )}
+                    </div>
+                  ))}
+                  {/* Row 2 */}
+                  {[['weapon', playerCharacter.weapon, 'Weapon'], ['armor', playerCharacter.armor, 'Armor'], ['gloves', playerCharacter.gloves, 'Gloves']].map(([slot, item, label]) => (
+                    <div 
+                      key={slot as string} 
+                      className={`relative aspect-square bg-stone-900 border-2 ${item ? getRarityBorder((item as any).rarity) + ' cursor-pointer hover:border-amber-500' : 'border-stone-700'}`} 
+                      style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}
+                      onClick={() => item && setSelectedItemDetails(item)}
+                    >
+                      {item ? (
+                        <div className="absolute inset-0 flex items-center justify-center p-1">
+                          {getItemImage((item as any).spriteId, (item as any).type) && <img src={getItemImage((item as any).spriteId, (item as any).type)!} alt={(item as any).name} className="w-full h-full object-contain" style={{ imageRendering: 'pixelated' }} />}
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600"><p className="text-[9px] font-bold" style={{ fontFamily: 'monospace' }}>{label as string}</p></div>
+                      )}
+                    </div>
+                  ))}
+                  {/* Row 3 */}
+                  {[['ring', playerCharacter.ring, 'Ring'], ['shoes', playerCharacter.shoes, 'Shoes'], ['belt', playerCharacter.belt, 'Belt']].map(([slot, item, label]) => (
+                    <div 
+                      key={slot as string} 
+                      className={`relative aspect-square bg-stone-900 border-2 ${item ? getRarityBorder((item as any).rarity) + ' cursor-pointer hover:border-amber-500' : 'border-stone-700'}`} 
+                      style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}
+                      onClick={() => item && setSelectedItemDetails(item)}
+                    >
+                      {item ? (
+                        <div className="absolute inset-0 flex items-center justify-center p-1">
+                          {getItemImage((item as any).spriteId, (item as any).type) && <img src={getItemImage((item as any).spriteId, (item as any).type)!} alt={(item as any).name} className="w-full h-full object-contain" style={{ imageRendering: 'pixelated' }} />}
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600"><p className="text-[9px] font-bold" style={{ fontFamily: 'monospace' }}>{label as string}</p></div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Side - Character Stats */}
+              <div>
+                <h3 className="text-lg font-bold text-amber-400 mb-3" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>Stats</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2" style={{ borderRadius: '8px' }}>
+                    <span className="text-2xl">❤️</span>
+                    <div>
+                      <p className="text-[10px] text-gray-400" style={{ fontFamily: 'monospace' }}>Health</p>
+                      <p className="text-lg font-bold text-red-400" style={{ fontFamily: 'monospace' }}>{playerCharacter.maxHealth}</p>
+                    </div>
+                  </div>
+                  <div className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2" style={{ borderRadius: '8px' }}>
+                    <span className="text-2xl">⚔️</span>
+                    <div>
+                      <p className="text-[10px] text-gray-400" style={{ fontFamily: 'monospace' }}>Attack</p>
+                      <p className="text-lg font-bold text-orange-400" style={{ fontFamily: 'monospace' }}>{playerCharacter.attack}</p>
+                    </div>
+                  </div>
+                  <div className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2" style={{ borderRadius: '8px' }}>
+                    <span className="text-2xl">🛡️</span>
+                    <div>
+                      <p className="text-[10px] text-gray-400" style={{ fontFamily: 'monospace' }}>Defense</p>
+                      <p className="text-lg font-bold text-blue-400" style={{ fontFamily: 'monospace' }}>{playerCharacter.defense}</p>
+                    </div>
+                  </div>
+                  <div className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2" style={{ borderRadius: '8px' }}>
+                    <span className="text-2xl">⚡</span>
+                    <div>
+                      <p className="text-[10px] text-gray-400" style={{ fontFamily: 'monospace' }}>Speed</p>
+                      <p className="text-lg font-bold text-green-400" style={{ fontFamily: 'monospace' }}>{playerCharacter.speed}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Item Details Modal */}
+      {selectedItemDetails && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[110] p-4" onClick={() => setSelectedItemDetails(null)}>
+          <div className="bg-stone-900 border-4 border-amber-600 rounded-lg p-4 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  {getItemImage(selectedItemDetails.spriteId, selectedItemDetails.type) && (
+                    <img
+                      src={getItemImage(selectedItemDetails.spriteId, selectedItemDetails.type)!}
+                      alt={selectedItemDetails.name}
+                      className="w-16 h-16 object-contain"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                  )}
+                </div>
+                <div>
+                  <h3 className={`text-xl font-bold ${getRarityColor(selectedItemDetails.rarity)}`}>
+                    {selectedItemDetails.name}
+                  </h3>
+                  <p className="text-sm text-gray-400">{selectedItemDetails.type}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedItemDetails(null)} className="text-gray-400 hover:text-white">
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Base Stats */}
+            <div className="bg-stone-800 p-3 rounded mb-3">
+              <h4 className="text-sm font-bold text-amber-400 mb-2">Stats</h4>
+              <div className="space-y-1 text-sm">
+                {selectedItemDetails.attackBonus > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Attack:</span>
+                    <span className="text-red-400">+{selectedItemDetails.attackBonus}</span>
+                  </div>
+                )}
+                {selectedItemDetails.defenseBonus > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Defense:</span>
+                    <span className="text-blue-400">+{selectedItemDetails.defenseBonus}</span>
+                  </div>
+                )}
+                {selectedItemDetails.healthBonus > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Health:</span>
+                    <span className="text-green-400">+{selectedItemDetails.healthBonus}</span>
+                  </div>
+                )}
+                {selectedItemDetails.speedBonus > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Speed:</span>
+                    <span className="text-purple-400">+{selectedItemDetails.speedBonus}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

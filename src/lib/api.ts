@@ -154,6 +154,12 @@ export const friendApi = {
   removeFriend: (friendId: string) => api.delete(`/friends/${friendId}`),
 };
 
+// Chest API
+export const chestApi = {
+  open: (tier: number) => api.post(`/chest/open/${tier}`),
+  getRewards: (tier: number) => api.get(`/chest/rewards/${tier}`),
+};
+
 // Message API
 export const messageApi = {
   send: (receiverId: string, content: string) => api.post('/messages/send', { receiverId, content }),
