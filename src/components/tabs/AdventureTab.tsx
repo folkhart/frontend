@@ -51,6 +51,19 @@ export default function AdventureTab() {
     const saved = localStorage.getItem("activeDungeonRun");
     return saved ? JSON.parse(saved) : null;
   });
+  
+  // Separate state for unclaimed rewards (persists even after run is cleared)
+  const [unclaimedReward, setUnclaimedReward] = useState<any>(() => {
+    const saved = localStorage.getItem("unclaimedDungeonReward");
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  // Idle farming reward state
+  const [unclaimedIdleReward, setUnclaimedIdleReward] = useState<any>(() => {
+    const saved = localStorage.getItem("unclaimedIdleReward");
+    return saved ? JSON.parse(saved) : null;
+  });
+  
   const [timeRemaining, setTimeRemaining] = useState<number>(() => {
     const saved = localStorage.getItem("activeDungeonRun");
     if (saved) {
@@ -142,6 +155,16 @@ export default function AdventureTab() {
             };
             setActiveDungeonRun(completedRun);
             localStorage.setItem("activeDungeonRun", JSON.stringify(completedRun));
+            
+            // Save unclaimed reward for persistent notification
+            const rewardData = {
+              dungeonName: activeDungeonRun.dungeon.name,
+              result: result,
+              timestamp: Date.now(),
+            };
+            setUnclaimedReward(rewardData);
+            localStorage.setItem("unclaimedDungeonReward", JSON.stringify(rewardData));
+            
             queryClient.invalidateQueries({ queryKey: ["character"] });
             
             // Show notification
@@ -202,7 +225,17 @@ export default function AdventureTab() {
 
   const claimIdleMutation = useMutation({
     mutationFn: () => idleApi.claim(),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      // Save idle reward for modal display
+      const rewardData = {
+        goldEarned: response.data.goldEarned,
+        expEarned: response.data.expEarned,
+        itemsDropped: response.data.itemsEarned || [],
+        timestamp: Date.now(),
+      };
+      setUnclaimedIdleReward(rewardData);
+      localStorage.setItem("unclaimedIdleReward", JSON.stringify(rewardData));
+      
       refetchIdle();
       queryClient.invalidateQueries({ queryKey: ["character"] });
     },
@@ -248,6 +281,15 @@ export default function AdventureTab() {
               "activeDungeonRun",
               JSON.stringify(completedRun)
             );
+            
+            // Save unclaimed reward for persistent notification
+            const rewardData = {
+              dungeonName: activeDungeonRun.dungeon.name,
+              result: result.data,
+              timestamp: Date.now(),
+            };
+            setUnclaimedReward(rewardData);
+            localStorage.setItem("unclaimedDungeonReward", JSON.stringify(rewardData));
             
             // Send browser notification
             if ('Notification' in window && Notification.permission === 'granted') {
@@ -379,17 +421,25 @@ export default function AdventureTab() {
         </div>
       )}
 
-      {/* Dungeon Complete Modal (only shows when completed) */}
-      {activeDungeonRun?.completed && (
+      {/* Dungeon Complete Modal (shows for unclaimed rewards, persists across refreshes) */}
+      {unclaimedReward && (
         <div
           className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
-          onClick={() => setActiveDungeonRun(null)}
+          onClick={() => {
+            setUnclaimedReward(null);
+            localStorage.removeItem("unclaimedDungeonReward");
+            if (activeDungeonRun?.completed) {
+              setActiveDungeonRun(null);
+              localStorage.removeItem("activeDungeonRun");
+            }
+          }}
         >
           <div
             className="bg-stone-800 rounded-lg border-2 border-amber-600 p-8 max-w-md w-full text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            {activeDungeonRun.result?.success ? (
+            <h3 className="text-xl font-bold text-amber-400 mb-4">{unclaimedReward.dungeonName}</h3>
+            {unclaimedReward.result?.success ? (
               <>
                 <div className="text-6xl mb-4">🎉</div>
                 <h2 className="text-3xl font-bold text-green-400 mb-4">
@@ -400,36 +450,41 @@ export default function AdventureTab() {
                     <div className="flex justify-between">
                       <span className="text-gray-400">Gold:</span>
                       <span className="text-yellow-400 font-bold">
-                        +{activeDungeonRun.result.goldEarned}
+                        +{unclaimedReward.result.goldEarned}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">EXP:</span>
                       <span className="text-purple-400 font-bold">
-                        +{activeDungeonRun.result.expEarned}
+                        +{unclaimedReward.result.expEarned}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Item Drops */}
-                {activeDungeonRun.result.itemsDropped &&
-                  activeDungeonRun.result.itemsDropped.length > 0 && (
+                {/* Item Drops with Images */}
+                {unclaimedReward.result.itemsDropped &&
+                  unclaimedReward.result.itemsDropped.length > 0 && (
                     <div className="bg-stone-900 rounded-lg p-4 mb-4">
-                      <h3 className="text-sm font-bold text-gray-400 mb-2">
-                        Items Dropped:
+                      <h3 className="text-sm font-bold text-amber-400 mb-3" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+                        💎 ITEMS OBTAINED:
                       </h3>
-                      <div className="space-y-1">
-                        {activeDungeonRun.result.itemsDropped.map(
+                      <div className="grid grid-cols-3 gap-2">
+                        {unclaimedReward.result.itemsDropped.map(
                           (item: any, idx: number) => (
                             <div
                               key={idx}
-                              className="flex items-center justify-between text-sm"
+                              className="bg-stone-800 p-2 rounded border-2 border-amber-600 text-center"
                             >
-                              <span className="text-white">📦 {item.name}</span>
-                              <span className="text-gray-400">
+                              <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center">
+                                <span className="text-3xl">📦</span>
+                              </div>
+                              <p className="text-xs text-white font-bold truncate" style={{ fontFamily: 'monospace' }}>
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-amber-400" style={{ fontFamily: 'monospace' }}>
                                 x{item.quantity}
-                              </span>
+                              </p>
                             </div>
                           )
                         )}
@@ -439,10 +494,20 @@ export default function AdventureTab() {
               </>
             ) : (
               <>
-                <div className="text-6xl mb-4">😢</div>
+                <div className="text-6xl mb-4">💀</div>
                 <h2 className="text-3xl font-bold text-red-400 mb-4">
                   Defeated!
                 </h2>
+                {unclaimedReward.result.hpLoss && (
+                  <div className="bg-stone-900 rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-center gap-2 text-lg">
+                      <span className="text-gray-400">HP Lost:</span>
+                      <span className="text-red-400 font-bold text-2xl">
+                        -{unclaimedReward.result.hpLoss}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 <p className="text-gray-400 mb-4">
                   Try again with better equipment or higher level!
                 </p>
@@ -450,8 +515,12 @@ export default function AdventureTab() {
             )}
             <button
               onClick={() => {
-                setActiveDungeonRun(null);
-                localStorage.removeItem("activeDungeonRun");
+                setUnclaimedReward(null);
+                localStorage.removeItem("unclaimedDungeonReward");
+                if (activeDungeonRun?.completed) {
+                  setActiveDungeonRun(null);
+                  localStorage.removeItem("activeDungeonRun");
+                }
               }}
               className="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded transition btn-press"
             >
@@ -460,6 +529,86 @@ export default function AdventureTab() {
           </div>
         </div>
       )}
+      
+      {/* Idle Farming Complete Modal */}
+      {unclaimedIdleReward && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            setUnclaimedIdleReward(null);
+            localStorage.removeItem("unclaimedIdleReward");
+          }}
+        >
+          <div
+            className="bg-stone-800 rounded-lg border-2 border-green-600 p-8 max-w-md w-full text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-6xl mb-4">🌾</div>
+            <h3 className="text-xl font-bold text-green-400 mb-2" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+              Idle Farming Complete!
+            </h3>
+            <p className="text-sm text-gray-400 mb-4">You've been busy while away!</p>
+            
+            <div className="bg-stone-900 rounded-lg p-4 mb-4">
+              <div className="space-y-2 text-lg">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Gold:</span>
+                  <span className="text-yellow-400 font-bold">
+                    +{unclaimedIdleReward.goldEarned}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">EXP:</span>
+                  <span className="text-purple-400 font-bold">
+                    +{unclaimedIdleReward.expEarned}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Item Drops with Images */}
+            {unclaimedIdleReward.itemsDropped &&
+              unclaimedIdleReward.itemsDropped.length > 0 && (
+                <div className="bg-stone-900 rounded-lg p-4 mb-4">
+                  <h3 className="text-sm font-bold text-green-400 mb-3" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+                    💎 ITEMS OBTAINED:
+                  </h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {unclaimedIdleReward.itemsDropped.map(
+                      (item: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="bg-stone-800 p-2 rounded border-2 border-green-600 text-center"
+                        >
+                          <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center">
+                            <span className="text-3xl">📦</span>
+                          </div>
+                          <p className="text-xs text-white font-bold truncate" style={{ fontFamily: 'monospace' }}>
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-green-400" style={{ fontFamily: 'monospace' }}>
+                            x{item.quantity}
+                          </p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+            
+            <button
+              onClick={() => {
+                setUnclaimedIdleReward(null);
+                localStorage.removeItem("unclaimedIdleReward");
+              }}
+              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded transition btn-press"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Idle Status Banner */}
       {idleStatus?.active && (
         <div 

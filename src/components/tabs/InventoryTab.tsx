@@ -242,13 +242,30 @@ export default function InventoryTab() {
     },
   });
 
-  const getSlotForType = (type: string): string => {
+  const getSlotForItem = (item: any): string => {
+    // For accessories, use the accessoryType field
+    if (item.type === "Accessory" && item.accessoryType) {
+      // Convert "Ring" -> "ring", "Necklace" -> "necklace", etc.
+      return item.accessoryType.toLowerCase();
+    }
+    
+    // For armor pieces, use the armorSlot field
+    if (item.type === "Armor" && item.armorSlot) {
+      // Convert "Body" -> "armor", "Helmet" -> "helmet", etc.
+      if (item.armorSlot === "Body") return "armor";
+      return item.armorSlot.toLowerCase(); // helmet, gloves, shoes
+    }
+    
+    // For weapons
+    if (item.type === "Weapon") return "weapon";
+    
+    // Fallback for old items without sub-types
     const mapping: Record<string, string> = {
       Weapon: "weapon",
       Armor: "armor",
-      Accessory: "accessory",
+      Accessory: "ring", // Default accessory to ring slot
     };
-    return mapping[type] || "";
+    return mapping[item.type] || "";
   };
 
   if (isLoading) {
@@ -292,7 +309,13 @@ export default function InventoryTab() {
     return (
       character.weapon?.id === itemId ||
       character.armor?.id === itemId ||
-      character.accessory?.id === itemId
+      character.helmet?.id === itemId ||
+      character.gloves?.id === itemId ||
+      character.shoes?.id === itemId ||
+      character.ring?.id === itemId ||
+      character.necklace?.id === itemId ||
+      character.belt?.id === itemId ||
+      character.earring?.id === itemId
     );
   };
 
@@ -469,12 +492,14 @@ export default function InventoryTab() {
                 <div className="space-y-1">
                   <button
                     onClick={() => {
-                      const slotType = getSlotForType(slot.item.type);
+                      const slotType = getSlotForItem(slot.item);
                       if (slotType) {
                         equipMutation.mutate({
                           itemId: slot.item.id,
                           slot: slotType,
                         });
+                      } else {
+                        (window as any).showToast?.("Cannot determine equipment slot", "error");
                       }
                     }}
                     disabled={equipMutation.isPending}
