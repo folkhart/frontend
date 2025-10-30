@@ -540,7 +540,7 @@ export default function GuildTab() {
 
   const donateMutation = useMutation({
     mutationFn: (amount: number) => guildApi.donate(amount),
-    onSuccess: async (data: any) => {
+    onSuccess: async (response: any) => {
       // Force fresh refetch of all guild-related data
       queryClient.invalidateQueries({ queryKey: ["myGuild"] });
       await refetchMyGuild();
@@ -551,6 +551,7 @@ export default function GuildTab() {
       queryClient.invalidateQueries({ queryKey: ["character"] });
 
       setDonateAmount("");
+      const data = response.data;
       (window as any).showToast?.(
         `💰 Donated ${data.goldDonated}g! +${data.guildCoinsAdded} GC to shop, +${data.bankGoldAdded}g to bank`,
         "success"
