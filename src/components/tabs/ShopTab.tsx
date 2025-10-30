@@ -620,6 +620,15 @@ export default function ShopTab() {
                 >
                   {selectedItem.item.rarity}
                 </p>
+                {selectedItem.item.levelRequirement && selectedItem.item.levelRequirement > 1 && (
+                  <p className={`text-xs mt-1 font-bold ${
+                    character && character.level >= selectedItem.item.levelRequirement
+                      ? 'text-green-400'
+                      : 'text-red-400'
+                  }`}>
+                    Required Level: {selectedItem.item.levelRequirement}
+                  </p>
+                )}
               </div>
             </div>
             {selectedItem.item.description && (
