@@ -776,7 +776,20 @@ export default function TopBar() {
                     </div>
                     <div>
                       <p className="text-xs text-purple-300 font-bold mb-1" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>CURRENTLY EQUIPPED:</p>
-                      <p className={`text-lg font-bold ${equippedTitle.titleColor || 'text-amber-400'}`} style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+                      <p 
+                        className={`text-lg font-bold ${
+                          equippedTitle.titleColor && !equippedTitle.titleColor.includes('black') && !equippedTitle.titleColor.includes('#000')
+                            ? equippedTitle.titleColor.startsWith('text-') ? equippedTitle.titleColor : ''
+                            : 'text-amber-400'
+                        }`}
+                        style={{ 
+                          fontFamily: 'monospace', 
+                          textShadow: '2px 2px 0 #000',
+                          color: equippedTitle.titleColor && !equippedTitle.titleColor.startsWith('text-') && !equippedTitle.titleColor.includes('black') && equippedTitle.titleColor !== '#000000'
+                            ? equippedTitle.titleColor
+                            : undefined
+                        }}
+                      >
                         「{equippedTitle.title}」
                       </p>
                     </div>
@@ -833,10 +846,23 @@ export default function TopBar() {
                           )}
                         </div>
                         <div className="flex-1">
-                          <p className={`text-lg font-bold ${achievement.titleColor || 'text-amber-400'} mb-1`} style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+                          <p 
+                            className={`text-lg font-bold mb-1 ${
+                              achievement.titleColor && !achievement.titleColor.includes('black') && !achievement.titleColor.includes('#000')
+                                ? achievement.titleColor.startsWith('text-') ? achievement.titleColor : ''
+                                : 'text-amber-400'
+                            }`}
+                            style={{ 
+                              fontFamily: 'monospace', 
+                              textShadow: '2px 2px 0 #000',
+                              color: achievement.titleColor && !achievement.titleColor.startsWith('text-') && !achievement.titleColor.includes('black') && achievement.titleColor !== '#000000'
+                                ? achievement.titleColor
+                                : undefined
+                            }}
+                          >
                             「{achievement.title}」
                           </p>
-                          <p className="text-xs text-gray-400 font-bold" style={{ fontFamily: 'monospace' }}>{achievement.name}</p>
+                          <p className="text-xs text-gray-300 font-bold" style={{ fontFamily: 'monospace' }}>{achievement.name}</p>
                         </div>
                         {achievement.isEquipped && (
                           <div className="text-purple-400 text-sm font-bold px-3 py-1 bg-purple-950 border-2 border-purple-600" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>✓ EQUIPPED</div>

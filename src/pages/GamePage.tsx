@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useGameStore } from '@/store/gameStore';
 import { authApi, characterApi } from '@/lib/api';
 import { onIdleComplete, onDungeonComplete, onLevelUp, getSocket } from '@/lib/socket';
@@ -22,6 +23,7 @@ import LevelUpModal from '@/components/modals/LevelUpModal';
 
 export default function GamePage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { activeTab, setPlayer, setCharacter, character, player, setHasUnreadGuildMessages } = useGameStore();
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<any>(null);
@@ -126,6 +128,17 @@ export default function GamePage() {
       socket.on('guild_chat_message', () => {
         // Always set unread flag - GuildTab will clear it if chat is open
         setHasUnreadGuildMessages(true);
+      });
+
+      // Listen for achievement completions
+      socket.on('achievement:completed', (data: any) => {
+        (window as any).showToast?.(
+          `🏆 Achievement Unlocked: ${data.name}! +${data.rewards.gold}g, +${data.rewards.gems} gems`,
+          'success'
+        );
+        // Refresh achievement data
+        queryClient.invalidateQueries({ queryKey: ['achievements'] });
+        queryClient.invalidateQueries({ queryKey: ['achievement-stats'] });
       });
     }
   };

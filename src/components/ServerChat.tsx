@@ -320,9 +320,12 @@ export default function ServerChat() {
       }
 
       if (spriteId.includes("/")) {
-        const fullPath = spriteId.startsWith("woodenSet/")
-          ? `accessories/${spriteId}`
-          : spriteId;
+        const fullPath =
+          spriteId.startsWith("woodenSet/") ||
+          spriteId.startsWith("ironSet/") ||
+          spriteId.startsWith("dungeonDrops/")
+            ? `accessories/${spriteId}`
+            : spriteId;
         return `/assets/items/${fullPath}.png`;
       }
 

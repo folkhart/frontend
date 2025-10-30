@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trophy, Award, Star, Lock, Check, Gift } from 'lucide-react';
 import { achievementApi } from '@/lib/api';
+import { useGameStore } from '@/store/gameStore';
 import achievementIcon from '@/assets/ui/achievement.png';
 
 interface AchievementStep {
@@ -57,6 +58,7 @@ interface AchievementStats {
 
 export default function AchievementTab() {
   const queryClient = useQueryClient();
+  const { player, setPlayer } = useGameStore();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const { data: achievements = [] } = useQuery<Achievement[]>({
@@ -109,11 +111,19 @@ export default function AchievementTab() {
       return data;
     },
     onSuccess: (data) => {
+      // Immediately update player state
+      if (player) {
+        setPlayer({
+          ...player,
+          gold: player.gold + data.rewards.gold,
+          gems: player.gems + data.rewards.gems,
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
       queryClient.invalidateQueries({ queryKey: ['achievement-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['player'] }); // For gold/gems update
-      queryClient.refetchQueries({ queryKey: ['player'] }); // Force immediate refetch
+      
       (window as any).showToast?.(
         `Step ${data.step + 1} claimed! +${data.rewards.gold}g, +${data.rewards.gems} gems`,
         'success'
@@ -333,7 +343,13 @@ export default function AchievementTab() {
                                   claimStepMutation.mutate({ achievementId: achievement.id, stepIndex: index })
                                 }
                                 disabled={claimStepMutation.isPending}
-                                className="px-2 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 text-white text-xs font-bold transition"
+                                className="px-3 py-1 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 text-white text-xs font-bold transition"
+                                style={{
+                                  border: '2px solid #15803d',
+                                  borderRadius: '0',
+                                  boxShadow: '0 2px 0 #166534',
+                                  fontFamily: 'monospace',
+                                }}
                               >
                                 CLAIM
                               </button>
