@@ -196,13 +196,16 @@ export default function VillageTab() {
         return `/assets/items/guildshop_items/${getGuildItemPath(spriteId)}`;
       }
 
-      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
+      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, ironSet/, etc.)
       if (spriteId.includes("/")) {
-        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing'
-        // For accessories with woodenSet/, the path is accessories/woodenSet/...
-        const fullPath = spriteId.startsWith("woodenSet/")
-          ? `accessories/${spriteId}`
-          : spriteId;
+        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing' or 'ironSet/ironRing'
+        // For accessories with woodenSet/ or ironSet/, the path is accessories/woodenSet/... or accessories/ironSet/...
+        const fullPath =
+          spriteId.startsWith("woodenSet/") ||
+          spriteId.startsWith("ironSet/") ||
+          spriteId.startsWith("dungeonDrops/")
+            ? `accessories/${spriteId}`
+            : spriteId;
         const path = `../../assets/items/${fullPath}.png`;
         return images[path] || null;
       }
@@ -340,7 +343,7 @@ export default function VillageTab() {
         className={`relative aspect-square bg-stone-900 border-2 cursor-pointer transition ${getBorderClass()} ${
           equippedItem ? "hover:border-amber-500" : "hover:border-amber-600"
         }`}
-        style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}
+        style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)" }}
       >
         {equippedItem ? (
           <div className="absolute inset-0 flex items-center justify-center p-2">
@@ -350,14 +353,14 @@ export default function VillageTab() {
                   src={getItemImage(equippedItem.spriteId, equippedItem.type)!}
                   alt={equippedItem.name}
                   className="w-full h-full object-contain"
-                  style={{ imageRendering: 'pixelated' }}
+                  style={{ imageRendering: "pixelated" }}
                 />
               )}
               {/* Enhancement Level Badge */}
               {enhancementLevel > 0 && (
                 <div
                   className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
-                  style={{ fontFamily: 'monospace' }}
+                  style={{ fontFamily: "monospace" }}
                 >
                   +{enhancementLevel}
                 </div>
@@ -382,7 +385,12 @@ export default function VillageTab() {
           </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
-            <p className="text-xs font-bold" style={{ fontFamily: 'monospace' }}>{label}</p>
+            <p
+              className="text-xs font-bold"
+              style={{ fontFamily: "monospace" }}
+            >
+              {label}
+            </p>
             <p className="text-[10px] text-gray-700 mt-1">Empty</p>
           </div>
         )}
@@ -613,11 +621,15 @@ export default function VillageTab() {
                     slotType = "shoes";
                   else if (character.ring?.id === selectedItemDetails.item.id)
                     slotType = "ring";
-                  else if (character.necklace?.id === selectedItemDetails.item.id)
+                  else if (
+                    character.necklace?.id === selectedItemDetails.item.id
+                  )
                     slotType = "necklace";
                   else if (character.belt?.id === selectedItemDetails.item.id)
                     slotType = "belt";
-                  else if (character.earring?.id === selectedItemDetails.item.id)
+                  else if (
+                    character.earring?.id === selectedItemDetails.item.id
+                  )
                     slotType = "earring";
 
                   if (slotType) {
@@ -670,11 +682,15 @@ export default function VillageTab() {
                     slotType = "shoes";
                   else if (character.ring?.id === selectedItemDetails.item.id)
                     slotType = "ring";
-                  else if (character.necklace?.id === selectedItemDetails.item.id)
+                  else if (
+                    character.necklace?.id === selectedItemDetails.item.id
+                  )
                     slotType = "necklace";
                   else if (character.belt?.id === selectedItemDetails.item.id)
                     slotType = "belt";
-                  else if (character.earring?.id === selectedItemDetails.item.id)
+                  else if (
+                    character.earring?.id === selectedItemDetails.item.id
+                  )
                     slotType = "earring";
 
                   setSelectedItemDetails(null);

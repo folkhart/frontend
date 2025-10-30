@@ -21,13 +21,14 @@ import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
 import dragonLairIcon from "@/assets/ui/dungeonIcons/dragonLair.png";
 import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
+import darkForestIcon from "@/assets/ui/dungeonIcons/darkForest.png";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
     "Rat Cellar": ratCellarIcon,
     "Goblin Cave": goblinCaveIcon,
     "Slime Den": slimeDenIcon,
-    "Dark Forest": goblinCaveIcon,
+    "Dark Forest": darkForestIcon,
     "Dragon's Lair": dragonLairIcon,
     "Shattered Obsidian Vault": ratCellarIcon,
     "Hollowroot Sanctuary": slimeDenIcon,

@@ -1,24 +1,33 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { blacksmithApi, inventoryApi } from '@/lib/api';
-import { Hammer, Shield, AlertCircle } from 'lucide-react';
-import { getRarityColor } from '@/utils/format';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { blacksmithApi, inventoryApi } from "@/lib/api";
+import { Hammer, Shield, AlertCircle } from "lucide-react";
+import { getRarityColor } from "@/utils/format";
 
-const socketDrillIcon = new URL('../../assets/items/craft/gems/socket_drill.png', import.meta.url).href;
-const refiningStoneIcon = new URL('../../assets/items/craft/gems/refining_stone.png', import.meta.url).href;
-const enhancementStoneIcon = new URL('../../assets/items/craft/gems/enhancement_stone.png', import.meta.url).href;
+const socketDrillIcon = new URL(
+  "../../assets/items/craft/gems/socket_drill.png",
+  import.meta.url
+).href;
+const refiningStoneIcon = new URL(
+  "../../assets/items/craft/gems/refining_stone.png",
+  import.meta.url
+).href;
+const enhancementStoneIcon = new URL(
+  "../../assets/items/craft/gems/enhancement_stone.png",
+  import.meta.url
+).href;
 
-type BlacksmithMode = 'enhance' | 'refine' | 'socket';
+type BlacksmithMode = "enhance" | "refine" | "socket";
 
 export default function BlacksmithTab() {
   const queryClient = useQueryClient();
-  const [mode, setMode] = useState<BlacksmithMode>('enhance');
+  const [mode, setMode] = useState<BlacksmithMode>("enhance");
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [useProtection, setUseProtection] = useState(false);
   const [result, setResult] = useState<any>(null);
 
   const { data: inventory } = useQuery({
-    queryKey: ['inventory'],
+    queryKey: ["inventory"],
     queryFn: async () => {
       const { data } = await inventoryApi.get();
       return data;
@@ -26,44 +35,58 @@ export default function BlacksmithTab() {
   });
 
   const enhanceMutation = useMutation({
-    mutationFn: ({ slotId, useProtectionScroll }: { slotId: string; useProtectionScroll: boolean }) =>
-      blacksmithApi.enhance(slotId, useProtectionScroll),
+    mutationFn: ({
+      slotId,
+      useProtectionScroll,
+    }: {
+      slotId: string;
+      useProtectionScroll: boolean;
+    }) => blacksmithApi.enhance(slotId, useProtectionScroll),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['character'] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["character"] });
       setResult(response.data);
       setSelectedItem(null);
       setUseProtection(false);
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Enhancement failed', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Enhancement failed",
+        "error"
+      );
     },
   });
 
   const refineMutation = useMutation({
     mutationFn: (slotId: string) => blacksmithApi.refine(slotId),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['character'] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["character"] });
       setResult(response.data);
       setSelectedItem(null);
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Refining failed', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Refining failed",
+        "error"
+      );
     },
   });
 
   const addSocketMutation = useMutation({
     mutationFn: (slotId: string) => blacksmithApi.addSocketSlot(slotId),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['player'] }); // For gold update
-      queryClient.refetchQueries({ queryKey: ['inventory'] }); // Force immediate refetch
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["player"] }); // For gold update
+      queryClient.refetchQueries({ queryKey: ["inventory"] }); // Force immediate refetch
       setResult(response.data);
       setSelectedItem(null);
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Socket addition failed', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Socket addition failed",
+        "error"
+      );
     },
   });
 
@@ -71,31 +94,38 @@ export default function BlacksmithTab() {
     mutationFn: ({ slotId, gemId }: { slotId: string; gemId: string }) =>
       blacksmithApi.insertGem(slotId, gemId),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['character'] });
-      queryClient.invalidateQueries({ queryKey: ['player'] }); // For gold update
-      queryClient.refetchQueries({ queryKey: ['inventory'] }); // Force immediate refetch
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["character"] });
+      queryClient.invalidateQueries({ queryKey: ["player"] }); // For gold update
+      queryClient.refetchQueries({ queryKey: ["inventory"] }); // Force immediate refetch
       setResult(response.data);
       setSelectedItem(null);
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Gem insertion failed', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Gem insertion failed",
+        "error"
+      );
     },
   });
 
-  const equipmentItems = inventory?.filter(
-    (slot: any) => ['Weapon', 'Armor', 'Accessory'].includes(slot.item.type)
-  ) || [];
+  const equipmentItems =
+    inventory?.filter((slot: any) =>
+      ["Weapon", "Armor", "Accessory"].includes(slot.item.type)
+    ) || [];
 
-  const gems = inventory?.filter((slot: any) => slot.item.type === 'Gem') || [];
+  const gems = inventory?.filter((slot: any) => slot.item.type === "Gem") || [];
 
   const getItemImage = (spriteId: string, itemType?: string) => {
     if (!spriteId) return null;
-    
+
     try {
       // Use eager glob imports to ensure images are bundled
-      const images = import.meta.glob('../../assets/items/**/*.png', { eager: true, as: 'url' });
-      
+      const images = import.meta.glob("../../assets/items/**/*.png", {
+        eager: true,
+        as: "url",
+      });
+
       // Check if it's a potion (numeric sprite ID)
       if (/^\d+$/.test(spriteId)) {
         const num = parseInt(spriteId);
@@ -110,57 +140,83 @@ export default function BlacksmithTab() {
           return images[path] || null;
         }
       }
-      
-      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
-      if (spriteId.includes('/')) {
-        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing'
-        // For accessories with woodenSet/, the path is accessories/woodenSet/...
-        const fullPath = spriteId.startsWith('woodenSet/') 
-          ? `accessories/${spriteId}` 
-          : spriteId;
+
+      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, ironSet/, etc.)
+      if (spriteId.includes("/")) {
+        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing' or 'ironSet/ironRing'
+        // For accessories with woodenSet/ or ironSet/, the path is accessories/woodenSet/... or accessories/ironSet/...
+        const fullPath =
+          spriteId.startsWith("woodenSet/") ||
+          spriteId.startsWith("ironSet/") ||
+          spriteId.startsWith("dungeonDrops/")
+            ? `accessories/${spriteId}`
+            : spriteId;
         const path = `../../assets/items/${fullPath}.png`;
         return images[path] || null;
       }
-      
+
       // Determine folder based on item type
-      let folder = 'weapons'; // default
-      if (itemType === 'Armor') {
-        folder = 'armors';
-      } else if (itemType === 'Accessory') {
-        folder = 'accessories';
-      } else if (itemType === 'Consumable') {
-        folder = 'consumables';
-      } else if (itemType === 'Material' || itemType === 'Gem') {
+      let folder = "weapons"; // default
+      if (itemType === "Armor") {
+        folder = "armors";
+      } else if (itemType === "Accessory") {
+        folder = "accessories";
+      } else if (itemType === "Consumable") {
+        folder = "consumables";
+      } else if (itemType === "Material" || itemType === "Gem") {
         const path = `../../assets/items/craft/gems/${spriteId}.png`;
         return images[path] || null;
       }
-      
+
       const path = `../../assets/items/${folder}/${spriteId}.png`;
       return images[path] || null;
     } catch (e) {
-      console.error('Failed to load image:', spriteId, itemType, e);
+      console.error("Failed to load image:", spriteId, itemType, e);
       return null;
     }
   };
 
   const getEnhancementCost = (level: number) => {
     const costs: Record<number, number> = {
-      0: 100, 1: 250, 2: 500, 3: 1000, 4: 2500,
-      5: 5000, 6: 10000, 7: 25000, 8: 50000,
+      0: 100,
+      1: 250,
+      2: 500,
+      3: 1000,
+      4: 2500,
+      5: 5000,
+      6: 10000,
+      7: 25000,
+      8: 50000,
     };
     return costs[level] || 0;
   };
 
   const getEnhancementStones = (level: number) => {
     const stones: Record<number, number> = {
-      0: 1, 1: 1, 2: 2, 3: 3, 4: 5, 5: 7, 6: 10, 7: 15, 8: 20,
+      0: 1,
+      1: 1,
+      2: 2,
+      3: 3,
+      4: 5,
+      5: 7,
+      6: 10,
+      7: 15,
+      8: 20,
     };
     return stones[level] || 0;
   };
 
   const getSuccessRate = (level: number) => {
     const rates: Record<number, number> = {
-      0: 100, 1: 100, 2: 100, 3: 80, 4: 60, 5: 40, 6: 30, 7: 20, 8: 10,
+      0: 100,
+      1: 100,
+      2: 100,
+      3: 80,
+      4: 60,
+      5: 40,
+      6: 30,
+      7: 20,
+      8: 10,
     };
     return rates[level] || 0;
   };
@@ -169,17 +225,25 @@ export default function BlacksmithTab() {
     <div className="space-y-4">
       <div className="bg-stone-800 border-2 border-amber-600 p-4">
         <h3 className="text-amber-400 font-bold mb-2 flex items-center gap-2">
-          <img src={enhancementStoneIcon} alt="" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+          <img
+            src={enhancementStoneIcon}
+            alt=""
+            className="w-4 h-4"
+            style={{ imageRendering: "pixelated" }}
+          />
           ENHANCEMENT (+0 to +9)
         </h3>
         <p className="text-gray-300 text-sm">
-          Enhance equipment to increase stats. Success rate decreases at higher levels.
+          Enhance equipment to increase stats. Success rate decreases at higher
+          levels.
         </p>
       </div>
 
       {!selectedItem ? (
         <div>
-          <h4 className="text-white font-bold mb-2">Select Equipment to Enhance:</h4>
+          <h4 className="text-white font-bold mb-2">
+            Select Equipment to Enhance:
+          </h4>
           <div className="grid grid-cols-2 gap-2">
             {equipmentItems.map((slot: any) => (
               <button
@@ -193,14 +257,21 @@ export default function BlacksmithTab() {
                       src={getItemImage(slot.item.spriteId, slot.item.type)!}
                       alt={slot.item.name}
                       className="w-8 h-8"
-                      style={{ imageRendering: 'pixelated' }}
+                      style={{ imageRendering: "pixelated" }}
                     />
                   )}
                   <div className="flex-1">
-                    <div className={`font-bold text-sm ${getRarityColor(slot.item.rarity)}`}>
-                      {slot.item.name} {slot.enhancementLevel > 0 && `+${slot.enhancementLevel}`}
+                    <div
+                      className={`font-bold text-sm ${getRarityColor(
+                        slot.item.rarity
+                      )}`}
+                    >
+                      {slot.item.name}{" "}
+                      {slot.enhancementLevel > 0 && `+${slot.enhancementLevel}`}
                     </div>
-                    <div className="text-gray-400 text-xs">{slot.item.rarity}</div>
+                    <div className="text-gray-400 text-xs">
+                      {slot.item.rarity}
+                    </div>
                   </div>
                 </div>
               </button>
@@ -211,12 +282,20 @@ export default function BlacksmithTab() {
         <div className="space-y-4">
           <div className="bg-stone-900 border-2 border-amber-600 p-4">
             <div className="flex items-center gap-3 mb-3">
-              {getItemImage(selectedItem.item.spriteId, selectedItem.item.type) && (
+              {getItemImage(
+                selectedItem.item.spriteId,
+                selectedItem.item.type
+              ) && (
                 <img
-                  src={getItemImage(selectedItem.item.spriteId, selectedItem.item.type)!}
+                  src={
+                    getItemImage(
+                      selectedItem.item.spriteId,
+                      selectedItem.item.type
+                    )!
+                  }
                   alt={selectedItem.item.name}
                   className="w-12 h-12"
-                  style={{ imageRendering: 'pixelated' }}
+                  style={{ imageRendering: "pixelated" }}
                 />
               )}
               <div>
@@ -232,7 +311,15 @@ export default function BlacksmithTab() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between items-center">
                 <span className="text-gray-400">Success Rate:</span>
-                <span className={`font-bold ${getSuccessRate(selectedItem.enhancementLevel) >= 80 ? 'text-green-400' : getSuccessRate(selectedItem.enhancementLevel) >= 40 ? 'text-yellow-400' : 'text-red-400'}`}>
+                <span
+                  className={`font-bold ${
+                    getSuccessRate(selectedItem.enhancementLevel) >= 80
+                      ? "text-green-400"
+                      : getSuccessRate(selectedItem.enhancementLevel) >= 40
+                      ? "text-yellow-400"
+                      : "text-red-400"
+                  }`}
+                >
                   {getSuccessRate(selectedItem.enhancementLevel)}%
                 </span>
               </div>
@@ -249,7 +336,7 @@ export default function BlacksmithTab() {
                     src={enhancementStoneIcon}
                     alt="Enhancement Stone"
                     className="w-4 h-4"
-                    style={{ imageRendering: 'pixelated' }}
+                    style={{ imageRendering: "pixelated" }}
                   />
                 </div>
                 <span className="text-blue-400 font-bold">
@@ -287,14 +374,16 @@ export default function BlacksmithTab() {
 
           <div className="flex gap-2">
             <button
-              onClick={() => enhanceMutation.mutate({
-                slotId: selectedItem.id,
-                useProtectionScroll: useProtection,
-              })}
+              onClick={() =>
+                enhanceMutation.mutate({
+                  slotId: selectedItem.id,
+                  useProtectionScroll: useProtection,
+                })
+              }
               disabled={enhanceMutation.isPending}
               className="flex-1 py-3 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 text-white font-bold transition"
             >
-              {enhanceMutation.isPending ? 'ENHANCING...' : 'ENHANCE'}
+              {enhanceMutation.isPending ? "ENHANCING..." : "ENHANCE"}
             </button>
             <button
               onClick={() => {
@@ -315,7 +404,12 @@ export default function BlacksmithTab() {
     <div className="space-y-4">
       <div className="bg-stone-800 border-2 border-purple-600 p-4">
         <h3 className="text-purple-400 font-bold mb-2 flex items-center gap-2">
-          <img src={refiningStoneIcon} alt="" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+          <img
+            src={refiningStoneIcon}
+            alt=""
+            className="w-4 h-4"
+            style={{ imageRendering: "pixelated" }}
+          />
           REFINING
         </h3>
         <p className="text-gray-300 text-sm">
@@ -328,7 +422,9 @@ export default function BlacksmithTab() {
 
       {!selectedItem ? (
         <div>
-          <h4 className="text-white font-bold mb-2">Select Equipment to Refine:</h4>
+          <h4 className="text-white font-bold mb-2">
+            Select Equipment to Refine:
+          </h4>
           <div className="grid grid-cols-2 gap-2">
             {equipmentItems.map((slot: any) => (
               <button
@@ -342,15 +438,23 @@ export default function BlacksmithTab() {
                       src={getItemImage(slot.item.spriteId, slot.item.type)!}
                       alt={slot.item.name}
                       className="w-8 h-8"
-                      style={{ imageRendering: 'pixelated' }}
+                      style={{ imageRendering: "pixelated" }}
                     />
                   )}
                   <div className="flex-1">
-                    <div className={`font-bold text-sm ${getRarityColor(slot.item.rarity)}`}>
+                    <div
+                      className={`font-bold text-sm ${getRarityColor(
+                        slot.item.rarity
+                      )}`}
+                    >
                       {slot.item.name}
-                      {slot.refineStats && <span className="text-purple-400 ml-1">★</span>}
+                      {slot.refineStats && (
+                        <span className="text-purple-400 ml-1">★</span>
+                      )}
                     </div>
-                    <div className="text-gray-400 text-xs">{slot.item.rarity}</div>
+                    <div className="text-gray-400 text-xs">
+                      {slot.item.rarity}
+                    </div>
                   </div>
                 </div>
               </button>
@@ -361,16 +465,26 @@ export default function BlacksmithTab() {
         <div className="space-y-4">
           <div className="bg-stone-900 border-2 border-purple-600 p-4">
             <div className="flex items-center gap-3 mb-3">
-              {getItemImage(selectedItem.item.spriteId, selectedItem.item.type) && (
+              {getItemImage(
+                selectedItem.item.spriteId,
+                selectedItem.item.type
+              ) && (
                 <img
-                  src={getItemImage(selectedItem.item.spriteId, selectedItem.item.type)!}
+                  src={
+                    getItemImage(
+                      selectedItem.item.spriteId,
+                      selectedItem.item.type
+                    )!
+                  }
                   alt={selectedItem.item.name}
                   className="w-12 h-12"
-                  style={{ imageRendering: 'pixelated' }}
+                  style={{ imageRendering: "pixelated" }}
                 />
               )}
               <div>
-                <div className="text-white font-bold">{selectedItem.item.name}</div>
+                <div className="text-white font-bold">
+                  {selectedItem.item.name}
+                </div>
                 {selectedItem.refineStats && (
                   <div className="text-purple-400 text-xs">Already refined</div>
                 )}
@@ -388,7 +502,7 @@ export default function BlacksmithTab() {
               disabled={refineMutation.isPending}
               className="flex-1 py-3 bg-purple-700 hover:bg-purple-600 disabled:bg-gray-600 text-white font-bold transition"
             >
-              {refineMutation.isPending ? 'REFINING...' : 'REFINE'}
+              {refineMutation.isPending ? "REFINING..." : "REFINE"}
             </button>
             <button
               onClick={() => setSelectedItem(null)}
@@ -406,7 +520,12 @@ export default function BlacksmithTab() {
     <div className="space-y-4">
       <div className="bg-stone-800 border-2 border-blue-600 p-4">
         <h3 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
-          <img src={socketDrillIcon} alt="" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+          <img
+            src={socketDrillIcon}
+            alt=""
+            className="w-4 h-4"
+            style={{ imageRendering: "pixelated" }}
+          />
           SOCKET SYSTEM
         </h3>
         <p className="text-gray-300 text-sm">
@@ -430,13 +549,20 @@ export default function BlacksmithTab() {
                       src={getItemImage(slot.item.spriteId, slot.item.type)!}
                       alt={slot.item.name}
                       className="w-8 h-8"
-                      style={{ imageRendering: 'pixelated' }}
+                      style={{ imageRendering: "pixelated" }}
                     />
                   )}
                   <div className="flex-1">
-                    <div className={`font-bold text-sm ${getRarityColor(slot.item.rarity)}`}>{slot.item.name}</div>
+                    <div
+                      className={`font-bold text-sm ${getRarityColor(
+                        slot.item.rarity
+                      )}`}
+                    >
+                      {slot.item.name}
+                    </div>
                     <div className="text-blue-400 text-xs">
-                      Sockets: {slot.socketedGems?.length || 0}/{slot.socketSlots || 0}
+                      Sockets: {slot.socketedGems?.length || 0}/
+                      {slot.socketSlots || 0}
                     </div>
                   </div>
                 </div>
@@ -448,18 +574,29 @@ export default function BlacksmithTab() {
         <div className="space-y-4">
           <div className="bg-stone-900 border-2 border-blue-600 p-4">
             <div className="flex items-center gap-3 mb-3">
-              {getItemImage(selectedItem.item.spriteId, selectedItem.item.type) && (
+              {getItemImage(
+                selectedItem.item.spriteId,
+                selectedItem.item.type
+              ) && (
                 <img
-                  src={getItemImage(selectedItem.item.spriteId, selectedItem.item.type)!}
+                  src={
+                    getItemImage(
+                      selectedItem.item.spriteId,
+                      selectedItem.item.type
+                    )!
+                  }
                   alt={selectedItem.item.name}
                   className="w-12 h-12"
-                  style={{ imageRendering: 'pixelated' }}
+                  style={{ imageRendering: "pixelated" }}
                 />
               )}
               <div>
-                <div className="text-white font-bold">{selectedItem.item.name}</div>
+                <div className="text-white font-bold">
+                  {selectedItem.item.name}
+                </div>
                 <div className="text-blue-400 text-sm">
-                  Sockets: {selectedItem.socketedGems?.length || 0}/{selectedItem.socketSlots || 0}
+                  Sockets: {selectedItem.socketedGems?.length || 0}/
+                  {selectedItem.socketSlots || 0}
                 </div>
               </div>
             </div>
@@ -471,35 +608,56 @@ export default function BlacksmithTab() {
                 disabled={addSocketMutation.isPending}
                 className="w-full py-2 bg-blue-700 hover:bg-blue-600 disabled:bg-gray-600 text-white font-bold text-sm transition mb-3"
               >
-                {addSocketMutation.isPending ? 'ADDING...' : `ADD SOCKET SLOT (${(selectedItem.socketSlots + 1) * 10000}g + Socket Drill)`}
+                {addSocketMutation.isPending
+                  ? "ADDING..."
+                  : `ADD SOCKET SLOT (${
+                      (selectedItem.socketSlots + 1) * 10000
+                    }g + Socket Drill)`}
               </button>
             )}
 
             {/* Insert Gem */}
-            {selectedItem.socketSlots > (selectedItem.socketedGems?.length || 0) && (
+            {selectedItem.socketSlots >
+              (selectedItem.socketedGems?.length || 0) && (
               <div>
-                <h5 className="text-white font-bold text-sm mb-2">Select Gem to Insert:</h5>
+                <h5 className="text-white font-bold text-sm mb-2">
+                  Select Gem to Insert:
+                </h5>
                 <div className="grid grid-cols-3 gap-2 max-h-48 overflow-y-auto">
                   {gems.map((gemSlot: any) => (
                     <button
                       key={gemSlot.id}
-                      onClick={() => insertGemMutation.mutate({
-                        slotId: selectedItem.id,
-                        gemId: gemSlot.item.id,
-                      })}
+                      onClick={() =>
+                        insertGemMutation.mutate({
+                          slotId: selectedItem.id,
+                          gemId: gemSlot.item.id,
+                        })
+                      }
                       disabled={insertGemMutation.isPending}
                       className="bg-stone-800 border-2 border-stone-700 hover:border-blue-600 p-2 transition"
                     >
-                      {getItemImage(gemSlot.item.spriteId, gemSlot.item.type) && (
+                      {getItemImage(
+                        gemSlot.item.spriteId,
+                        gemSlot.item.type
+                      ) && (
                         <img
-                          src={getItemImage(gemSlot.item.spriteId, gemSlot.item.type)!}
+                          src={
+                            getItemImage(
+                              gemSlot.item.spriteId,
+                              gemSlot.item.type
+                            )!
+                          }
                           alt={gemSlot.item.name}
                           className="w-8 h-8 mx-auto mb-1"
-                          style={{ imageRendering: 'pixelated' }}
+                          style={{ imageRendering: "pixelated" }}
                         />
                       )}
-                      <div className="text-white text-xs font-bold">{gemSlot.item.name}</div>
-                      <div className="text-gray-400 text-xs">x{gemSlot.quantity}</div>
+                      <div className="text-white text-xs font-bold">
+                        {gemSlot.item.name}
+                      </div>
+                      <div className="text-gray-400 text-xs">
+                        x{gemSlot.quantity}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -533,29 +691,41 @@ export default function BlacksmithTab() {
             {result.success !== undefined && (
               <div>
                 {result.success ? (
-                  <span className="text-green-400">✓ Enhancement successful! +{result.toLevel}</span>
+                  <span className="text-green-400">
+                    ✓ Enhancement successful! +{result.toLevel}
+                  </span>
                 ) : result.itemDestroyed ? (
                   <span className="text-red-400">✗ Item destroyed!</span>
                 ) : (
-                  <span className="text-yellow-400">Enhancement failed. Level: +{result.toLevel}</span>
+                  <span className="text-yellow-400">
+                    Enhancement failed. Level: +{result.toLevel}
+                  </span>
                 )}
               </div>
             )}
             {result.refineStats && (
               <div>
-                <div className="text-purple-400 font-bold">Refining Complete!</div>
+                <div className="text-purple-400 font-bold">
+                  Refining Complete!
+                </div>
                 <div className="text-sm">
                   {Object.entries(result.refineStats).map(([stat, value]) => (
-                    <div key={stat}>+{value as number} {stat}</div>
+                    <div key={stat}>
+                      +{value as number} {stat}
+                    </div>
                   ))}
                 </div>
               </div>
             )}
             {result.socketSlots && (
-              <div className="text-blue-400">Socket slot added! Total: {result.socketSlots}</div>
+              <div className="text-blue-400">
+                Socket slot added! Total: {result.socketSlots}
+              </div>
             )}
             {result.gemName && (
-              <div className="text-blue-400">{result.gemName} socketed successfully!</div>
+              <div className="text-blue-400">
+                {result.gemName} socketed successfully!
+              </div>
             )}
           </div>
           <button
@@ -571,63 +741,72 @@ export default function BlacksmithTab() {
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => {
-            setMode('enhance');
+            setMode("enhance");
             setSelectedItem(null);
             setResult(null);
           }}
           className={`flex-1 py-2 font-bold transition ${
-            mode === 'enhance'
-              ? 'bg-amber-600 text-white'
-              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+            mode === "enhance"
+              ? "bg-amber-600 text-white"
+              : "bg-stone-800 text-gray-400 hover:bg-stone-700"
           }`}
           style={{
-            border: '2px solid #92400e',
-            borderRadius: '0',
-            boxShadow: mode === 'enhance' ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
-            textShadow: mode === 'enhance' ? '1px 1px 0 #000' : 'none',
-            fontFamily: 'monospace',
+            border: "2px solid #92400e",
+            borderRadius: "0",
+            boxShadow:
+              mode === "enhance"
+                ? "0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)"
+                : "none",
+            textShadow: mode === "enhance" ? "1px 1px 0 #000" : "none",
+            fontFamily: "monospace",
           }}
         >
           ENHANCE
         </button>
         <button
           onClick={() => {
-            setMode('refine');
+            setMode("refine");
             setSelectedItem(null);
             setResult(null);
           }}
           className={`flex-1 py-2 font-bold transition ${
-            mode === 'refine'
-              ? 'bg-purple-600 text-white'
-              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+            mode === "refine"
+              ? "bg-purple-600 text-white"
+              : "bg-stone-800 text-gray-400 hover:bg-stone-700"
           }`}
           style={{
-            border: '2px solid #581c87',
-            borderRadius: '0',
-            boxShadow: mode === 'refine' ? '0 2px 0 #7e22ce, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
-            textShadow: mode === 'refine' ? '1px 1px 0 #000' : 'none',
-            fontFamily: 'monospace',
+            border: "2px solid #581c87",
+            borderRadius: "0",
+            boxShadow:
+              mode === "refine"
+                ? "0 2px 0 #7e22ce, inset 0 1px 0 rgba(255,255,255,0.2)"
+                : "none",
+            textShadow: mode === "refine" ? "1px 1px 0 #000" : "none",
+            fontFamily: "monospace",
           }}
         >
           REFINE
         </button>
         <button
           onClick={() => {
-            setMode('socket');
+            setMode("socket");
             setSelectedItem(null);
             setResult(null);
           }}
           className={`flex-1 py-2 font-bold transition ${
-            mode === 'socket'
-              ? 'bg-blue-600 text-white'
-              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+            mode === "socket"
+              ? "bg-blue-600 text-white"
+              : "bg-stone-800 text-gray-400 hover:bg-stone-700"
           }`}
           style={{
-            border: '2px solid #1e3a8a',
-            borderRadius: '0',
-            boxShadow: mode === 'socket' ? '0 2px 0 #2563eb, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
-            textShadow: mode === 'socket' ? '1px 1px 0 #000' : 'none',
-            fontFamily: 'monospace',
+            border: "2px solid #1e3a8a",
+            borderRadius: "0",
+            boxShadow:
+              mode === "socket"
+                ? "0 2px 0 #2563eb, inset 0 1px 0 rgba(255,255,255,0.2)"
+                : "none",
+            textShadow: mode === "socket" ? "1px 1px 0 #000" : "none",
+            fontFamily: "monospace",
           }}
         >
           SOCKET
@@ -635,9 +814,9 @@ export default function BlacksmithTab() {
       </div>
 
       {/* Mode Content */}
-      {mode === 'enhance' && renderEnhanceMode()}
-      {mode === 'refine' && renderRefineMode()}
-      {mode === 'socket' && renderSocketMode()}
+      {mode === "enhance" && renderEnhanceMode()}
+      {mode === "refine" && renderRefineMode()}
+      {mode === "socket" && renderSocketMode()}
     </div>
   );
 }

@@ -7,12 +7,19 @@ import { Check } from "lucide-react";
 import sellItemIcon from "@/assets/ui/sellItemIcon.png";
 import inventoryIcon from "@/assets/ui/inventory.png";
 
-type CategoryFilter = "All" | "Weapons" | "Armor" | "Accessories" | "Consumables" | "Materials";
+type CategoryFilter =
+  | "All"
+  | "Weapons"
+  | "Armor"
+  | "Accessories"
+  | "Consumables"
+  | "Materials";
 
 export default function InventoryTab() {
   const queryClient = useQueryClient();
   const { character, player, setCharacter, setPlayer } = useGameStore();
-  const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>("All");
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   const getGuildItemPath = (spriteId: string, itemType?: string) => {
@@ -145,13 +152,16 @@ export default function InventoryTab() {
         )}`;
       }
 
-      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, etc.)
+      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, ironSet/, etc.)
       if (spriteId.includes("/")) {
-        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing'
-        // For accessories with woodenSet/, the path is accessories/woodenSet/...
-        const fullPath = spriteId.startsWith("woodenSet/")
-          ? `accessories/${spriteId}`
-          : spriteId;
+        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing' or 'ironSet/ironRing'
+        // For accessories with woodenSet/ or ironSet/, the path is accessories/woodenSet/... or accessories/ironSet/...
+        const fullPath =
+          spriteId.startsWith("woodenSet/") ||
+          spriteId.startsWith("ironSet/") ||
+          spriteId.startsWith("dungeonDrops/")
+            ? `accessories/${spriteId}`
+            : spriteId;
         const path = `../../assets/items/${fullPath}.png`;
         return images[path] || null;
       }
@@ -360,28 +370,50 @@ export default function InventoryTab() {
   };
 
   // Filter inventory by category and search
-  const categories: CategoryFilter[] = ["All", "Weapons", "Armor", "Accessories", "Consumables", "Materials"];
-  
+  const categories: CategoryFilter[] = [
+    "All",
+    "Weapons",
+    "Armor",
+    "Accessories",
+    "Consumables",
+    "Materials",
+  ];
+
   const filteredInventory = inventory.filter((slot: any) => {
     // Category filter
     if (selectedCategory !== "All") {
       const itemType = slot.item?.type;
       if (selectedCategory === "Weapons" && itemType !== "Weapon") return false;
       if (selectedCategory === "Armor" && itemType !== "Armor") return false;
-      if (selectedCategory === "Accessories" && itemType !== "Accessory") return false;
-      if (selectedCategory === "Consumables" && itemType !== "Consumable" && itemType !== "Potion") return false;
-      if (selectedCategory === "Materials" && itemType !== "Material" && itemType !== "Gem") return false;
+      if (selectedCategory === "Accessories" && itemType !== "Accessory")
+        return false;
+      if (
+        selectedCategory === "Consumables" &&
+        itemType !== "Consumable" &&
+        itemType !== "Potion"
+      )
+        return false;
+      if (
+        selectedCategory === "Materials" &&
+        itemType !== "Material" &&
+        itemType !== "Gem"
+      )
+        return false;
     }
-    
+
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const itemName = slot.item?.name?.toLowerCase() || "";
       const itemType = slot.item?.type?.toLowerCase() || "";
       const itemRarity = slot.item?.rarity?.toLowerCase() || "";
-      return itemName.includes(query) || itemType.includes(query) || itemRarity.includes(query);
+      return (
+        itemName.includes(query) ||
+        itemType.includes(query) ||
+        itemRarity.includes(query)
+      );
     }
-    
+
     return true;
   });
 

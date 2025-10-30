@@ -9,7 +9,6 @@ import {
   Trophy,
   ChevronDown,
   ChevronUp,
-  Skull,
 } from "lucide-react";
 import energyIcon from "@/assets/ui/energy.png";
 import hpIcon from "@/assets/ui/hp.png";
@@ -19,11 +18,13 @@ import goldIcon from "@/assets/ui/gold.png";
 import rewardIcon from "@/assets/ui/reward.png";
 import monstersIcon from "@/assets/ui/monsters.png";
 import cpIcon from "@/assets/ui/cp.png";
-import BossFight from "@/components/BossFight";
 import dungeonsIcon from "@/assets/ui/dungeons.png";
 import historyIcon from "@/assets/ui/history.png";
 import idleFarmingIcon from "@/assets/ui/idleFarming.png";
 import serverchatIcon from "@/assets/ui/serverchat.png";
+import searchIcon from "@/assets/ui/search.png";
+import expandedIcon from "@/assets/ui/expanded.png";
+import compactIcon from "@/assets/ui/compact.png";
 import ServerChat from "@/components/ServerChat";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
@@ -201,12 +202,11 @@ export default function AdventureTab() {
   const queryClient = useQueryClient();
   const { character, player, setPlayer, setCharacter } = useGameStore();
   const fastFinishCost = 10; // gems
-  const [view, setView] = useState<"dungeons" | "history" | "serverchat">(
-    "dungeons"
-  );
+  const [view, setView] = useState<"dungeons" | "idle" | "history" | "serverchat">("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showRewards, setShowRewards] = useState(false);
-  const [showBossFight, setShowBossFight] = useState(false);
+  const [collapsedView, setCollapsedView] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeDungeonRun, setActiveDungeonRun] = useState<any>(() => {
     // Restore from localStorage on mount
     const saved = localStorage.getItem("activeDungeonRun");
@@ -734,7 +734,7 @@ export default function AdventureTab() {
       {/* Dungeon Complete Modal (shows for unclaimed rewards, persists across refreshes) */}
       {unclaimedReward && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
           onClick={() => {
             setUnclaimedReward(null);
             localStorage.removeItem("unclaimedDungeonReward");
@@ -745,7 +745,7 @@ export default function AdventureTab() {
           }}
         >
           <div
-            className="bg-stone-800 rounded-lg border-2 border-amber-600 p-8 max-w-md w-full text-center"
+            className="bg-stone-800 rounded-lg border-2 border-amber-600 p-4 sm:p-8 max-w-md w-full text-center my-auto max-h-[95vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-xl font-bold text-amber-400 mb-4">
@@ -813,13 +813,13 @@ export default function AdventureTab() {
                   </div>
                 </div>
                 <h2
-                  className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 mb-4 animate-pulse"
+                  className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 mb-3 sm:mb-4 animate-pulse"
                   style={{ textShadow: "0 0 20px rgba(251, 191, 36, 0.5)" }}
                 >
                   Victory!
                 </h2>
-                <div className="bg-stone-900 rounded-lg p-4 mb-4">
-                  <div className="space-y-2 text-lg">
+                <div className="bg-stone-900 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+                  <div className="space-y-2 text-base sm:text-lg">
                     <div className="flex justify-between">
                       <span className="text-gray-400">Gold:</span>
                       <span className="text-yellow-400 font-bold">
@@ -838,9 +838,9 @@ export default function AdventureTab() {
                 {/* Item Drops with Images */}
                 {unclaimedReward.result.itemsDropped &&
                   unclaimedReward.result.itemsDropped.length > 0 && (
-                    <div className="bg-stone-900 rounded-lg p-4 mb-4">
+                    <div className="bg-stone-900 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
                       <h3
-                        className="text-sm font-bold text-amber-400 mb-3"
+                        className="text-xs sm:text-sm font-bold text-amber-400 mb-2 sm:mb-3"
                         style={{
                           fontFamily: "monospace",
                           textShadow: "1px 1px 0 #000",
@@ -848,7 +848,7 @@ export default function AdventureTab() {
                       >
                         💎 ITEMS OBTAINED:
                       </h3>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                         {unclaimedReward.result.itemsDropped.map(
                           (item: any, idx: number) => (
                             <div
@@ -1311,16 +1311,64 @@ export default function AdventureTab() {
       {/* Dungeons List */}
       {view === "dungeons" && (
         <div className="space-y-3">
+          {/* Search Bar and View Toggle */}
+          <div className="flex gap-2 mb-2">
+            <div className="flex-1 relative">
+              <img
+                src={searchIcon}
+                alt="Search"
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <input
+                type="text"
+                placeholder="Search dungeons..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-2 bg-stone-800 border-2 border-stone-600 text-white text-sm focus:border-amber-600 focus:outline-none"
+                style={{
+                  fontFamily: 'monospace',
+                }}
+              />
+            </div>
+            <button
+              onClick={() => setCollapsedView(!collapsedView)}
+              className="px-3 py-2 bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold transition whitespace-nowrap flex items-center gap-2"
+              style={{
+                border: '2px solid #57534e',
+                fontFamily: 'monospace',
+              }}
+            >
+              <img
+                src={collapsedView ? expandedIcon : compactIcon}
+                alt={collapsedView ? 'Expanded' : 'Compact'}
+                className="w-4 h-4"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              {collapsedView ? 'EXPANDED' : 'COMPACT'}
+            </button>
+          </div>
+
           {dungeons && dungeons.length > 0 ? (
             dungeons
               .filter(
                 (dungeon: any) =>
                   character && character.level >= dungeon.recommendedLevel
               )
+              .filter((dungeon: any) => {
+                if (!searchQuery.trim()) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                  dungeon.name.toLowerCase().includes(query) ||
+                  dungeon.zone.name.toLowerCase().includes(query) ||
+                  dungeon.difficulty.toLowerCase().includes(query) ||
+                  dungeon.recommendedLevel.toString().includes(query)
+                );
+              })
               .map((dungeon: any) => (
                 <div
                   key={dungeon.id}
-                  className="p-4 bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600 hover:border-amber-600 transition-all cursor-pointer active:translate-y-1"
+                  className={`${collapsedView ? 'p-2' : 'p-4'} bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600 hover:border-amber-600 transition-all cursor-pointer active:translate-y-1`}
                   onClick={() => setSelectedDungeon(dungeon)}
                   style={{
                     borderRadius: "12px",
@@ -1328,6 +1376,51 @@ export default function AdventureTab() {
                       "0 4px 0 #57534e, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
                   }}
                 >
+                  {collapsedView ? (
+                    // Compact View
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={getDungeonIcon(dungeon.name)}
+                        alt={dungeon.name}
+                        className="w-10 h-10 border-2 border-stone-500"
+                        style={{
+                          imageRendering: "pixelated",
+                          borderRadius: "6px",
+                        }}
+                      />
+                      <div className="flex-1 flex items-center justify-between">
+                        <div>
+                          <h3
+                            className="font-bold text-white text-sm"
+                            style={{
+                              fontFamily: "monospace",
+                              textShadow: "1px 1px 0 #000",
+                            }}
+                          >
+                            {dungeon.name}
+                          </h3>
+                          <div className="flex items-center gap-2 text-xs">
+                            <span className="text-blue-400">Lv.{dungeon.recommendedLevel}</span>
+                            <span className={`${getDifficultyColor(dungeon.difficulty)}`}>
+                              {dungeon.difficulty}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <div className="flex items-center gap-1 text-amber-400">
+                            <img src={goldIcon} alt="Gold" className="w-3 h-3" style={{ imageRendering: "pixelated" }} />
+                            <span>{formatGold(dungeon.baseGoldReward)}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-blue-400">
+                            <img src={energyIcon} alt="Energy" className="w-3 h-3" style={{ imageRendering: "pixelated" }} />
+                            <span>{dungeon.energyCost}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Expanded View
+                    <>
                   <div className="flex items-start gap-3 mb-3">
                     <img
                       src={getDungeonIcon(dungeon.name)}
@@ -1480,6 +1573,8 @@ export default function AdventureTab() {
                         ⚠️ Combat Power too low!
                       </div>
                     )}
+                    </>
+                  )}
                 </div>
               ))
           ) : (

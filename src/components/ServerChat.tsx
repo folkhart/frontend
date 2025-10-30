@@ -5,22 +5,24 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { useGameStore } from "@/store/gameStore";
 import { dungeonApi } from "@/lib/api";
-import ratCellarIcon from '@/assets/ui/dungeonIcons/ratCellar.png';
-import goblinCaveIcon from '@/assets/ui/dungeonIcons/goblinCave.png';
-import slimeDenIcon from '@/assets/ui/dungeonIcons/slimeDen.png';
-import dragonLairIcon from '@/assets/ui/dungeonIcons/dragonLair.png';
-import eclipticThroneIcon from '@/assets/ui/dungeonIcons/eclipticThrone.png';
-import attackIconCP from '@/assets/ui/character_panel/attack.png';
-import defenseIconCP from '@/assets/ui/character_panel/defense.png';
-import hpIconCP from '@/assets/ui/character_panel/hp.png';
-import speedIconCP from '@/assets/ui/character_panel/speed.png';
+import worldIcon from "@/assets/ui/world.png";
+import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
+import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
+import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
+import darkForestIcon from "@/assets/ui/dungeonIcons/darkForest.png";
+import dragonLairIcon from "@/assets/ui/dungeonIcons/dragonLair.png";
+import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
+import attackIconCP from "@/assets/ui/character_panel/attack.png";
+import defenseIconCP from "@/assets/ui/character_panel/defense.png";
+import hpIconCP from "@/assets/ui/character_panel/hp.png";
+import speedIconCP from "@/assets/ui/character_panel/speed.png";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
     "Rat Cellar": ratCellarIcon,
     "Goblin Cave": goblinCaveIcon,
     "Slime Den": slimeDenIcon,
-    "Dark Forest": goblinCaveIcon,
+    "Dark Forest": darkForestIcon,
     "Dragon's Lair": dragonLairIcon,
     "Shattered Obsidian Vault": ratCellarIcon,
     "Hollowroot Sanctuary": slimeDenIcon,
@@ -122,21 +124,21 @@ const EMOJIS = [
 ];
 
 export default function ServerChat() {
-  const { } = useGameStore();
+  const {} = useGameStore();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  
+
   // Fetch all dungeons for avatar icon mapping
   const { data: allDungeons } = useQuery({
-    queryKey: ['dungeons'],
+    queryKey: ["dungeons"],
     queryFn: async () => {
       const { data } = await dungeonApi.getAll();
       return data;
     },
     staleTime: Infinity, // Dungeons don't change, cache forever
   });
-  
+
   // Helper function to get dungeon icon by dungeon ID
   const getDungeonIcon = (dungeonId: string) => {
     if (!allDungeons) return ratCellarIcon;
@@ -165,7 +167,7 @@ export default function ServerChat() {
   // Set initial messages when loaded
   useEffect(() => {
     if (initialMessages) {
-      console.log('Initial messages loaded:', initialMessages);
+      console.log("Initial messages loaded:", initialMessages);
       setMessages(initialMessages);
     }
   }, [initialMessages]);
@@ -379,10 +381,16 @@ export default function ServerChat() {
       {/* Header */}
       <div className="bg-stone-800 border-b-2 border-amber-600 p-3">
         <h2
-          className="text-xl font-bold text-amber-400"
+          className="text-xl font-bold text-amber-400 flex items-center gap-2"
           style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
         >
-          🌍 SERVER CHAT
+          <img
+            src={worldIcon}
+            alt="World"
+            className="w-6 h-6"
+            style={{ imageRendering: "pixelated" }}
+          />
+          SERVER CHAT
         </h2>
         <p
           className="text-xs text-gray-400"
@@ -408,9 +416,9 @@ export default function ServerChat() {
                 {/* Player Avatar - Clickable */}
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${
-                    isSystemMessage(msg.player.username) 
-                      ? 'border-orange-600' 
-                      : 'border-amber-500'
+                    isSystemMessage(msg.player.username)
+                      ? "border-orange-600"
+                      : "border-amber-500"
                   } ${
                     !isSystemMessage(msg.player.username)
                       ? "cursor-pointer hover:opacity-80"
@@ -437,7 +445,9 @@ export default function ServerChat() {
                     />
                   ) : (
                     <img
-                      src={`/assets/ui/chat/classIcons/${msg.player.class?.toLowerCase() || 'warrior'}.png`}
+                      src={`/assets/ui/chat/classIcons/${
+                        msg.player.class?.toLowerCase() || "warrior"
+                      }.png`}
                       alt={msg.player.class}
                       className="w-6 h-6"
                       style={{ imageRendering: "pixelated" }}
@@ -470,7 +480,8 @@ export default function ServerChat() {
                           ? {
                               textShadow:
                                 "0 0 15px rgba(239, 68, 68, 1), 0 0 30px rgba(239, 68, 68, 0.7), 0 0 45px rgba(239, 68, 68, 0.4), 2px 2px 0 #000",
-                              filter: "drop-shadow(0 0 10px rgba(239, 68, 68, 0.9))",
+                              filter:
+                                "drop-shadow(0 0 10px rgba(239, 68, 68, 0.9))",
                             }
                           : undefined
                       }
@@ -481,15 +492,16 @@ export default function ServerChat() {
                     >
                       {msg.player.username}
                     </span>
-                    {msg.player.class && !isSystemMessage(msg.player.username) && (
-                      <img
-                        src={`/assets/ui/chat/classIcons/${msg.player.class.toLowerCase()}.png`}
-                        alt={msg.player.class}
-                        className="w-4 h-4"
-                        style={{ imageRendering: "pixelated" }}
-                        title={msg.player.class}
-                      />
-                    )}
+                    {msg.player.class &&
+                      !isSystemMessage(msg.player.username) && (
+                        <img
+                          src={`/assets/ui/chat/classIcons/${msg.player.class.toLowerCase()}.png`}
+                          alt={msg.player.class}
+                          className="w-4 h-4"
+                          style={{ imageRendering: "pixelated" }}
+                          title={msg.player.class}
+                        />
+                      )}
                     {!isSystemMessage(msg.player.username) && (
                       <span className="text-gray-500 text-xs">
                         Lv.{msg.player.level}
@@ -695,7 +707,9 @@ export default function ServerChat() {
                       )}
                       <h3
                         className={`text-2xl font-bold ${
-                          playerCharacter.isAdmin ? "text-red-500" : "text-white"
+                          playerCharacter.isAdmin
+                            ? "text-red-500"
+                            : "text-white"
                         }`}
                         style={{
                           fontFamily: "monospace",
@@ -948,7 +962,12 @@ export default function ServerChat() {
                         className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2"
                         style={{ borderRadius: "8px" }}
                       >
-                        <img src={hpIconCP} alt="HP" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
+                        <img
+                          src={hpIconCP}
+                          alt="HP"
+                          className="w-8 h-8"
+                          style={{ imageRendering: "pixelated" }}
+                        />
                         <div>
                           <p
                             className="text-[10px] text-gray-400"
@@ -968,7 +987,12 @@ export default function ServerChat() {
                         className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2"
                         style={{ borderRadius: "8px" }}
                       >
-                        <img src={attackIconCP} alt="Attack" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
+                        <img
+                          src={attackIconCP}
+                          alt="Attack"
+                          className="w-8 h-8"
+                          style={{ imageRendering: "pixelated" }}
+                        />
                         <div>
                           <p
                             className="text-[10px] text-gray-400"
@@ -988,7 +1012,12 @@ export default function ServerChat() {
                         className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2"
                         style={{ borderRadius: "8px" }}
                       >
-                        <img src={defenseIconCP} alt="Defense" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
+                        <img
+                          src={defenseIconCP}
+                          alt="Defense"
+                          className="w-8 h-8"
+                          style={{ imageRendering: "pixelated" }}
+                        />
                         <div>
                           <p
                             className="text-[10px] text-gray-400"
@@ -1008,7 +1037,12 @@ export default function ServerChat() {
                         className="bg-stone-900 border-2 border-stone-700 p-3 flex items-center gap-2"
                         style={{ borderRadius: "8px" }}
                       >
-                        <img src={speedIconCP} alt="Speed" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
+                        <img
+                          src={speedIconCP}
+                          alt="Speed"
+                          className="w-8 h-8"
+                          style={{ imageRendering: "pixelated" }}
+                        />
                         <div>
                           <p
                             className="text-[10px] text-gray-400"
