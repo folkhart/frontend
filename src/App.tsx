@@ -7,8 +7,29 @@ import CharacterCreationPage from './pages/CharacterCreationPage';
 import GamePage from './pages/GamePage';
 import DocsPage from './pages/DocsPage';
 
+// Increment this version whenever you reset the database
+// This will auto-logout all cached users
+const DB_VERSION = '1.0.0';
+
 function App() {
-  const { isAuthenticated, accessToken } = useGameStore();
+  const { isAuthenticated, accessToken, clearAuth } = useGameStore();
+
+  // Check database version on app load
+  useEffect(() => {
+    const storedVersion = localStorage.getItem('db_version');
+    if (storedVersion !== DB_VERSION) {
+      // Database was reset, clear all cached auth data
+      localStorage.clear();
+      sessionStorage.clear();
+      localStorage.setItem('db_version', DB_VERSION);
+      if (isAuthenticated) {
+        clearAuth();
+        window.location.reload();
+      }
+    } else {
+      localStorage.setItem('db_version', DB_VERSION);
+    }
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated && accessToken) {

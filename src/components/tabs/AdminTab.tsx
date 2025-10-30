@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper } from 'lucide-react';
+import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
 import AdminNewsTab from './AdminNewsTab';
@@ -52,12 +52,53 @@ const adminApi = {
     },
     body: JSON.stringify({ itemId, quantity })
   }).then(r => r.json()),
+
+  // Backup API
+  getBackups: () => fetch(`${API_URL}/api/backup/list`, {
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+  }).then(r => r.json()),
+  
+  createBackup: () => fetch(`${API_URL}/api/backup/create`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+  }).then(r => r.json()),
+  
+  restoreBackup: (filename: string) => fetch(`${API_URL}/api/backup/restore/${filename}`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+  }).then(r => r.json()),
+  
+  deleteBackup: (filename: string) => fetch(`${API_URL}/api/backup/${filename}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+  }).then(r => r.json()),
+
+  downloadBackup: async (filename: string) => {
+    const response = await fetch(`${API_URL}/api/backup/download/${filename}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download backup');
+    }
+    
+    // Create blob and trigger download
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  },
 };
 
 export default function AdminTab() {
   const queryClient = useQueryClient();
   const { player } = useGameStore();
-  const [activeTab, setActiveTab] = useState<'players' | 'items' | 'shop' | 'news'>('players');
+  const [activeTab, setActiveTab] = useState<'players' | 'items' | 'shop' | 'news' | 'backups'>('players');
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [price, setPrice] = useState('100');
@@ -193,6 +234,24 @@ export default function AdminTab() {
         >
           <Newspaper size={16} className="inline mr-1" />
           News
+        </button>
+        <button
+          onClick={() => setActiveTab('backups')}
+          className={`flex-1 py-2 font-bold transition relative overflow-hidden ${
+            activeTab === 'backups'
+              ? 'bg-red-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #991b1b',
+            borderRadius: '0',
+            boxShadow: activeTab === 'backups' ? '0 2px 0 #b91c1c, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeTab === 'backups' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <Database size={16} className="inline mr-1" />
+          Backups
         </button>
       </div>
 
@@ -365,6 +424,181 @@ export default function AdminTab() {
 
       {/* News Tab */}
       {activeTab === 'news' && <AdminNewsTab />}
+
+      {/* Backups Tab */}
+      {activeTab === 'backups' && <BackupsTab />}
+    </div>
+  );
+}
+
+// Backups Tab Component
+function BackupsTab() {
+  const queryClient = useQueryClient();
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState<string | null>(null);
+
+  const { data: backups, isLoading } = useQuery({
+    queryKey: ['admin', 'backups'],
+    queryFn: adminApi.getBackups,
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+
+  const createBackupMutation = useMutation({
+    mutationFn: adminApi.createBackup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'backups'] });
+      (window as any).showToast?.('✅ Backup created successfully!', 'success');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.message || 'Failed to create backup', 'error');
+    },
+  });
+
+  const restoreBackupMutation = useMutation({
+    mutationFn: (filename: string) => adminApi.restoreBackup(filename),
+    onSuccess: () => {
+      setShowRestoreConfirm(null);
+      (window as any).showToast?.('✅ Database restored! Please refresh the page.', 'success');
+      setTimeout(() => window.location.reload(), 2000);
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.message || 'Failed to restore backup', 'error');
+    },
+  });
+
+  const deleteBackupMutation = useMutation({
+    mutationFn: (filename: string) => adminApi.deleteBackup(filename),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'backups'] });
+      (window as any).showToast?.('🗑️ Backup deleted', 'info');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.message || 'Failed to delete backup', 'error');
+    },
+  });
+
+  const formatDate = (date: string) => {
+    return new Date(date).toLocaleString();
+  };
+
+  const formatSize = (bytes: number) => {
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-stone-800 border-2 border-red-600 p-4" style={{ borderRadius: '0' }}>
+        <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <Database className="text-red-400" />
+          Database Backup System (JSON Format)
+        </h3>
+        <p className="text-sm text-gray-400 mb-4">
+          Automatic daily backups run at 3 AM. Backups are saved as JSON files. Download backups to keep them safe off-server. Keep up to 30 days of backups.
+        </p>
+        <button
+          onClick={() => createBackupMutation.mutate()}
+          disabled={createBackupMutation.isPending}
+          className="py-2 px-4 bg-green-700 hover:bg-green-600 disabled:bg-gray-600 text-white font-bold flex items-center gap-2"
+          style={{ border: '2px solid #15803d', borderRadius: '0' }}
+        >
+          <RefreshCw size={16} className={createBackupMutation.isPending ? 'animate-spin' : ''} />
+          {createBackupMutation.isPending ? 'Creating Backup...' : 'Create Backup Now'}
+        </button>
+      </div>
+
+      {isLoading ? (
+        <p className="text-gray-400 text-center py-4">Loading backups...</p>
+      ) : (
+        <div className="space-y-2">
+          <p className="text-sm text-gray-400">Available Backups: {backups?.length || 0}</p>
+          {backups && backups.length === 0 && (
+            <p className="text-center text-gray-500 py-8">No backups available yet.</p>
+          )}
+          {backups?.map((backup: any) => (
+            <div
+              key={backup.filename}
+              className="bg-stone-800 border-2 border-stone-700 p-3"
+              style={{ borderRadius: '0' }}
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <p className="font-bold text-white font-mono text-sm">{backup.filename}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {formatDate(backup.date)} · {formatSize(backup.size)}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await adminApi.downloadBackup(backup.filename);
+                        (window as any).showToast?.('📥 Download started!', 'success');
+                      } catch (error: any) {
+                        (window as any).showToast?.(error.message || 'Download failed', 'error');
+                      }
+                    }}
+                    className="px-3 py-1 bg-green-700 hover:bg-green-600 text-white font-bold text-xs flex items-center gap-1"
+                    style={{ border: '2px solid #15803d', borderRadius: '0' }}
+                  >
+                    <Download size={14} />
+                    Download
+                  </button>
+                  <button
+                    onClick={() => setShowRestoreConfirm(backup.filename)}
+                    className="px-3 py-1 bg-blue-700 hover:bg-blue-600 text-white font-bold text-xs flex items-center gap-1"
+                    style={{ border: '2px solid #1e40af', borderRadius: '0' }}
+                  >
+                    <Upload size={14} />
+                    Restore
+                  </button>
+                  <button
+                    onClick={() => deleteBackupMutation.mutate(backup.filename)}
+                    disabled={deleteBackupMutation.isPending}
+                    className="px-3 py-1 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 text-white font-bold text-xs flex items-center gap-1"
+                    style={{ border: '2px solid #991b1b', borderRadius: '0' }}
+                  >
+                    <Trash2 size={14} />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Restore Confirmation Modal */}
+      {showRestoreConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-stone-800 border-4 border-red-600 p-6 max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">⚠️ Confirm Restore</h3>
+            <p className="text-gray-300 mb-4">
+              Are you sure you want to restore from this backup?
+            </p>
+            <p className="text-red-400 font-bold mb-4 text-sm">
+              WARNING: This will replace ALL current data with the backup!
+            </p>
+            <p className="text-xs text-gray-400 mb-4 font-mono">{showRestoreConfirm}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => restoreBackupMutation.mutate(showRestoreConfirm)}
+                disabled={restoreBackupMutation.isPending}
+                className="flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 text-white font-bold"
+                style={{ border: '2px solid #991b1b', borderRadius: '0' }}
+              >
+                {restoreBackupMutation.isPending ? 'Restoring...' : 'Yes, Restore'}
+              </button>
+              <button
+                onClick={() => setShowRestoreConfirm(null)}
+                disabled={restoreBackupMutation.isPending}
+                className="flex-1 py-2 bg-stone-700 hover:bg-stone-600 text-white font-bold"
+                style={{ border: '2px solid #374151', borderRadius: '0' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
