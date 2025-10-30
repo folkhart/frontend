@@ -205,7 +205,11 @@ export default function AdventureTab() {
   const [view, setView] = useState<"dungeons" | "idle" | "history" | "serverchat">("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showRewards, setShowRewards] = useState(false);
-  const [collapsedView, setCollapsedView] = useState(false);
+  const [collapsedView, setCollapsedView] = useState(() => {
+    // Restore view preference from localStorage
+    const saved = localStorage.getItem("dungeonViewCollapsed");
+    return saved === "true";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [activeDungeonRun, setActiveDungeonRun] = useState<any>(() => {
     // Restore from localStorage on mount
@@ -248,6 +252,11 @@ export default function AdventureTab() {
     return 0;
   });
   const [idleTimeRemaining, setIdleTimeRemaining] = useState<number>(0);
+
+  // Save collapsed view preference to localStorage
+  useEffect(() => {
+    localStorage.setItem("dungeonViewCollapsed", String(collapsedView));
+  }, [collapsedView]);
 
   const { data: dungeons } = useQuery({
     queryKey: ["dungeons"],
