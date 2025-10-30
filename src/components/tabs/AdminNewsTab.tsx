@@ -213,7 +213,7 @@ export default function AdminNewsTab() {
                   {emojis.map((emojiId) => (
                     <img
                       key={emojiId}
-                      src={`/src/assets/ui/news/emojis/64x64/${emojiId}.png`}
+                      src={`/assets/ui/news/emojis/64x64/${emojiId}.png`}
                       alt={emojiId}
                       className="w-8 h-8 cursor-pointer hover:scale-125 hover:bg-blue-700 transition"
                       style={{ imageRendering: 'pixelated' }}
