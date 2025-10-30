@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { LogOut, Info } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { useGameStore } from "@/store/gameStore";
 import { disconnectSocket } from "@/lib/socket";
@@ -307,15 +307,10 @@ export default function SettingsTab() {
                       return;
                     }
                     try {
-                      await axios.post(
-                        `${
-                          import.meta.env.VITE_API_URL
-                        }/api/player/change-password`,
-                        {
-                          currentPassword: passwordData.currentPassword,
-                          newPassword: passwordData.newPassword,
-                        }
-                      );
+                      await api.post('/player/change-password', {
+                        currentPassword: passwordData.currentPassword,
+                        newPassword: passwordData.newPassword,
+                      });
                       (window as any).showToast?.(
                         "Password changed successfully!",
                         "success"
@@ -387,14 +382,9 @@ export default function SettingsTab() {
                       return;
                     }
                     try {
-                      const { data } = await axios.post(
-                        `${
-                          import.meta.env.VITE_API_URL
-                        }/api/player/change-character-name`,
-                        {
-                          newName: newCharacterName,
-                        }
-                      );
+                      await api.post('/player/change-character-name', {
+                        newName: newCharacterName,
+                      });
                       (window as any).showToast?.(
                         "Character name changed successfully!",
                         "success"
