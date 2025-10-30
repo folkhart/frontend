@@ -6,6 +6,7 @@ import { Users, Plus, TrendingUp, UserMinus, Shield } from "lucide-react";
 import guildIcon from "@/assets/ui/guild.png";
 import guildLeaderIcon from "@/assets/ui/guild/guildLeader.png";
 import guildOfficerIcon from "@/assets/ui/guild/guildOfficer.png";
+import guildMemberIcon from "@/assets/ui/guild/guildMember.png";
 import guildRecruitIcon from "@/assets/ui/guild/guildRecruit.png";
 import guildShopIcon from "@/assets/ui/guild/guildShop.png";
 import guildInfoIcon from "@/assets/ui/guild/guildInfo.png";
@@ -286,6 +287,8 @@ export default function GuildTab() {
       const { data } = await guildApi.getMyGuild();
       return data;
     },
+    staleTime: 0, // Always fetch fresh data
+    refetchOnMount: true, // Refetch when component mounts
   });
 
   // Fetch all dungeons for avatar icon mapping
@@ -444,16 +447,21 @@ export default function GuildTab() {
 
   const donateMutation = useMutation({
     mutationFn: (amount: number) => guildApi.donate(amount),
-    onSuccess: async () => {
-      // Refresh guild data
+    onSuccess: async (data: any) => {
+      // Force fresh refetch of all guild-related data
+      queryClient.invalidateQueries({ queryKey: ["myGuild"] });
       await refetchMyGuild();
-      // Refresh player data to update gold immediately
+      
+      // Update player gold immediately
       const { data: profile } = await authApi.getProfile();
       setPlayer(profile);
       queryClient.invalidateQueries({ queryKey: ["character"] });
 
       setDonateAmount("");
-      (window as any).showToast?.("Donation successful!", "success");
+      (window as any).showToast?.(
+        `💰 Donated ${data.goldDonated}g! +${data.guildCoinsAdded} GC to shop, +${data.bankGoldAdded}g to bank`,
+        "success"
+      );
     },
     onError: (error: any) => {
       (window as any).showToast?.(
@@ -543,6 +551,8 @@ export default function GuildTab() {
         return guildLeaderIcon;
       case "Officer":
         return guildOfficerIcon;
+      case "Member":
+        return guildMemberIcon;
       case "Recruit":
         return guildRecruitIcon;
       default:
@@ -993,8 +1003,12 @@ export default function GuildTab() {
                 <p className="text-white font-bold">{myGuild.experience}</p>
               </div>
               <div className="bg-stone-900 rounded p-2">
-                <p className="text-gray-400 text-xs">Guild Gold</p>
-                <p className="text-yellow-400 font-bold">{myGuild.guildGold}</p>
+                <p className="text-gray-400 text-xs">Guild Bank</p>
+                <p className="text-yellow-400 font-bold">{myGuild.guildGold}g</p>
+              </div>
+              <div className="bg-stone-900 rounded p-2">
+                <p className="text-gray-400 text-xs">Guild Coins</p>
+                <p className="text-purple-400 font-bold">{myGuild.guildCoins} GC</p>
               </div>
               <div className="bg-stone-900 rounded p-2">
                 <p className="text-gray-400 text-xs">Members</p>
@@ -1105,8 +1119,7 @@ export default function GuildTab() {
           <div className="bg-stone-800 rounded-lg p-3">
             <h3 className="font-bold text-white mb-2">Donate Gold</h3>
             <p className="text-sm text-gray-400 mb-3">
-              Help your guild grow by donating gold. Guild gold can be used for
-              upgrades and the guild shop.
+              Help your guild grow by donating gold. 95% converts to Guild Coins (GC) for the shop, 5% goes to the Guild Bank for upgrades.
             </p>
             <div className="flex gap-2">
               <input

@@ -55,19 +55,10 @@ export default function GuildShop({ guild }: GuildShopProps) {
       return data;
     },
     onSuccess: (data: any) => {
-      // Immediately update guild coins and guild gold in UI
-      if (guild) {
-        queryClient.setQueryData(['myGuild'], (old: any) => ({
-          ...old,
-          guildCoins: data.newGuildCoins,
-          guildGold: data.newGuildGold,
-        }));
-      }
-      
       queryClient.invalidateQueries({ queryKey: ['myGuild'] });
       queryClient.invalidateQueries({ queryKey: ['player'] });
       (window as any).showToast?.(
-        `Converted! +${data.coinsReceived} GC | +${data.guildGoldDonated} Guild Gold (5%)`,
+        `✅ Converted ${data.goldConverted}g → +${data.coinsReceived} GC! (${data.remainingConvertible}g remaining)`,
         'success'
       );
       setShowConvertModal(false);
@@ -476,9 +467,12 @@ export default function GuildShop({ guild }: GuildShopProps) {
             </h3>
 
             <div className="mb-4">
-              <div className="text-sm text-gray-400 mb-2">
-                <strong>Conversion Rate:</strong> 100 Gold = 1 Guild Coin<br />
-                <span className="text-green-400">+5% automatically donated to Guild Gold</span>
+              <div className="bg-stone-900 p-3 mb-3">
+                <p className="text-sm text-gray-400">Convert your donated gold to Guild Coins</p>
+                <p className="text-xs text-amber-400 mt-1">Rate: 100 gold = 1 Guild Coin</p>
+                <p className="text-xs text-green-400 mt-1 font-bold">
+                  Available: {guild?.membership?.convertibleGold || 0}g from donations
+                </p>
               </div>
               <input
                 type="number"
