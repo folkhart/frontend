@@ -485,25 +485,33 @@ export default function InventoryTab() {
         />
       </div>
 
-      {/* Category Tabs */}
-      <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+      {/* Category Tabs - Retro 2x3 Grid */}
+      <div className="grid grid-cols-3 gap-2 mb-3">
         {categories.map((category) => (
           <button
             key={category}
             onClick={() => setSelectedCategory(category)}
-            className={`px-3 py-1.5 rounded text-xs font-bold whitespace-nowrap transition ${
+            className={`py-2 text-xs font-bold transition relative overflow-hidden ${
               selectedCategory === category
-                ? "bg-amber-600 text-white border-2 border-amber-400"
-                : "bg-stone-700 text-gray-300 border-2 border-stone-600 hover:bg-stone-600"
+                ? "bg-amber-700 text-white"
+                : "bg-stone-800 text-gray-400 hover:bg-stone-700"
             }`}
-            style={{ fontFamily: "monospace" }}
+            style={{
+              border: selectedCategory === category ? '2px solid #92400e' : '2px solid #57534e',
+              borderRadius: '0',
+              boxShadow: selectedCategory === category 
+                ? '0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)' 
+                : 'none',
+              textShadow: selectedCategory === category ? '1px 1px 0 #000' : 'none',
+              fontFamily: "monospace"
+            }}
           >
             {category}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {filteredInventory.map((slot: any) => {
           const equipped = isEquipped(slot.item?.id);
           const isConsumable =
@@ -525,16 +533,16 @@ export default function InventoryTab() {
                 </div>
               )}
 
-              <div className="w-full aspect-square bg-stone-900 rounded mb-2 flex items-center justify-center p-3">
+              <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center p-2">
                 {getItemImage(slot.item.spriteId, slot.item.type) ? (
                   <img
                     src={getItemImage(slot.item.spriteId, slot.item.type)!}
                     alt={slot.item.name}
-                    className="max-w-[48px] max-h-[48px] object-contain"
+                    className="max-w-full max-h-full object-contain"
                     style={{ imageRendering: "pixelated" }}
                   />
                 ) : (
-                  <span className="text-2xl">
+                  <span className="text-xl">
                     {slot.item.type === "Weapon" && "⚔️"}
                     {slot.item.type === "Armor" && "🛡️"}
                     {slot.item.type === "Accessory" && "💍"}
@@ -544,52 +552,72 @@ export default function InventoryTab() {
               </div>
 
               <h3
-                className={`font-bold text-xs mb-1 truncate ${getRarityColor(
+                className={`font-bold text-xs truncate ${getRarityColor(
                   slot.item.rarity
                 )}`}
               >
                 {slot.item.name}
               </h3>
 
-              {slot.quantity > 1 && (
-                <p className="text-xs text-gray-400 mb-1">x{slot.quantity}</p>
-              )}
+              {/* Level requirement and quantity */}
+              <div className="text-xs text-gray-400 mb-1 flex items-center justify-between min-h-[12px]">
+                {slot.item.levelRequirement > 0 && (
+                  <span className={(character?.level || 0) >= slot.item.levelRequirement ? "text-gray-400" : "text-red-400"}>
+                    Lv.{slot.item.levelRequirement}
+                  </span>
+                )}
+                {slot.quantity > 1 && (
+                  <span className="ml-auto">x{slot.quantity}</span>
+                )}
+              </div>
 
-              <div className="text-xs text-gray-400 mb-2 flex flex-wrap gap-1">
+              <div className="text-xs text-gray-400 mb-1 flex flex-wrap gap-1 min-h-[12px]">
                 {slot.item.attackBonus > 0 && (
                   <span className="text-orange-400">
-                    ATK +{slot.item.attackBonus}
+                    +{slot.item.attackBonus}
                   </span>
                 )}
                 {slot.item.defenseBonus > 0 && (
                   <span className="text-blue-400">
-                    DEF +{slot.item.defenseBonus}
+                    +{slot.item.defenseBonus}
                   </span>
                 )}
                 {slot.item.healthBonus > 0 && (
                   <span className="text-red-400">
-                    HP +{slot.item.healthBonus}
+                    +{slot.item.healthBonus}
                   </span>
                 )}
               </div>
 
-              {/* Sell Price */}
-              <div className="flex items-center gap-1 mb-2 text-xs">
-                <img
-                  src={sellItemIcon}
-                  alt="Sell"
-                  className="w-3 h-3"
-                  style={{ imageRendering: "pixelated" }}
-                />
-                <span
-                  className="text-yellow-400"
-                  style={{ fontFamily: "monospace" }}
+              {slot.item.type === "Material" ||
+              slot.item.type === "Gem" ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openSellModal(slot);
+                  }}
+                  disabled={sellItemMutation.isPending}
+                  className="w-full py-1 bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
+                  style={{
+                    border: "2px solid #a16207",
+                    borderRadius: "0",
+                    boxShadow:
+                      "0 2px 0 #ca8a04, inset 0 1px 0 rgba(255,255,255,0.2)",
+                    textShadow: "1px 1px 0 #000",
+                    fontFamily: "monospace",
+                  }}
                 >
-                  {formatGold(slot.item.baseValue * (slot.quantity || 1))}
-                </span>
-              </div>
-
-              {slot.item.type === "Consumable" ||
+                  <span className="relative z-10 flex items-center justify-center gap-1">
+                    <img
+                      src={sellItemIcon}
+                      alt="Sell"
+                      className="w-3 h-3"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                    SELL
+                  </span>
+                </button>
+              ) : slot.item.type === "Consumable" ||
               slot.item.type === "Potion" ? (
                 <button
                   onClick={(e) => {
@@ -669,6 +697,14 @@ export default function InventoryTab() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      // Check level requirement
+                      if (slot.item.levelRequirement > 0 && (character?.level || 0) < slot.item.levelRequirement) {
+                        (window as any).showToast?.(
+                          `Requires Level ${slot.item.levelRequirement}`,
+                          "error"
+                        );
+                        return;
+                      }
                       const slotType = getSlotForItem(slot.item);
                       if (slotType) {
                         equipMutation.mutate({
@@ -682,7 +718,7 @@ export default function InventoryTab() {
                         );
                       }
                     }}
-                    disabled={equipMutation.isPending}
+                    disabled={equipMutation.isPending || (slot.item.levelRequirement > 0 && (character?.level || 0) < slot.item.levelRequirement)}
                     className="w-full py-2 bg-amber-700 hover:bg-amber-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
                     style={{
                       border: "2px solid #92400e",
@@ -1002,6 +1038,16 @@ export default function InventoryTab() {
                 STATS
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
+                {selectedItemDetail.item.levelRequirement > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className={(character?.level || 0) >= selectedItemDetail.item.levelRequirement ? "text-gray-400" : "text-red-400"}>
+                      📊 Level Required:
+                    </span>
+                    <span className={(character?.level || 0) >= selectedItemDetail.item.levelRequirement ? "text-white font-bold" : "text-red-400 font-bold"}>
+                      {selectedItemDetail.item.levelRequirement}
+                    </span>
+                  </div>
+                )}
                 {selectedItemDetail.item.attackBonus > 0 && (
                   <div className="flex items-center gap-2">
                     <span className="text-orange-400">⚔️ Attack:</span>
@@ -1141,6 +1187,14 @@ export default function InventoryTab() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+                      // Check level requirement
+                      if (selectedItemDetail.item.levelRequirement > 0 && (character?.level || 0) < selectedItemDetail.item.levelRequirement) {
+                        (window as any).showToast?.(
+                          `Requires Level ${selectedItemDetail.item.levelRequirement}`,
+                          "error"
+                        );
+                        return;
+                      }
                       const slotType = getSlotForItem(selectedItemDetail.item);
                       if (slotType) {
                         equipMutation.mutate({
@@ -1155,7 +1209,7 @@ export default function InventoryTab() {
                         );
                       }
                     }}
-                    disabled={equipMutation.isPending}
+                    disabled={equipMutation.isPending || (selectedItemDetail.item.levelRequirement > 0 && (character?.level || 0) < selectedItemDetail.item.levelRequirement)}
                     className="flex-1 py-2 sm:py-3 bg-amber-700 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold transition disabled:opacity-50"
                     style={{
                       border: "2px solid #92400e",

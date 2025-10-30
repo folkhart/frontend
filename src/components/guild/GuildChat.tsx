@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, Smile, X, Circle } from "lucide-react";
 import { useSocket } from "@/lib/socket";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
-import { dungeonApi } from "@/lib/api";
+import { dungeonApi, friendApi } from "@/lib/api";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
 import dragonLairIcon from "@/assets/ui/dungeonIcons/dragonLair.png";
 import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
 import darkForestIcon from "@/assets/ui/dungeonIcons/darkForest.png";
+import addFriendIcon from "@/assets/ui/add_friend.png";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -116,6 +117,20 @@ export default function GuildChat({
       return data;
     },
     enabled: !!selectedPlayerUsername,
+  });
+
+  // Send friend request mutation
+  const sendFriendRequestMutation = useMutation({
+    mutationFn: async (username: string) => {
+      const { data } = await friendApi.sendRequest(username);
+      return data;
+    },
+    onSuccess: () => {
+      (window as any).showToast?.('Friend request sent!', 'success');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to send friend request', 'error');
+    },
   });
 
   // Scroll to bottom when new messages arrive
@@ -545,11 +560,11 @@ export default function GuildChat({
       {/* Player Character Stats Modal */}
       {selectedPlayerUsername && playerCharacter && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-2 sm:p-4"
           onClick={() => setSelectedPlayerUsername(null)}
         >
           <div
-            className="bg-stone-800 border-4 border-amber-600 p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            className="bg-stone-800 border-2 sm:border-4 border-amber-600 p-3 sm:p-4 md:p-6 max-w-2xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto"
             style={{ borderRadius: "0", boxShadow: "0 8px 0 rgba(0,0,0,0.5)" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -935,6 +950,29 @@ export default function GuildChat({
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-6 pt-6 border-t-2 border-amber-700">
+              <button
+                onClick={() => sendFriendRequestMutation.mutate(selectedPlayerUsername!)}
+                disabled={sendFriendRequestMutation.isPending}
+                className="w-full bg-gradient-to-b from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold py-2 sm:py-3 px-4 border-2 border-blue-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  borderRadius: "0",
+                  boxShadow: "0 4px 0 #1e40af, inset 0 2px 0 rgba(255,255,255,0.3)",
+                  fontFamily: "monospace",
+                  textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                }}
+              >
+                <img 
+                  src={addFriendIcon} 
+                  alt="Add Friend" 
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                  style={{ imageRendering: "pixelated" }}
+                />
+                <span className="text-sm sm:text-base">Add Friend</span>
+              </button>
             </div>
           </div>
         </div>

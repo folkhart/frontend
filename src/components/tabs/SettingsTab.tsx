@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { LogOut, Info } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+import { LogOut, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, messageApi } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { useGameStore } from "@/store/gameStore";
 import { disconnectSocket } from "@/lib/socket";
@@ -27,16 +27,34 @@ export default function SettingsTab() {
     setActiveTab,
     setPlayer,
     setCharacter,
+    hasUnreadFriendMessages,
+    setHasUnreadFriendMessages,
   } = useGameStore();
   const [showAchievements, setShowAchievements] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showChangeName, setShowChangeName] = useState(false);
+  const [profileExpanded, setProfileExpanded] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
   const [newCharacterName, setNewCharacterName] = useState("");
+
+  // Query for unread friend messages count
+  const { data: unreadCount } = useQuery({
+    queryKey: ['unreadFriendMessages'],
+    queryFn: async () => {
+      try {
+        const { data } = await messageApi.getUnreadCount();
+        setHasUnreadFriendMessages(data.count > 0);
+        return data.count;
+      } catch (error) {
+        return 0;
+      }
+    },
+    refetchInterval: 10000, // Check every 10 seconds
+  });
 
   const handleLogout = () => {
     disconnectSocket();
@@ -70,7 +88,7 @@ export default function SettingsTab() {
         Settings
       </h2>
 
-      {/* Profile Section - Retro Style */}
+      {/* Profile Section - Retro Style - Collapsible */}
       <div
         className="bg-gradient-to-b from-stone-700 to-stone-800 p-4 mb-4 relative"
         style={{
@@ -80,26 +98,36 @@ export default function SettingsTab() {
             "0 4px 0 #292524, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
         }}
       >
-        <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-stone-600">
-          <img
-            src={userIcon}
-            alt="Profile"
-            className="w-6 h-6"
-            style={{ imageRendering: "pixelated" }}
-          />
-          <h3
-            className="font-bold text-amber-400 text-lg"
-            style={{
-              fontFamily: "monospace",
-              textShadow: "2px 2px 0 #000",
-              letterSpacing: "1px",
-            }}
-          >
-            PROFILE
-          </h3>
-        </div>
+        <button
+          onClick={() => setProfileExpanded(!profileExpanded)}
+          className="w-full flex items-center justify-between mb-4 pb-3 border-b-2 border-stone-600 hover:opacity-80 transition"
+        >
+          <div className="flex items-center gap-2">
+            <img
+              src={userIcon}
+              alt="Profile"
+              className="w-6 h-6"
+              style={{ imageRendering: "pixelated" }}
+            />
+            <h3
+              className="font-bold text-amber-400 text-lg"
+              style={{
+                fontFamily: "monospace",
+                textShadow: "2px 2px 0 #000",
+                letterSpacing: "1px",
+              }}
+            >
+              PROFILE
+            </h3>
+          </div>
+          {profileExpanded ? (
+            <ChevronUp className="text-amber-400" size={24} />
+          ) : (
+            <ChevronDown className="text-amber-400" size={24} />
+          )}
+        </button>
 
-        <div className="space-y-3">
+        {profileExpanded && <div className="space-y-3">
           {/* Username */}
           <div
             className="bg-stone-900 p-3 border-2 border-stone-600"
@@ -249,7 +277,6 @@ export default function SettingsTab() {
               </div>
             </div>
           </div>
-        </div>
 
         {/* Change Password Form */}
         {showChangePassword && (
@@ -421,11 +448,15 @@ export default function SettingsTab() {
             </div>
           </div>
         )}
+        </div>}
       </div>
 
       {/* Friends Button */}
       <button
-        onClick={() => setActiveTab("friends")}
+        onClick={() => {
+          setActiveTab("friends");
+          setHasUnreadFriendMessages(false);
+        }}
         className="w-full py-3 bg-blue-700 hover:bg-blue-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
         style={{
           border: "3px solid #1e3a8a",
@@ -437,6 +468,9 @@ export default function SettingsTab() {
           letterSpacing: "1px",
         }}
       >
+        {hasUnreadFriendMessages && (
+          <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-blue-700 animate-pulse z-20" />
+        )}
         <img
           src={friendsIcon}
           alt="Friends"
@@ -444,6 +478,17 @@ export default function SettingsTab() {
           style={{ imageRendering: "pixelated" }}
         />
         <span className="relative z-10">FRIENDS & MESSAGES</span>
+        {unreadCount && unreadCount > 0 && (
+          <span
+            className="relative z-10 bg-red-600 text-white text-xs px-2 py-0.5 font-bold"
+            style={{
+              border: '2px solid #991b1b',
+              fontFamily: 'monospace',
+            }}
+          >
+            {unreadCount}
+          </span>
+        )}
         <div className="absolute inset-0 bg-gradient-to-b from-blue-400/20 to-transparent"></div>
       </button>
 

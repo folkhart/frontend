@@ -44,7 +44,7 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
   };
 
   return (
-    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-slide-down">
+    <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[200] animate-slide-down">
       <div className={`${getBackgroundColor()} border-2 rounded-lg shadow-lg p-4 min-w-[300px] max-w-[500px]`}>
         <div className="flex items-center gap-3">
           {getIcon()}

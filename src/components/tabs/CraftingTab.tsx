@@ -63,10 +63,11 @@ export default function CraftingTab() {
     },
     onSuccess: (data) => {
       setCraftingAnimation('success');
-      // Immediately invalidate and refetch inventory
+      // Immediately invalidate and refetch inventory and character
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.refetchQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
+      queryClient.refetchQueries({ queryKey: ['character'] });
       
       setTimeout(() => {
         (window as any).showToast?.(
@@ -93,52 +94,93 @@ export default function CraftingTab() {
     if (!spriteId) return null;
     
     try {
-      // Check if it's a gem (craft material) - use public assets
-      if (spriteId.includes('Gem') || itemType === 'Material' || itemType === 'Gem') {
-        return `/assets/items/craft/gems/${spriteId}.png`;
-      }
-      
+      const images = import.meta.glob('../../assets/items/**/*.png', {
+        eager: true,
+        as: 'url',
+      });
+
       // Check if it's a potion (numeric sprite ID)
       if (/^\d+$/.test(spriteId)) {
         const num = parseInt(spriteId);
         if (num >= 985 && num <= 992) {
-          return new URL(`../../assets/items/potions/hp/${spriteId}.png`, import.meta.url).href;
+          const path = `../../assets/items/potions/hp/${spriteId}.png`;
+          return images[path] || null;
         } else if (num >= 1001 && num <= 1008) {
-          return new URL(`../../assets/items/potions/mp/${spriteId}.png`, import.meta.url).href;
+          const path = `../../assets/items/potions/mp/${spriteId}.png`;
+          return images[path] || null;
         } else if (num >= 1033 && num <= 1040) {
-          return new URL(`../../assets/items/potions/attack/${spriteId}.png`, import.meta.url).href;
+          const path = `../../assets/items/potions/attack/${spriteId}.png`;
+          return images[path] || null;
         }
       }
-      
-      // Handle accessories with set prefixes (woodenSet/, ironSet/)
-      if (spriteId.includes('/')) {
-        const fullPath = spriteId.startsWith('woodenSet/') || spriteId.startsWith('ironSet/')
-          ? `accessories/${spriteId}`
-          : spriteId;
-        return new URL(`../../assets/items/${fullPath}.png`, import.meta.url).href;
+
+      // Check for guild shop items
+      if (
+        spriteId.startsWith('guild_') ||
+        spriteId.startsWith('Chest') ||
+        spriteId.startsWith('key')
+      ) {
+        return `/assets/items/guildshop_items/${spriteId}.png`;
       }
-      
+
+      // Check if spriteId contains a path
+      if (spriteId.includes('/')) {
+        const fullPath =
+          spriteId.startsWith('woodenSet/') ||
+          spriteId.startsWith('ironSet/') ||
+          spriteId.startsWith('dungeonDrops/')
+            ? `accessories/${spriteId}`
+            : spriteId;
+        const path = `../../assets/items/${fullPath}.png`;
+        return images[path] || null;
+      }
+
       // Determine folder based on item type
-      let folder = 'weapons'; // default
+      let folder = 'weapons';
       if (itemType === 'Armor') {
         folder = 'armors';
       } else if (itemType === 'Accessory') {
         folder = 'accessories';
+      } else if (itemType === 'Consumable') {
+        folder = 'consumables';
+      } else if (itemType === 'Material' || itemType === 'Gem') {
+        const path = `../../assets/items/craft/gems/${spriteId}.png`;
+        return images[path] || null;
       }
-      
-      return new URL(`../../assets/items/${folder}/${spriteId}.png`, import.meta.url).href;
+
+      const path = `../../assets/items/${folder}/${spriteId}.png`;
+      return images[path] || null;
     } catch (e) {
       console.error('Failed to load image:', spriteId, itemType, e);
       return null;
     }
   };
 
+  // Helper function to count total items (inventory + equipped)
+  const getTotalItemCount = (itemId: string) => {
+    // Count inventory items
+    const inventoryItem = inventory?.find((slot: any) => slot.item.id === itemId);
+    let totalCount = inventoryItem ? inventoryItem.quantity : 0;
+    
+    // Also count equipped items
+    if (character) {
+      const equippedSlots = ['weapon', 'armor', 'helmet', 'gloves', 'shoes', 'ring', 'necklace', 'belt', 'earring', 'accessory'];
+      for (const slot of equippedSlots) {
+        const equippedItem = (character as any)[slot];
+        if (equippedItem && equippedItem.id === itemId) {
+          totalCount += 1;
+        }
+      }
+    }
+    
+    return totalCount;
+  };
+
   const hasEnoughMaterials = (recipe: any) => {
     if (!inventory) return false;
     
     return recipe.materials.every((material: any) => {
-      const playerItem = inventory.find((slot: any) => slot.item.id === material.itemId);
-      return playerItem && playerItem.quantity >= material.quantity;
+      return getTotalItemCount(material.itemId) >= material.quantity;
     });
   };
 
@@ -217,8 +259,8 @@ export default function CraftingTab() {
                 <p className="font-bold text-white mb-1">Materials Required:</p>
                 <div className="space-y-1">
                   {recipe.materials.map((material: any) => {
-                    const playerItem = inventory?.find((slot: any) => slot.item.id === material.itemId);
-                    const hasEnough = playerItem && playerItem.quantity >= material.quantity;
+                    const totalCount = getTotalItemCount(material.itemId);
+                    const hasEnough = totalCount >= material.quantity;
                     
                     return (
                       <div key={material.id} className="flex items-center justify-between">
@@ -226,7 +268,7 @@ export default function CraftingTab() {
                           {material.item.name} x{material.quantity}
                         </span>
                         <span className={hasEnough ? 'text-green-400' : 'text-red-400'}>
-                          ({playerItem?.quantity || 0}/{material.quantity})
+                          ({totalCount}/{material.quantity})
                         </span>
                       </div>
                     );
@@ -309,8 +351,8 @@ export default function CraftingTab() {
               <p className="text-sm font-bold text-white mb-2">Required Materials:</p>
               <div className="space-y-2">
                 {selectedRecipe.materials.map((material: any) => {
-                  const playerItem = inventory?.find((slot: any) => slot.item.id === material.itemId);
-                  const hasEnough = playerItem && playerItem.quantity >= material.quantity;
+                  const totalCount = getTotalItemCount(material.itemId);
+                  const hasEnough = totalCount >= material.quantity;
                   
                   return (
                     <div key={material.id} className="flex items-center justify-between text-sm">
@@ -332,7 +374,7 @@ export default function CraftingTab() {
                         </span>
                       </div>
                       <span className={hasEnough ? 'text-green-400' : 'text-red-400'} style={{ fontFamily: 'monospace' }}>
-                        {playerItem?.quantity || 0}/{material.quantity}
+                        {totalCount}/{material.quantity}
                       </span>
                     </div>
                   );

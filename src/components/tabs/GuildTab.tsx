@@ -263,6 +263,7 @@ export default function GuildTab() {
     setPlayer,
     hasUnreadGuildMessages,
     setHasUnreadGuildMessages,
+    setHasGuildInvitations,
   } = useGameStore();
   const [view, setView] = useState<View>("browse");
   const [showCreateGuild, setShowCreateGuild] = useState(false);
@@ -279,6 +280,25 @@ export default function GuildTab() {
   const [showEmblemPicker, setShowEmblemPicker] = useState(false);
   const [showUpgradeConfirm, setShowUpgradeConfirm] = useState(false);
   const [guildSearchQuery, setGuildSearchQuery] = useState("");
+  const [guildInvitations, setGuildInvitations] = useState<any[]>([]);
+
+  // Fetch guild invitations from database
+  const { data: fetchedInvitations } = useQuery({
+    queryKey: ['guildInvitations'],
+    queryFn: async () => {
+      const { data } = await guildApi.getInvitations();
+      return data;
+    },
+    refetchInterval: 10000, // Refresh every 10 seconds
+  });
+
+  // Update local state when database invitations change
+  useEffect(() => {
+    if (fetchedInvitations) {
+      setGuildInvitations(fetchedInvitations);
+      setHasGuildInvitations(fetchedInvitations.length > 0);
+    }
+  }, [fetchedInvitations, setHasGuildInvitations]);
 
   // Fetch player's guild
   const { data: myGuild, refetch: refetchMyGuild } = useQuery({
@@ -319,6 +339,35 @@ export default function GuildTab() {
     enabled: view === "browse",
   });
 
+  // Socket listener for guild invitations
+  useEffect(() => {
+    const socket = (window as any).socket;
+    if (!socket) return;
+
+    const handleGuildInvitation = (invitation: any) => {
+      // Refetch from database to get persistent version
+      queryClient.invalidateQueries({ queryKey: ['guildInvitations'] });
+      setHasGuildInvitations(true);
+      (window as any).showToast?.(
+        `Guild invitation from ${invitation.invitedBy.character?.name || invitation.invitedBy.username}!`,
+        'info'
+      );
+    };
+
+    socket.on('guild_invitation', handleGuildInvitation);
+
+    return () => {
+      socket.off('guild_invitation', handleGuildInvitation);
+    };
+  }, [setHasGuildInvitations, queryClient]);
+
+  // Clear guild invitation flag when viewing guild tab
+  useEffect(() => {
+    if (view === "browse" && guildInvitations.length === 0) {
+      setHasGuildInvitations(false);
+    }
+  }, [view, guildInvitations.length, setHasGuildInvitations]);
+
   // Auto-switch to my-guild view if player has a guild
   useEffect(() => {
     if (myGuild && view === "browse") {
@@ -353,6 +402,50 @@ export default function GuildTab() {
   }, [view, setHasUnreadGuildMessages]);
 
   // Chat auto-scroll is now handled by GuildChat component
+
+  // Accept guild invitation mutation
+  const acceptInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      const { data } = await guildApi.acceptInvitation(invitationId);
+      return { data, invitationId };
+    },
+    onSuccess: async ({ invitationId }) => {
+      // Remove accepted invitation
+      setGuildInvitations(prev => {
+        const newInvites = prev.filter(inv => inv.id !== invitationId);
+        if (newInvites.length === 0) {
+          setHasGuildInvitations(false);
+        }
+        return newInvites;
+      });
+      queryClient.invalidateQueries({ queryKey: ['myGuild'] });
+      queryClient.invalidateQueries({ queryKey: ['guildInvitations'] });
+      // Refresh player data
+      const { data: profile } = await authApi.getProfile();
+      setPlayer(profile);
+      (window as any).showToast?.('Guild invitation accepted!', 'success');
+      setView('my-guild');
+    },
+  });
+
+  // Reject guild invitation mutation
+  const rejectInvitationMutation = useMutation({
+    mutationFn: async (invitationId: string) => {
+      await guildApi.rejectInvitation(invitationId);
+      return { invitationId };
+    },
+    onSuccess: (data) => {
+      setGuildInvitations(prev => {
+        const newInvites = prev.filter(inv => inv.id !== data.invitationId);
+        if (newInvites.length === 0) {
+          setHasGuildInvitations(false);
+        }
+        return newInvites;
+      });
+      queryClient.invalidateQueries({ queryKey: ['guildInvitations'] });
+      (window as any).showToast?.('Guild invitation rejected', 'success');
+    },
+  });
 
   // Mutations
   const createGuildMutation = useMutation({
@@ -603,6 +696,71 @@ export default function GuildTab() {
             style={{ fontFamily: "monospace" }}
           />
         </div>
+
+        {/* Guild Invitations */}
+        {guildInvitations.length > 0 && (
+          <div className="mb-4 bg-amber-900/20 border-2 border-amber-600 rounded-lg p-3">
+            <h3 className="font-bold text-amber-400 mb-2 flex items-center gap-2">
+              <span className="bg-amber-600 text-white text-xs px-2 py-1 rounded">
+                {guildInvitations.length}
+              </span>
+              Guild Invitations
+            </h3>
+            <div className="space-y-2">
+              {guildInvitations.map((invitation, index) => (
+                <div
+                  key={index}
+                  className="bg-stone-800 rounded p-3 border-2 border-amber-500"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 flex items-center justify-center">
+                        <img
+                          src={`/assets/ui/guild/guild_icons/${invitation.guild.iconId}.gif`}
+                          alt="Guild Emblem"
+                          className="w-10 h-10"
+                          style={{ imageRendering: "pixelated" }}
+                          onError={(e) => {
+                            e.currentTarget.src = "/assets/ui/guild.png";
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-white text-sm">
+                            {invitation.guild.name}
+                          </h4>
+                          <span className="px-2 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
+                            [{invitation.guild.tag}]
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-400">
+                          Invited by {invitation.invitedBy.character?.name || invitation.invitedBy.username}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => acceptInvitationMutation.mutate(invitation.id)}
+                      disabled={acceptInvitationMutation.isPending}
+                      className="flex-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded font-bold btn-press text-xs disabled:opacity-50"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => rejectInvitationMutation.mutate(invitation.id)}
+                      disabled={rejectInvitationMutation.isPending}
+                      className="flex-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded font-bold btn-press text-xs disabled:opacity-50"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           {filteredGuilds.length === 0 ? (

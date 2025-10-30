@@ -26,6 +26,8 @@ export function useSocket() {
 
 export function connectSocket(token: string) {
   if (socket?.connected) {
+    // Also make sure it's on window
+    (window as any).socket = socket;
     return socket;
   }
 
@@ -45,6 +47,9 @@ export function connectSocket(token: string) {
   socket.on('connect_error', (error) => {
     console.error('Socket connection error:', error);
   });
+
+  // Expose socket on window for easy access in components
+  (window as any).socket = socket;
 
   return socket;
 }

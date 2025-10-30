@@ -55,6 +55,8 @@ interface GameState {
   activeTab: 'village' | 'adventure' | 'guild' | 'shop' | 'leaderboard' | 'friends' | 'news' | 'admin' | 'settings';
   isLoading: boolean;
   hasUnreadGuildMessages: boolean;
+  hasUnreadFriendMessages: boolean;
+  hasGuildInvitations: boolean;
   
   // Actions
   setAuth: (accessToken: string, refreshToken: string) => void;
@@ -67,6 +69,8 @@ interface GameState {
   updatePlayerEnergy: (amount: number) => void;
   updateCharacterExp: (amount: number) => void;
   setHasUnreadGuildMessages: (hasUnread: boolean) => void;
+  setHasUnreadFriendMessages: (hasUnread: boolean) => void;
+  setHasGuildInvitations: (hasInvitations: boolean) => void;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -79,6 +83,8 @@ export const useGameStore = create<GameState>((set) => ({
   activeTab: 'adventure',
   isLoading: false,
   hasUnreadGuildMessages: false,
+  hasUnreadFriendMessages: false,
+  hasGuildInvitations: false,
 
   // Actions
   setAuth: (accessToken, refreshToken) => {
@@ -132,4 +138,8 @@ export const useGameStore = create<GameState>((set) => ({
     })),
 
   setHasUnreadGuildMessages: (hasUnread) => set({ hasUnreadGuildMessages: hasUnread }),
+  
+  setHasUnreadFriendMessages: (hasUnread) => set({ hasUnreadFriendMessages: hasUnread }),
+  
+  setHasGuildInvitations: (hasInvitations) => set({ hasGuildInvitations: hasInvitations }),
 }));

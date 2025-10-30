@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Send, X, Smile } from "lucide-react";
 import { useSocket } from "@/lib/socket";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useGameStore } from "@/store/gameStore";
-import { dungeonApi } from "@/lib/api";
+import { dungeonApi, guildApi, friendApi } from "@/lib/api";
 import worldIcon from "@/assets/ui/world.png";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
@@ -16,6 +16,9 @@ import attackIconCP from "@/assets/ui/character_panel/attack.png";
 import defenseIconCP from "@/assets/ui/character_panel/defense.png";
 import hpIconCP from "@/assets/ui/character_panel/hp.png";
 import speedIconCP from "@/assets/ui/character_panel/speed.png";
+import addFriendIcon from "@/assets/ui/add_friend.png";
+import guildInviteIcon from "@/assets/ui/guild_invite.png";
+import removeFriendIcon from "@/assets/ui/remove_friend.png";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -124,7 +127,8 @@ const EMOJIS = [
 ];
 
 export default function ServerChat() {
-  const {} = useGameStore();
+  const { player } = useGameStore();
+  const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -149,6 +153,8 @@ export default function ServerChat() {
   const [selectedPlayerUsername, setSelectedPlayerUsername] = useState<
     string | null
   >(null);
+  const [friendRequestSent, setFriendRequestSent] = useState(false);
+  const [isAlreadyFriend, setIsAlreadyFriend] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket();
@@ -172,6 +178,15 @@ export default function ServerChat() {
     }
   }, [initialMessages]);
 
+  // Fetch friends list
+  const { data: friendsList } = useQuery({
+    queryKey: ['friends'],
+    queryFn: async () => {
+      const { data } = await friendApi.getFriends();
+      return data;
+    },
+  });
+
   // Fetch player character data when selected
   const {
     data: playerCharacter,
@@ -192,6 +207,76 @@ export default function ServerChat() {
     },
     enabled: !!selectedPlayerUsername,
     retry: false,
+  });
+
+  // Check if selected player is already a friend
+  useEffect(() => {
+    if (playerCharacter && friendsList) {
+      const isFriend = friendsList.some(
+        (friend: any) => friend.friend?.character?.name === selectedPlayerUsername
+      );
+      setIsAlreadyFriend(isFriend);
+    }
+  }, [playerCharacter, friendsList, selectedPlayerUsername]);
+
+  // Send friend request mutation
+  const sendFriendRequestMutation = useMutation({
+    mutationFn: async (username: string) => {
+      const { data } = await friendApi.sendRequest(username);
+      return data;
+    },
+    onSuccess: () => {
+      setFriendRequestSent(true);
+      (window as any).showToast?.('Friend request sent!', 'success');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to send friend request', 'error');
+    },
+  });
+
+  // Cancel friend request mutation
+  const cancelFriendRequestMutation = useMutation({
+    mutationFn: async (username: string) => {
+      const { data } = await friendApi.cancelRequest(username);
+      return data;
+    },
+    onSuccess: () => {
+      setFriendRequestSent(false);
+      (window as any).showToast?.('Friend request cancelled', 'success');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to cancel request', 'error');
+    },
+  });
+
+  // Remove friend mutation
+  const removeFriendMutation = useMutation({
+    mutationFn: async (playerId: string) => {
+      const { data } = await friendApi.removeFriend(playerId);
+      return data;
+    },
+    onSuccess: () => {
+      setIsAlreadyFriend(false);
+      queryClient.invalidateQueries({ queryKey: ['friends'] });
+      (window as any).showToast?.('Friend removed', 'success');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to remove friend', 'error');
+    },
+  });
+
+  // Send guild invitation mutation
+  const sendGuildInviteMutation = useMutation({
+    mutationFn: async (playerId: string) => {
+      const { data } = await guildApi.invitePlayer(playerId);
+      return data;
+    },
+    onSuccess: () => {
+      (window as any).showToast?.('Guild invitation sent!', 'success');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to send guild invitation', 'error');
+    },
   });
 
   // Scroll to bottom when new messages arrive
@@ -618,11 +703,15 @@ export default function ServerChat() {
       {/* Player Character Stats Modal - Same as GuildChat */}
       {selectedPlayerUsername && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
-          onClick={() => setSelectedPlayerUsername(null)}
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-2 sm:p-4"
+          onClick={() => {
+            setSelectedPlayerUsername(null);
+            setFriendRequestSent(false);
+            setIsAlreadyFriend(false);
+          }}
         >
           <div
-            className="bg-stone-800 border-4 border-amber-600 p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            className="bg-stone-800 border-2 sm:border-4 border-amber-600 p-3 sm:p-4 md:p-6 max-w-2xl w-full max-h-[90vh] sm:max-h-[85vh] overflow-y-auto"
             style={{ borderRadius: "0", boxShadow: "0 8px 0 rgba(0,0,0,0.5)" }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -638,7 +727,11 @@ export default function ServerChat() {
                 CHARACTER STATS
               </h2>
               <button
-                onClick={() => setSelectedPlayerUsername(null)}
+                onClick={() => {
+                  setSelectedPlayerUsername(null);
+                  setFriendRequestSent(false);
+                  setIsAlreadyFriend(false);
+                }}
                 className="text-amber-400 hover:text-amber-300 transition"
               >
                 <X size={28} strokeWidth={3} />
@@ -1064,6 +1157,61 @@ export default function ServerChat() {
                     </div>
                   </div>
                 </div>
+
+                {/* Action Buttons */}
+                {playerCharacter && (
+                  <div className={`flex flex-col sm:flex-row gap-2 sm:gap-3 mt-6 pt-6 border-t-2 border-amber-700 ${!(player as any)?.guildId || ((player as any)?.guildRank !== 'Leader' && (player as any)?.guildRank !== 'Officer') ? 'justify-center' : ''}`}>
+                    <button
+                      onClick={() => {
+                        if (isAlreadyFriend) {
+                          removeFriendMutation.mutate(playerCharacter.playerId);
+                        } else if (friendRequestSent) {
+                          cancelFriendRequestMutation.mutate(selectedPlayerUsername!);
+                        } else {
+                          sendFriendRequestMutation.mutate(selectedPlayerUsername!);
+                        }
+                      }}
+                      disabled={sendFriendRequestMutation.isPending || cancelFriendRequestMutation.isPending || removeFriendMutation.isPending}
+                      className={`${(player as any)?.guildId && ((player as any)?.guildRank === 'Leader' || (player as any)?.guildRank === 'Officer') ? 'flex-1' : 'w-full'} bg-gradient-to-b ${isAlreadyFriend || friendRequestSent ? 'from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border-red-400' : 'from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 border-blue-400'} text-white font-bold py-2 sm:py-3 px-4 border-2 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                      style={{
+                        borderRadius: "0",
+                        boxShadow: isAlreadyFriend || friendRequestSent ? "0 4px 0 #991b1b, inset 0 2px 0 rgba(255,255,255,0.3)" : "0 4px 0 #1e40af, inset 0 2px 0 rgba(255,255,255,0.3)",
+                        fontFamily: "monospace",
+                        textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                      }}
+                    >
+                      <img 
+                        src={isAlreadyFriend || friendRequestSent ? removeFriendIcon : addFriendIcon} 
+                        alt={isAlreadyFriend ? "Remove Friend" : friendRequestSent ? "Cancel Request" : "Add Friend"} 
+                        className="w-5 h-5 sm:w-6 sm:h-6"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                      <span className="text-sm sm:text-base">{isAlreadyFriend ? 'Remove Friend' : friendRequestSent ? 'Cancel Request' : 'Add Friend'}</span>
+                    </button>
+                    {/* Only show guild invite if player is guild leader or officer */}
+                    {(player as any)?.guildId && ((player as any)?.guildRank === 'Leader' || (player as any)?.guildRank === 'Officer') && (
+                      <button
+                        onClick={() => sendGuildInviteMutation.mutate(playerCharacter.playerId)}
+                        disabled={sendGuildInviteMutation.isPending || !playerCharacter?.playerId}
+                        className="flex-1 bg-gradient-to-b from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-2 sm:py-3 px-4 border-2 border-purple-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          borderRadius: "0",
+                          boxShadow: "0 4px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.3)",
+                          fontFamily: "monospace",
+                          textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                        }}
+                      >
+                        <img 
+                          src={guildInviteIcon} 
+                          alt="Guild Invite" 
+                          className="w-5 h-5 sm:w-6 sm:h-6"
+                          style={{ imageRendering: "pixelated" }}
+                        />
+                        <span className="text-sm sm:text-base">Invite to Guild</span>
+                      </button>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>

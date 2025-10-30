@@ -148,11 +148,17 @@ export const guildApi = {
   getApplications: (guildId: string) => api.get(`/guild/${guildId}/applications`),
   approveApplication: (applicationId: string) => api.post(`/guild/applications/${applicationId}/approve`),
   rejectApplication: (applicationId: string) => api.post(`/guild/applications/${applicationId}/reject`),
+  // Guild Invites
+  invitePlayer: (playerId: string) => api.post(`/guild/invite/${playerId}`),
+  getInvitations: () => api.get('/guild/invitations'),
+  acceptInvitation: (invitationId: string) => api.post(`/guild/invitations/${invitationId}/accept`),
+  rejectInvitation: (invitationId: string) => api.post(`/guild/invitations/${invitationId}/reject`),
 };
 
 // Friend API
 export const friendApi = {
   sendRequest: (username: string) => api.post('/friends/request', { username }),
+  cancelRequest: (username: string) => api.post('/friends/request/cancel', { username }),
   getRequests: () => api.get('/friends/requests'),
   acceptRequest: (requestId: string) => api.post(`/friends/request/${requestId}/accept`),
   rejectRequest: (requestId: string) => api.post(`/friends/request/${requestId}/reject`),

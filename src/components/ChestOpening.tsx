@@ -98,9 +98,10 @@ export default function ChestOpening({
 
     // Handle items with paths (like woodenSet/woodenRing)
     if (spriteId.includes("/")) {
-      const fullPath = spriteId.startsWith("woodenSet/")
-        ? `accessories/${spriteId}`
-        : spriteId;
+      const fullPath =
+        spriteId.startsWith("woodenSet/") || spriteId.startsWith("ironSet/")
+          ? `accessories/${spriteId}`
+          : spriteId;
       return `/assets/items/${fullPath}.png`;
     }
 
