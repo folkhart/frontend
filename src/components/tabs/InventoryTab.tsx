@@ -21,6 +21,10 @@ export default function InventoryTab() {
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sellModalOpen, setSellModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [sellQuantity, setSellQuantity] = useState(1);
+  const [selectedItemDetail, setSelectedItemDetail] = useState<any>(null);
 
   const getGuildItemPath = (spriteId: string, itemType?: string) => {
     // FIRST: Convert tier names to numbers (bronze→1, silver→2, gold→3, diamond→4)
@@ -318,6 +322,24 @@ export default function InventoryTab() {
     return mapping[item.type] || "";
   };
 
+  const openSellModal = (slot: any) => {
+    setSelectedSlot(slot);
+    setSellQuantity(1);
+    setSellModalOpen(true);
+  };
+
+  const handleSell = () => {
+    if (selectedSlot && sellQuantity > 0) {
+      sellItemMutation.mutate({
+        inventorySlotId: selectedSlot.id,
+        quantity: sellQuantity,
+      });
+      setSellModalOpen(false);
+      setSelectedSlot(null);
+      setSellQuantity(1);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-4 text-center">
@@ -468,11 +490,12 @@ export default function InventoryTab() {
           return (
             <div
               key={slot.id}
+              onClick={() => setSelectedItemDetail(slot)}
               className={`p-2 bg-stone-800 rounded-lg border-2 ${
                 equipped
                   ? "border-green-500"
                   : getRarityBorder(slot.item.rarity)
-              } transition relative`}
+              } transition relative cursor-pointer hover:scale-105 active:scale-95`}
             >
               {equipped && (
                 <div className="absolute top-1 right-1 bg-green-500 rounded-full p-1">
@@ -579,12 +602,7 @@ export default function InventoryTab() {
                     EQUIPPED
                   </div>
                   <button
-                    onClick={() =>
-                      sellItemMutation.mutate({
-                        inventorySlotId: slot.id,
-                        quantity: slot.quantity,
-                      })
-                    }
+                    onClick={() => openSellModal(slot)}
                     disabled={sellItemMutation.isPending}
                     className="w-full py-1 bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
                     style={{
@@ -639,12 +657,7 @@ export default function InventoryTab() {
                     <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
                   </button>
                   <button
-                    onClick={() =>
-                      sellItemMutation.mutate({
-                        inventorySlotId: slot.id,
-                        quantity: slot.quantity,
-                      })
-                    }
+                    onClick={() => openSellModal(slot)}
                     disabled={sellItemMutation.isPending}
                     className="w-full py-1 bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
                     style={{
@@ -672,6 +685,489 @@ export default function InventoryTab() {
           );
         })}
       </div>
+
+      {/* Sell Modal */}
+      {sellModalOpen && selectedSlot && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setSellModalOpen(false)}
+        >
+          <div
+            className="bg-stone-800 border-4 border-amber-600 p-6 max-w-md w-full"
+            style={{ borderRadius: "0", boxShadow: "0 8px 0 rgba(0,0,0,0.5)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2
+              className="text-2xl font-bold text-amber-400 mb-4 text-center"
+              style={{
+                fontFamily: "monospace",
+                textShadow: "2px 2px 0 #000",
+              }}
+            >
+              <img
+                src={sellItemIcon}
+                alt="Sell"
+                className="w-6 h-6 inline mr-2"
+                style={{ imageRendering: "pixelated" }}
+              />
+              SELL ITEM
+            </h2>
+
+            {/* Item Display */}
+            <div className="bg-stone-900 border-2 border-stone-700 p-4 mb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-stone-800 rounded flex items-center justify-center">
+                  {getItemImage(selectedSlot.item.spriteId, selectedSlot.item.type) ? (
+                    <img
+                      src={getItemImage(selectedSlot.item.spriteId, selectedSlot.item.type)!}
+                      alt={selectedSlot.item.name}
+                      className="max-w-[48px] max-h-[48px] object-contain"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                  ) : (
+                    <span className="text-3xl">💰</span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3
+                    className={`font-bold text-lg ${getRarityColor(
+                      selectedSlot.item.rarity
+                    )}`}
+                    style={{ fontFamily: "monospace" }}
+                  >
+                    {selectedSlot.item.name}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    Available: {selectedSlot.quantity}
+                  </p>
+                  <p className="text-sm text-yellow-400">
+                    Value: {formatGold(selectedSlot.item.baseValue)} each
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quantity Selector */}
+            <div className="mb-4">
+              <label
+                className="block text-white font-bold mb-2"
+                style={{ fontFamily: "monospace" }}
+              >
+                Quantity to Sell:
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSellQuantity(Math.max(1, sellQuantity - 1))}
+                  className="px-4 py-2 bg-stone-700 hover:bg-stone-600 text-white font-bold"
+                  style={{
+                    border: "2px solid #57534e",
+                    borderRadius: "0",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  max={selectedSlot.quantity}
+                  value={sellQuantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 1;
+                    setSellQuantity(Math.min(Math.max(1, val), selectedSlot.quantity));
+                  }}
+                  className="flex-1 px-4 py-2 bg-stone-900 border-2 border-stone-600 text-white text-center font-bold"
+                  style={{
+                    borderRadius: "0",
+                    fontFamily: "monospace",
+                  }}
+                />
+                <button
+                  onClick={() =>
+                    setSellQuantity(Math.min(selectedSlot.quantity, sellQuantity + 1))
+                  }
+                  className="px-4 py-2 bg-stone-700 hover:bg-stone-600 text-white font-bold"
+                  style={{
+                    border: "2px solid #57534e",
+                    borderRadius: "0",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => setSellQuantity(selectedSlot.quantity)}
+                  className="px-4 py-2 bg-amber-700 hover:bg-amber-600 text-white font-bold"
+                  style={{
+                    border: "2px solid #92400e",
+                    borderRadius: "0",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  MAX
+                </button>
+              </div>
+            </div>
+
+            {/* Total Price */}
+            <div className="bg-amber-900/30 border-2 border-amber-600 p-3 mb-4">
+              <p
+                className="text-center text-xl font-bold text-yellow-400"
+                style={{
+                  fontFamily: "monospace",
+                  textShadow: "1px 1px 0 #000",
+                }}
+              >
+                Total: {formatGold(selectedSlot.item.baseValue * sellQuantity)}
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setSellModalOpen(false)}
+                className="flex-1 py-3 bg-stone-700 hover:bg-stone-600 text-white font-bold transition"
+                style={{
+                  border: "2px solid #57534e",
+                  borderRadius: "0",
+                  boxShadow: "0 2px 0 #44403c",
+                  textShadow: "1px 1px 0 #000",
+                  fontFamily: "monospace",
+                }}
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={handleSell}
+                disabled={sellItemMutation.isPending}
+                className="flex-1 py-3 bg-yellow-700 hover:bg-yellow-600 text-white font-bold transition disabled:opacity-50"
+                style={{
+                  border: "2px solid #a16207",
+                  borderRadius: "0",
+                  boxShadow: "0 2px 0 #ca8a04",
+                  textShadow: "1px 1px 0 #000",
+                  fontFamily: "monospace",
+                }}
+              >
+                <img
+                  src={sellItemIcon}
+                  alt="Sell"
+                  className="w-4 h-4 inline mr-1"
+                  style={{ imageRendering: "pixelated" }}
+                />
+                SELL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Item Detail Modal */}
+      {selectedItemDetail && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto"
+          onClick={() => setSelectedItemDetail(null)}
+        >
+          <div
+            className={`bg-stone-800 border-4 ${getRarityBorder(
+              selectedItemDetail.item.rarity
+            )} p-4 sm:p-6 max-w-md w-full my-auto`}
+            style={{ borderRadius: "0", boxShadow: "0 8px 0 rgba(0,0,0,0.5)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with Item Image and Basic Info */}
+            <div className="flex items-start gap-3 sm:gap-4 mb-4">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-stone-900 rounded flex items-center justify-center flex-shrink-0">
+                {getItemImage(
+                  selectedItemDetail.item.spriteId,
+                  selectedItemDetail.item.type
+                ) ? (
+                  <img
+                    src={
+                      getItemImage(
+                        selectedItemDetail.item.spriteId,
+                        selectedItemDetail.item.type
+                      )!
+                    }
+                    alt={selectedItemDetail.item.name}
+                    className="max-w-full max-h-full object-contain p-2"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                ) : (
+                  <span className="text-3xl sm:text-4xl">
+                    {selectedItemDetail.item.type === "Weapon" && "⚔️"}
+                    {selectedItemDetail.item.type === "Armor" && "🛡️"}
+                    {selectedItemDetail.item.type === "Accessory" && "💍"}
+                    {selectedItemDetail.item.type === "Consumable" && "🧪"}
+                    {selectedItemDetail.item.type === "Material" && "📦"}
+                    {selectedItemDetail.item.type === "Gem" && "💎"}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2
+                  className={`text-lg sm:text-xl font-bold mb-1 ${getRarityColor(
+                    selectedItemDetail.item.rarity
+                  )} break-words`}
+                  style={{ fontFamily: "monospace" }}
+                >
+                  {selectedItemDetail.item.name}
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-400">
+                  {selectedItemDetail.item.type}
+                  {selectedItemDetail.item.armorSlot && ` - ${selectedItemDetail.item.armorSlot}`}
+                  {selectedItemDetail.item.accessoryType && ` - ${selectedItemDetail.item.accessoryType}`}
+                </p>
+                <p
+                  className={`text-xs ${getRarityColor(
+                    selectedItemDetail.item.rarity
+                  )} mt-1`}
+                >
+                  {selectedItemDetail.item.rarity}
+                </p>
+                {selectedItemDetail.quantity > 1 && (
+                  <p className="text-xs sm:text-sm text-amber-400 font-bold mt-1">
+                    Quantity: {selectedItemDetail.quantity}
+                  </p>
+                )}
+                {isEquipped(selectedItemDetail.item.id) && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Check size={14} className="text-green-400" />
+                    <span className="text-xs text-green-400 font-bold">
+                      EQUIPPED
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Description */}
+            {selectedItemDetail.item.description && (
+              <div className="bg-stone-900 rounded p-2 sm:p-3 mb-3 sm:mb-4">
+                <p className="text-xs sm:text-sm text-gray-300 italic break-words">
+                  "{selectedItemDetail.item.description}"
+                </p>
+              </div>
+            )}
+
+            {/* Stats Section */}
+            <div className="bg-stone-900 rounded p-2 sm:p-3 mb-3 sm:mb-4">
+              <h3
+                className="text-xs sm:text-sm font-bold text-amber-400 mb-2"
+                style={{ fontFamily: "monospace" }}
+              >
+                STATS
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
+                {selectedItemDetail.item.attackBonus > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-orange-400">⚔️ Attack:</span>
+                    <span className="text-white font-bold">
+                      +{selectedItemDetail.item.attackBonus}
+                    </span>
+                  </div>
+                )}
+                {selectedItemDetail.item.defenseBonus > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-400">🛡️ Defense:</span>
+                    <span className="text-white font-bold">
+                      +{selectedItemDetail.item.defenseBonus}
+                    </span>
+                  </div>
+                )}
+                {selectedItemDetail.item.healthBonus > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-red-400">❤️ Health:</span>
+                    <span className="text-white font-bold">
+                      +{selectedItemDetail.item.healthBonus}
+                    </span>
+                  </div>
+                )}
+                {selectedItemDetail.item.speedBonus > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">⚡ Speed:</span>
+                    <span className="text-white font-bold">
+                      +{selectedItemDetail.item.speedBonus}
+                    </span>
+                  </div>
+                )}
+                {!selectedItemDetail.item.attackBonus &&
+                  !selectedItemDetail.item.defenseBonus &&
+                  !selectedItemDetail.item.healthBonus &&
+                  !selectedItemDetail.item.speedBonus && (
+                    <p className="text-gray-500 col-span-full text-center text-xs">
+                      {selectedItemDetail.item.type === "Material" || selectedItemDetail.item.type === "Gem"
+                        ? "Crafting Material"
+                        : "No stat bonuses"}
+                    </p>
+                  )}
+              </div>
+            </div>
+
+            {/* Sell Value */}
+            <div className="bg-amber-900/20 border-2 border-amber-600 rounded p-2 sm:p-3 mb-3 sm:mb-4">
+              <div className="flex items-center justify-center gap-2">
+                <img
+                  src={sellItemIcon}
+                  alt="Sell"
+                  className="w-4 h-4"
+                  style={{ imageRendering: "pixelated" }}
+                />
+                <span
+                  className="text-sm sm:text-base font-bold text-yellow-400"
+                  style={{ fontFamily: "monospace" }}
+                >
+                  Sell Value: {formatGold(selectedItemDetail.item.baseValue * selectedItemDetail.quantity)}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              {selectedItemDetail.item.type === "Consumable" ||
+              selectedItemDetail.item.type === "Potion" ? (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      useItemMutation.mutate(selectedItemDetail.item.id);
+                      setSelectedItemDetail(null);
+                    }}
+                    disabled={useItemMutation.isPending}
+                    className="flex-1 py-2 sm:py-3 bg-green-700 hover:bg-green-600 text-white text-xs sm:text-sm font-bold transition disabled:opacity-50"
+                    style={{
+                      border: "2px solid #15803d",
+                      borderRadius: "0",
+                      boxShadow: "0 2px 0 #166534",
+                      textShadow: "1px 1px 0 #000",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    🧪 USE
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedItemDetail(null);
+                      openSellModal(selectedItemDetail);
+                    }}
+                    className="flex-1 py-2 sm:py-3 bg-yellow-700 hover:bg-yellow-600 text-white text-xs sm:text-sm font-bold transition"
+                    style={{
+                      border: "2px solid #a16207",
+                      borderRadius: "0",
+                      boxShadow: "0 2px 0 #ca8a04",
+                      textShadow: "1px 1px 0 #000",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    <img
+                      src={sellItemIcon}
+                      alt="Sell"
+                      className="w-3 h-3 inline mr-1"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                    SELL
+                  </button>
+                </>
+              ) : isEquipped(selectedItemDetail.item.id) ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedItemDetail(null);
+                    openSellModal(selectedItemDetail);
+                  }}
+                  className="flex-1 py-2 sm:py-3 bg-yellow-700 hover:bg-yellow-600 text-white text-xs sm:text-sm font-bold transition"
+                  style={{
+                    border: "2px solid #a16207",
+                    borderRadius: "0",
+                    boxShadow: "0 2px 0 #ca8a04",
+                    textShadow: "1px 1px 0 #000",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  <img
+                    src={sellItemIcon}
+                    alt="Sell"
+                    className="w-3 h-3 inline mr-1"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  SELL
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const slotType = getSlotForItem(selectedItemDetail.item);
+                      if (slotType) {
+                        equipMutation.mutate({
+                          itemId: selectedItemDetail.item.id,
+                          slot: slotType,
+                        });
+                        setSelectedItemDetail(null);
+                      } else {
+                        (window as any).showToast?.(
+                          "Cannot determine equipment slot",
+                          "error"
+                        );
+                      }
+                    }}
+                    disabled={equipMutation.isPending}
+                    className="flex-1 py-2 sm:py-3 bg-amber-700 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold transition disabled:opacity-50"
+                    style={{
+                      border: "2px solid #92400e",
+                      borderRadius: "0",
+                      boxShadow: "0 2px 0 #b45309",
+                      textShadow: "1px 1px 0 #000",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    ⚔️ EQUIP
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedItemDetail(null);
+                      openSellModal(selectedItemDetail);
+                    }}
+                    className="flex-1 py-2 sm:py-3 bg-yellow-700 hover:bg-yellow-600 text-white text-xs sm:text-sm font-bold transition"
+                    style={{
+                      border: "2px solid #a16207",
+                      borderRadius: "0",
+                      boxShadow: "0 2px 0 #ca8a04",
+                      textShadow: "1px 1px 0 #000",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    <img
+                      src={sellItemIcon}
+                      alt="Sell"
+                      className="w-3 h-3 inline mr-1"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                    SELL
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedItemDetail(null)}
+              className="w-full mt-2 py-2 bg-stone-700 hover:bg-stone-600 text-white text-xs sm:text-sm font-bold transition"
+              style={{
+                border: "2px solid #57534e",
+                borderRadius: "0",
+                boxShadow: "0 2px 0 #44403c",
+                textShadow: "1px 1px 0 #000",
+                fontFamily: "monospace",
+              }}
+            >
+              CLOSE
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
