@@ -63,9 +63,12 @@ export default function CraftingTab() {
     },
     onSuccess: (data) => {
       setCraftingAnimation('success');
+      // Immediately invalidate and refetch inventory
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.refetchQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['character'] });
+      
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['inventory'] });
-        queryClient.invalidateQueries({ queryKey: ['character'] });
         (window as any).showToast?.(
           `Crafted ${data.data.craftedItem.name}!`,
           'success'
@@ -90,9 +93,9 @@ export default function CraftingTab() {
     if (!spriteId) return null;
     
     try {
-      // Check if it's a gem (craft material)
-      if (spriteId.includes('Gem')) {
-        return new URL(`../../assets/items/craft/gems/${spriteId}.png`, import.meta.url).href;
+      // Check if it's a gem (craft material) - use public assets
+      if (spriteId.includes('Gem') || itemType === 'Material' || itemType === 'Gem') {
+        return `/assets/items/craft/gems/${spriteId}.png`;
       }
       
       // Check if it's a potion (numeric sprite ID)
@@ -105,6 +108,14 @@ export default function CraftingTab() {
         } else if (num >= 1033 && num <= 1040) {
           return new URL(`../../assets/items/potions/attack/${spriteId}.png`, import.meta.url).href;
         }
+      }
+      
+      // Handle accessories with set prefixes (woodenSet/, ironSet/)
+      if (spriteId.includes('/')) {
+        const fullPath = spriteId.startsWith('woodenSet/') || spriteId.startsWith('ironSet/')
+          ? `accessories/${spriteId}`
+          : spriteId;
+        return new URL(`../../assets/items/${fullPath}.png`, import.meta.url).href;
       }
       
       // Determine folder based on item type

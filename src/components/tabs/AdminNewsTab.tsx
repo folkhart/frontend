@@ -124,7 +124,7 @@ export default function AdminNewsTab() {
   };
 
   const insertEmoji = (emojiId: string) => {
-    const emojiMarkdown = `![${emojiId}](/src/assets/ui/news/emojis/64x64/${emojiId}.png) `;
+    const emojiMarkdown = `![${emojiId}](/assets/ui/news/emojis/64x64/${emojiId}.png) `;
     const currentContent = formData.content || '';
     const newContent = currentContent + emojiMarkdown;
     setFormData({ ...formData, content: newContent });
