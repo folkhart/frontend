@@ -32,6 +32,11 @@ export default function CraftingTab() {
   };
 
   const canCraftRecipe = (recipe: any) => {
+    // Check level requirement (default to 1 if not specified)
+    const requiredLevel = recipe.levelRequirement || 1;
+    if (character && character.level < requiredLevel) {
+      return false;
+    }
     // Check class restriction
     if (recipe.resultItem.classRestriction && character?.class !== recipe.resultItem.classRestriction) {
       return false;
@@ -249,6 +254,15 @@ export default function CraftingTab() {
                     {recipe.resultItem.name}
                   </h3>
                   <p className="text-xs text-gray-400">{recipe.resultItem.type}</p>
+                  {recipe.levelRequirement > 1 && (
+                    <p className={`text-xs font-bold mt-1 ${
+                      character && character.level >= recipe.levelRequirement 
+                        ? 'text-green-400' 
+                        : 'text-amber-400'
+                    }`}>
+                      ⭐ Level {recipe.levelRequirement} Required
+                    </p>
+                  )}
                 </div>
                 {canCraft && (
                   <Check size={20} className="text-green-400" />
