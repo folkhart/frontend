@@ -228,6 +228,28 @@ export default function InventoryTab() {
     },
   });
 
+  const unequipMutation = useMutation({
+    mutationFn: async (slot: string) => {
+      const result = await characterApi.unequip(slot);
+      return result;
+    },
+    onSuccess: async () => {
+      // Update character immediately
+      const { data: updatedCharacter } = await characterApi.get();
+      setCharacter(updatedCharacter);
+
+      queryClient.invalidateQueries({ queryKey: ["character"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      (window as any).showToast?.("Item unequipped!", "success");
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(
+        error.response?.data?.error || "Failed to unequip item",
+        "error"
+      );
+    },
+  });
+
   const useItemMutation = useMutation({
     mutationFn: (itemId: string) => inventoryApi.use(itemId),
     onSuccess: async (response) => {
@@ -570,7 +592,10 @@ export default function InventoryTab() {
               {slot.item.type === "Consumable" ||
               slot.item.type === "Potion" ? (
                 <button
-                  onClick={() => useItemMutation.mutate(slot.item.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    useItemMutation.mutate(slot.item.id);
+                  }}
                   disabled={useItemMutation.isPending}
                   className="w-full py-2 bg-green-700 hover:bg-green-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
                   style={{
@@ -587,22 +612,36 @@ export default function InventoryTab() {
                 </button>
               ) : equipped ? (
                 <div className="space-y-1">
-                  <div
-                    className="w-full py-2 bg-green-700 text-white text-xs font-bold text-center flex items-center justify-center gap-1"
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const slotType = getSlotForItem(slot.item);
+                      if (slotType) {
+                        unequipMutation.mutate(slotType);
+                      }
+                    }}
+                    disabled={unequipMutation.isPending}
+                    className="w-full py-2 bg-red-700 hover:bg-red-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
                     style={{
-                      border: "2px solid #15803d",
+                      border: "2px solid #991b1b",
                       borderRadius: "0",
                       boxShadow:
-                        "0 2px 0 #166534, inset 0 1px 0 rgba(255,255,255,0.2)",
+                        "0 2px 0 #b91c1c, 0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
                       textShadow: "1px 1px 0 #000",
                       fontFamily: "monospace",
                     }}
                   >
-                    <Check size={12} />
-                    EQUIPPED
-                  </div>
+                    <span className="relative z-10 flex items-center justify-center gap-1">
+                      <Check size={12} />
+                      UNEQUIP
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-b from-red-400/20 to-transparent"></div>
+                  </button>
                   <button
-                    onClick={() => openSellModal(slot)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openSellModal(slot);
+                    }}
                     disabled={sellItemMutation.isPending}
                     className="w-full py-1 bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
                     style={{
@@ -628,7 +667,8 @@ export default function InventoryTab() {
               ) : (
                 <div className="space-y-1">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       const slotType = getSlotForItem(slot.item);
                       if (slotType) {
                         equipMutation.mutate({
@@ -657,7 +697,10 @@ export default function InventoryTab() {
                     <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
                   </button>
                   <button
-                    onClick={() => openSellModal(slot)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openSellModal(slot);
+                    }}
                     disabled={sellItemMutation.isPending}
                     className="w-full py-1 bg-yellow-700 hover:bg-yellow-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
                     style={{
