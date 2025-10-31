@@ -284,13 +284,21 @@ export default function InventoryTab() {
         if (response.data?.player) {
           setPlayer(response.data.player);
         }
-        (window as any).showToast?.("Item used successfully!", "success");
+        
+        // Show specific message for energy potions
+        if (response.data?.effect === "energy") {
+          (window as any).showToast?.("⚡ Energy restored!", "success");
+        } else {
+          (window as any).showToast?.("Item used successfully!", "success");
+        }
       }
 
-      // Refresh queries
+      // Refresh queries with immediate refetch
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       queryClient.invalidateQueries({ queryKey: ["player"] });
+      await queryClient.refetchQueries({ queryKey: ["player"] }); // Force immediate refetch
+      await queryClient.refetchQueries({ queryKey: ["inventory"] }); // Force immediate refetch
     },
     onError: (error: any) => {
       (window as any).showToast?.(
