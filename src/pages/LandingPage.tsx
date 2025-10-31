@@ -128,10 +128,10 @@ export default function LandingPage() {
             {/* Content */}
             <div className="p-6 space-y-4">
               <div className="bg-amber-900 border-2 border-amber-700 p-4 text-center">
-                <p className="text-amber-200 retro-text text-sm mb-2">
+                <p className="text-amber-200 retro-text text-xs sm:text-sm mb-2">
                   WE MOVED TO A NEW DOMAIN!
                 </p>
-                <p className="text-amber-400 retro-text text-2xl font-bold tracking-wider">
+                <p className="text-amber-400 retro-text text-lg sm:text-xl md:text-2xl font-bold tracking-wider break-all">
                   FOLKHART.COM
                 </p>
               </div>
