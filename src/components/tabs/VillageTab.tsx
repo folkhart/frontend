@@ -32,7 +32,7 @@ export default function VillageTab() {
   >("equipment");
   const [selectedItemDetails, setSelectedItemDetails] = useState<any>(null);
 
-  const { data: inventory } = useQuery({
+  const { data: inventory, isLoading: isInventoryLoading } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
       const { data } = await inventoryApi.get();
@@ -94,7 +94,7 @@ export default function VillageTab() {
 
   // Removed useItemMutation - handled in InventoryTab
 
-  if (!character) return null;
+  if (!character || isInventoryLoading) return null;
 
   const getGuildItemPath = (spriteId: string) => {
     // Convert tier names to numbers (bronze→1, silver→2, gold→3, diamond→4)
