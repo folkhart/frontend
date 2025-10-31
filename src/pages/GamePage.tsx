@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGameStore } from '@/store/gameStore';
-import { authApi, characterApi } from '@/lib/api';
+import { authApi } from '@/lib/api';
 import { onIdleComplete, onDungeonComplete, onLevelUp, getSocket } from '@/lib/socket';
 import LoadingScreen from '@/components/LoadingScreen';
 import TopBar from '@/components/TopBar';
@@ -70,15 +70,18 @@ export default function GamePage() {
       const { data: profile } = await authApi.getProfile();
       setPlayer(profile);
 
+      // Check if player has a character
       if (!profile.character) {
         navigate('/create-character');
         return;
       }
 
-      const { data: characterData } = await characterApi.get();
-      setCharacter(characterData);
+      // Use character data from profile (it's already included)
+      setCharacter(profile.character);
     } catch (err) {
       console.error('Failed to load player data:', err);
+      // If profile fetch fails, redirect to login
+      navigate('/login');
     } finally {
       setLoading(false);
     }

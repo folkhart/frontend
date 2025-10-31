@@ -140,6 +140,9 @@ export default function InventoryTab() {
         } else if (num >= 1033 && num <= 1040) {
           const path = `../../assets/items/potions/attack/${spriteId}.png`;
           return images[path] || null;
+        } else if (num >= 1065 && num <= 1072) {
+          const path = `../../assets/items/potions/energy/${spriteId}.png`;
+          return images[path] || null;
         }
       }
 
@@ -277,12 +280,17 @@ export default function InventoryTab() {
         if (response.data?.character) {
           setCharacter(response.data.character);
         }
+        // Update player immediately with new energy
+        if (response.data?.player) {
+          setPlayer(response.data.player);
+        }
         (window as any).showToast?.("Item used successfully!", "success");
       }
 
       // Refresh queries
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["player"] });
     },
     onError: (error: any) => {
       (window as any).showToast?.(

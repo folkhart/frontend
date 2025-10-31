@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { characterApi } from '@/lib/api';
+import { authApi, characterApi } from '@/lib/api';
 import { useGameStore } from '@/store/gameStore';
 import classIcon from '@/assets/ui/class.png';
 import cpIcon from '@/assets/ui/cp.png';
@@ -20,8 +20,22 @@ export default function CharacterCreationPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    checkExistingCharacter();
     loadClasses();
   }, []);
+
+  const checkExistingCharacter = async () => {
+    try {
+      // Check if player already has a character
+      const { data: profile } = await authApi.getProfile();
+      if (profile.character) {
+        // Player already has a character, redirect to game
+        navigate('/');
+      }
+    } catch (err) {
+      console.error('Failed to check existing character:', err);
+    }
+  };
 
   const loadClasses = async () => {
     try {

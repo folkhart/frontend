@@ -156,6 +156,9 @@ const getItemImage = (spriteId: string, itemType?: string) => {
       } else if (num >= 1033 && num <= 1040) {
         const path = `../../assets/items/potions/attack/${spriteId}.png`;
         return images[path] || null;
+      } else if (num >= 1065 && num <= 1072) {
+        const path = `../../assets/items/potions/energy/${spriteId}.png`;
+        return images[path] || null;
       }
     }
 

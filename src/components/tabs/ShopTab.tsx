@@ -183,6 +183,10 @@ export default function ShopTab() {
           return (
             images[`../../assets/items/potions/attack/${spriteId}.png`] || null
           );
+        if (num >= 1065 && num <= 1072)
+          return (
+            images[`../../assets/items/potions/energy/${spriteId}.png`] || null
+          );
       }
       if (spriteId.includes("/")) {
         const fullPath = spriteId.startsWith("woodenSet/") || spriteId.startsWith("ironSet/")

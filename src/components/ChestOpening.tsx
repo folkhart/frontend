@@ -94,6 +94,8 @@ export default function ChestOpening({
         return `/assets/items/potions/mp/${spriteId}.png`;
       if (num >= 1033 && num <= 1040)
         return `/assets/items/potions/attack/${spriteId}.png`;
+      if (num >= 1065 && num <= 1072)
+        return `/assets/items/potions/energy/${spriteId}.png`;
     }
 
     // Handle items with paths (like woodenSet/woodenRing)
