@@ -917,24 +917,34 @@ export default function ServerChat() {
                           style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)" }}
                         >
                           {item ? (
-                            <div className="absolute inset-0 flex items-center justify-center p-1">
-                              {getItemImage(
-                                (item as any).spriteId,
-                                (item as any).type
-                              ) && (
-                                <img
-                                  src={
-                                    getItemImage(
-                                      (item as any).spriteId,
-                                      (item as any).type
-                                    )!
-                                  }
-                                  alt={(item as any).name}
-                                  className="w-full h-full object-contain"
-                                  style={{ imageRendering: "pixelated" }}
-                                />
+                            <>
+                              <div className="absolute inset-0 flex items-center justify-center p-1">
+                                {getItemImage(
+                                  (item as any).spriteId,
+                                  (item as any).type
+                                ) && (
+                                  <img
+                                    src={
+                                      getItemImage(
+                                        (item as any).spriteId,
+                                        (item as any).type
+                                      )!
+                                    }
+                                    alt={(item as any).name}
+                                    className="w-full h-full object-contain"
+                                    style={{ imageRendering: "pixelated" }}
+                                  />
+                                )}
+                              </div>
+                              {(item as any).enhancementLevel > 0 && (
+                                <div
+                                  className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
+                                  style={{ fontFamily: "monospace" }}
+                                >
+                                  +{(item as any).enhancementLevel}
+                                </div>
                               )}
-                            </div>
+                            </>
                           ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
                               <p
@@ -963,24 +973,34 @@ export default function ServerChat() {
                           style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)" }}
                         >
                           {item ? (
-                            <div className="absolute inset-0 flex items-center justify-center p-1">
-                              {getItemImage(
-                                (item as any).spriteId,
-                                (item as any).type
-                              ) && (
-                                <img
-                                  src={
-                                    getItemImage(
-                                      (item as any).spriteId,
-                                      (item as any).type
-                                    )!
-                                  }
-                                  alt={(item as any).name}
-                                  className="w-full h-full object-contain"
-                                  style={{ imageRendering: "pixelated" }}
-                                />
+                            <>
+                              <div className="absolute inset-0 flex items-center justify-center p-1">
+                                {getItemImage(
+                                  (item as any).spriteId,
+                                  (item as any).type
+                                ) && (
+                                  <img
+                                    src={
+                                      getItemImage(
+                                        (item as any).spriteId,
+                                        (item as any).type
+                                      )!
+                                    }
+                                    alt={(item as any).name}
+                                    className="w-full h-full object-contain"
+                                    style={{ imageRendering: "pixelated" }}
+                                  />
+                                )}
+                              </div>
+                              {(item as any).enhancementLevel > 0 && (
+                                <div
+                                  className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
+                                  style={{ fontFamily: "monospace" }}
+                                >
+                                  +{(item as any).enhancementLevel}
+                                </div>
                               )}
-                            </div>
+                            </>
                           ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
                               <p
@@ -1009,24 +1029,34 @@ export default function ServerChat() {
                           style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)" }}
                         >
                           {item ? (
-                            <div className="absolute inset-0 flex items-center justify-center p-1">
-                              {getItemImage(
-                                (item as any).spriteId,
-                                (item as any).type
-                              ) && (
-                                <img
-                                  src={
-                                    getItemImage(
-                                      (item as any).spriteId,
-                                      (item as any).type
-                                    )!
-                                  }
-                                  alt={(item as any).name}
-                                  className="w-full h-full object-contain"
-                                  style={{ imageRendering: "pixelated" }}
-                                />
+                            <>
+                              <div className="absolute inset-0 flex items-center justify-center p-1">
+                                {getItemImage(
+                                  (item as any).spriteId,
+                                  (item as any).type
+                                ) && (
+                                  <img
+                                    src={
+                                      getItemImage(
+                                        (item as any).spriteId,
+                                        (item as any).type
+                                      )!
+                                    }
+                                    alt={(item as any).name}
+                                    className="w-full h-full object-contain"
+                                    style={{ imageRendering: "pixelated" }}
+                                  />
+                                )}
+                              </div>
+                              {(item as any).enhancementLevel > 0 && (
+                                <div
+                                  className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
+                                  style={{ fontFamily: "monospace" }}
+                                >
+                                  +{(item as any).enhancementLevel}
+                                </div>
                               )}
-                            </div>
+                            </>
                           ) : (
                             <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
                               <p
