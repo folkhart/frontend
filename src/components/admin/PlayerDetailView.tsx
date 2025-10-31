@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   ArrowLeft, User, Shield, Swords, Package, Activity, 
-  Trash2, Plus, Edit, Ban, CheckCircle, XCircle 
+  Trash2, Plus, Edit, Ban, CheckCircle
 } from 'lucide-react';
 import axios from 'axios';
 import { useState } from 'react';
@@ -22,7 +22,7 @@ export default function PlayerDetailView({ playerId, onBack }: PlayerDetailViewP
   const { data: player, isLoading } = useQuery({
     queryKey: ['admin', 'player', playerId],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       const response = await axios.get(`${API_URL}/api/admin/players/${playerId}/detail`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -33,7 +33,7 @@ export default function PlayerDetailView({ playerId, onBack }: PlayerDetailViewP
   const { data: logs } = useQuery({
     queryKey: ['admin', 'player', playerId, 'logs'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       const response = await axios.get(`${API_URL}/api/admin/players/${playerId}/logs`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -43,7 +43,7 @@ export default function PlayerDetailView({ playerId, onBack }: PlayerDetailViewP
 
   const muteMutation = useMutation({
     mutationFn: async (duration: number) => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       await axios.post(
         `${API_URL}/api/admin/players/${playerId}/mute`,
         { duration },
@@ -58,7 +58,7 @@ export default function PlayerDetailView({ playerId, onBack }: PlayerDetailViewP
 
   const unmuteMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       await axios.post(
         `${API_URL}/api/admin/players/${playerId}/unmute`,
         {},
@@ -73,7 +73,7 @@ export default function PlayerDetailView({ playerId, onBack }: PlayerDetailViewP
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       await axios.delete(`${API_URL}/api/admin/players/${playerId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -295,7 +295,7 @@ function GiveItemModal({ playerId, onClose }: { playerId: string; onClose: () =>
   const { data: items } = useQuery({
     queryKey: ['admin', 'items'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       const response = await axios.get(`${API_URL}/api/admin/items`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -305,7 +305,7 @@ function GiveItemModal({ playerId, onClose }: { playerId: string; onClose: () =>
 
   const giveItemMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       await axios.post(
         `${API_URL}/api/admin/players/${playerId}/give-item`,
         { itemId, quantity },
@@ -379,7 +379,7 @@ function EditStatsModal({ player, onClose }: { player: any; onClose: () => void 
 
   const updateStatsMutation = useMutation({
     mutationFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       await axios.post(
         `${API_URL}/api/admin/players/${player.id}/update-stats`,
         { gold, gems, level, energy },

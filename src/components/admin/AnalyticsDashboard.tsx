@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Activity, Users, TrendingUp, Shield, Swords, Crown } from 'lucide-react';
+import { Activity, Users, TrendingUp, Swords, Crown } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -37,7 +37,7 @@ export default function AnalyticsDashboard() {
   const { data: analytics, isLoading } = useQuery<DashboardAnalytics>({
     queryKey: ['admin', 'analytics'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       const response = await axios.get(`${API_URL}/api/admin/analytics/dashboard`, {
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Search, Eye, Shield, Crown } from 'lucide-react';
+import { Search, Eye, Crown } from 'lucide-react';
 import axios from 'axios';
 import { useState } from 'react';
 
@@ -17,7 +17,7 @@ export default function PlayersList({ onSelectPlayer }: PlayersListProps) {
   const { data: players, isLoading } = useQuery({
     queryKey: ['admin', 'players'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       const response = await axios.get(`${API_URL}/api/admin/players`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -122,7 +122,9 @@ export default function PlayersList({ onSelectPlayer }: PlayersListProps) {
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       {player.isAdmin && (
-                        <Crown size={16} className="text-red-400" title="Admin" />
+                        <div title="Admin">
+                          <Crown size={16} className="text-red-400" />
+                        </div>
                       )}
                       <span className="text-white font-bold">{player.username}</span>
                     </div>
