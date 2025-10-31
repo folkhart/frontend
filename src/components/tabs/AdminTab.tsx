@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw } from 'lucide-react';
+import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3 } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
 import AdminNewsTab from './AdminNewsTab';
+import AnalyticsDashboard from '../admin/AnalyticsDashboard';
+import PlayersList from '../admin/PlayersList';
+import PlayerDetailView from '../admin/PlayerDetailView';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -98,7 +101,8 @@ const adminApi = {
 export default function AdminTab() {
   const queryClient = useQueryClient();
   const { player } = useGameStore();
-  const [activeTab, setActiveTab] = useState<'players' | 'items' | 'shop' | 'news' | 'backups'>('players');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'players' | 'items' | 'shop' | 'news' | 'backups'>('analytics');
+  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [price, setPrice] = useState('100');
@@ -164,7 +168,31 @@ export default function AdminTab() {
       {/* Tab Switcher */}
       <div className="flex gap-2 mb-4">
         <button
-          onClick={() => setActiveTab('players')}
+          onClick={() => {
+            setActiveTab('analytics');
+            setSelectedPlayerId(null);
+          }}
+          className={`flex-1 py-2 font-bold transition relative overflow-hidden ${
+            activeTab === 'analytics'
+              ? 'bg-cyan-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #0e7490',
+            borderRadius: '0',
+            boxShadow: activeTab === 'analytics' ? '0 2px 0 #155e75, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeTab === 'analytics' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <BarChart3 size={16} className="inline mr-1" />
+          Analytics
+        </button>
+        <button
+          onClick={() => {
+            setActiveTab('players');
+            setSelectedPlayerId(null);
+          }}
           className={`flex-1 py-2 font-bold transition relative overflow-hidden ${
             activeTab === 'players'
               ? 'bg-blue-700 text-white'
@@ -255,31 +283,20 @@ export default function AdminTab() {
         </button>
       </div>
 
+      {/* Analytics Dashboard */}
+      {activeTab === 'analytics' && <AnalyticsDashboard />}
+
       {/* Players Tab */}
-      {activeTab === 'players' && (
-        <div className="space-y-2">
-          <p className="text-sm text-gray-400 mb-2">Total Players: {players?.length || 0}</p>
-          {players?.map((p: any) => (
-            <div key={p.id} className="bg-stone-800 border-2 border-stone-700 p-3" style={{ borderRadius: '0' }}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-bold text-white">{p.username}</p>
-                  <p className="text-xs text-gray-400">{p.email}</p>
-                  {p.character && (
-                    <p className="text-sm text-amber-400 mt-1">
-                      Lv.{p.character.level} {p.character.name} ({p.character.class})
-                    </p>
-                  )}
-                </div>
-                <div className="text-right text-xs">
-                  <p className="text-yellow-400">💰 {p.gold}</p>
-                  <p className="text-blue-400">💎 {p.gems}</p>
-                  <p className="text-green-400">⚡ {p.energy}/{p.maxEnergy}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {activeTab === 'players' && !selectedPlayerId && (
+        <PlayersList onSelectPlayer={setSelectedPlayerId} />
+      )}
+
+      {/* Player Detail View */}
+      {selectedPlayerId && (
+        <PlayerDetailView
+          playerId={selectedPlayerId}
+          onBack={() => setSelectedPlayerId(null)}
+        />
       )}
 
       {/* Items Tab */}
