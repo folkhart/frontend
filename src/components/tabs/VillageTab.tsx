@@ -50,9 +50,11 @@ export default function VillageTab() {
       const { data: updatedCharacter } = await characterApi.get();
       setCharacter(updatedCharacter);
 
-      // Refresh queries
+      // Refresh queries with immediate refetch
       await queryClient.invalidateQueries({ queryKey: ["character"] });
       await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      await queryClient.refetchQueries({ queryKey: ["inventory"] }); // Force immediate refetch
+      await queryClient.refetchQueries({ queryKey: ["character"] }); // Force immediate refetch
       setSelectedSlot(null);
 
       (window as any).showToast?.("Item equipped successfully!", "success");
@@ -74,9 +76,11 @@ export default function VillageTab() {
       const { data: updatedCharacter } = await characterApi.get();
       setCharacter(updatedCharacter);
 
-      // Refresh queries
+      // Refresh queries with immediate refetch
       await queryClient.invalidateQueries({ queryKey: ["character"] });
       await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      await queryClient.refetchQueries({ queryKey: ["inventory"] }); // Force immediate refetch
+      await queryClient.refetchQueries({ queryKey: ["character"] }); // Force immediate refetch
       setSelectedItemDetails(null);
 
       (window as any).showToast?.("Item unequipped successfully!", "success");
