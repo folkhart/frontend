@@ -19,6 +19,32 @@ export default function LandingPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Domain notification state
+  const [showDomainNotif, setShowDomainNotif] = useState(() => {
+    const neverShow = localStorage.getItem('folkhart_domain_notif_never');
+    if (neverShow === 'true') return false;
+
+    const firstShown = localStorage.getItem('folkhart_domain_notif_shown');
+    if (!firstShown) {
+      localStorage.setItem('folkhart_domain_notif_shown', Date.now().toString());
+      return true;
+    }
+
+    // Check if 2 days have passed
+    const twoDays = 2 * 24 * 60 * 60 * 1000;
+    const elapsed = Date.now() - parseInt(firstShown);
+    return elapsed < twoDays;
+  });
+
+  const handleNeverShow = () => {
+    localStorage.setItem('folkhart_domain_notif_never', 'true');
+    setShowDomainNotif(false);
+  };
+
+  const handleDismiss = () => {
+    setShowDomainNotif(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -47,6 +73,10 @@ export default function LandingPage() {
       
       // Update Zustand store (which also updates localStorage)
       setAuth(data.accessToken, data.refreshToken);
+      
+      // Store login timestamp for version check
+      localStorage.setItem('lastLoginTime', Date.now().toString());
+      
       navigate('/game');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Something went wrong!');
@@ -83,6 +113,64 @@ export default function LandingPage() {
           ></div>
         ))}
       </div>
+
+      {/* Domain Notification Popup */}
+      {showDomainNotif && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75 animate-fade-in">
+          <div className="relative bg-stone-800 border-4 border-amber-600 shadow-2xl max-w-lg w-full animate-bounce-in">
+            {/* Header */}
+            <div className="bg-amber-600 px-6 py-4 border-b-4 border-amber-700">
+              <h2 className="text-white font-bold retro-text text-lg text-center">
+                🎉 NEW DOMAIN ANNOUNCEMENT! 🎉
+              </h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div className="bg-amber-900 border-2 border-amber-700 p-4 text-center">
+                <p className="text-amber-200 retro-text text-sm mb-2">
+                  WE MOVED TO A NEW DOMAIN!
+                </p>
+                <p className="text-amber-400 retro-text text-2xl font-bold tracking-wider">
+                  FOLKHART.COM
+                </p>
+              </div>
+
+              <p className="text-amber-200 retro-text text-xs text-center leading-relaxed">
+                Update your bookmarks and visit us at our new home!
+              </p>
+
+              {/* Buttons */}
+              <div className="space-y-3">
+                <a
+                  href="https://folkhart.com"
+                  className="block w-full py-3 bg-gradient-to-r from-green-700 to-green-600 text-white font-bold border-4 border-green-800 hover:from-green-600 hover:to-green-500 transform hover:scale-105 transition-all text-center retro-text text-sm"
+                >
+                  🌐 VISIT FOLKHART.COM
+                </a>
+
+                <button
+                  onClick={handleDismiss}
+                  className="w-full py-3 bg-gradient-to-r from-blue-700 to-blue-600 text-white font-bold border-4 border-blue-800 hover:from-blue-600 hover:to-blue-500 transform hover:scale-105 transition-all retro-text text-xs"
+                >
+                  ✓ I'M ALREADY ON FOLKHART.COM
+                </button>
+
+                <button
+                  onClick={handleNeverShow}
+                  className="w-full py-2 bg-stone-700 text-amber-300 font-bold border-2 border-stone-600 hover:bg-stone-600 transition-all retro-text text-xs"
+                >
+                  ❌ NEVER SHOW AGAIN
+                </button>
+              </div>
+
+              <p className="text-amber-600 retro-text text-xs text-center">
+                This message will disappear after 2 days
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Container */}
       <div className="relative z-10 w-full max-w-md">
@@ -289,6 +377,24 @@ export default function LandingPage() {
 
         .animate-bounce-slow {
           animation: bounce-slow 3s ease-in-out infinite;
+        }
+
+        @keyframes bounce-in {
+          0% {
+            opacity: 0;
+            transform: scale(0.5) translateY(-50px);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        .animate-bounce-in {
+          animation: bounce-in 0.5s ease-out;
         }
       `}</style>
     </div>

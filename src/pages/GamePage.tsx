@@ -32,7 +32,7 @@ export default function GamePage() {
   const [levelUpData, setLevelUpData] = useState<{ newLevel: number; unlocks?: string[] } | null>(null);
 
   useEffect(() => {
-    loadPlayerData();
+    checkVersionAndLoad();
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
@@ -45,6 +45,29 @@ export default function GamePage() {
       setShowOnboarding(true);
     }
   }, []);
+
+  const checkVersionAndLoad = async () => {
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/api/version/check`);
+      const data = await response.json();
+      
+      const lastLoginTime = localStorage.getItem('lastLoginTime');
+      
+      // Force logout if user logged in before the force logout timestamp
+      if (!lastLoginTime || parseInt(lastLoginTime) < data.forceLogoutTimestamp) {
+        console.log('🔄 Force logout: Domain migration');
+        localStorage.clear();
+        navigate('/');
+        return;
+      }
+      
+      loadPlayerData();
+    } catch (error) {
+      console.error('Version check failed, proceeding with login:', error);
+      loadPlayerData();
+    }
+  };
 
   // Energy regeneration timer - regenerate 1 energy every 5 minutes
   useEffect(() => {
