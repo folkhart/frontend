@@ -19,6 +19,8 @@ import speedIconCP from "@/assets/ui/character_panel/speed.png";
 import addFriendIcon from "@/assets/ui/add_friend.png";
 import guildInviteIcon from "@/assets/ui/guild_invite.png";
 import removeFriendIcon from "@/assets/ui/remove_friend.png";
+import Lightning from "@/components/effects/Lightning";
+import ColorBends from "@/components/effects/ColorBends";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -906,18 +908,44 @@ export default function ServerChat() {
                         ["earring", playerCharacter.earring, "Earring"],
                         ["helmet", playerCharacter.helmet, "Helmet"],
                         ["necklace", playerCharacter.necklace, "Necklace"],
-                      ].map(([slot, item, label]) => (
+                      ].map(([slot, item, label]) => {
+                        const enhLevel = (item as any)?.enhancementLevel || 0;
+                        const getAnimation = () => {
+                          if (enhLevel >= 1 && enhLevel <= 2) return "shimmer 2s ease-in-out infinite";
+                          if (enhLevel >= 3 && enhLevel <= 4) return "glow-pulse 1.5s ease-in-out infinite";
+                          if (enhLevel === 5) return "sparkle-shine 1.2s ease-in-out infinite";
+                          return "";
+                        };
+                        return (
                         <div
                           key={slot as string}
                           className={`relative aspect-square bg-stone-900 border-2 ${
                             item
-                              ? getRarityBorder((item as any).rarity)
+                              ? enhLevel >= 9
+                                ? "border-purple-500"
+                                : enhLevel >= 8
+                                ? "border-pink-500"
+                                : enhLevel >= 7
+                                ? "border-indigo-500"
+                                : enhLevel >= 6
+                                ? "border-cyan-400"
+                                : getRarityBorder((item as any).rarity)
                               : "border-stone-700"
                           }`}
-                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)" }}
+                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)", animation: getAnimation() }}
                         >
                           {item ? (
                             <>
+                              {(item as any).enhancementLevel >= 9 && (
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                  <Lightning hue={270} xOffset={0} speed={1.5} intensity={0.8} size={2} />
+                                </div>
+                              )}
+                              {(item as any).enhancementLevel === 8 && (
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                  <ColorBends colors={["#ff5c7a", "#8a5cff", "#00ffd1"]} rotation={30} speed={0.3} scale={1.2} frequency={1.4} warpStrength={1.2} mouseInfluence={0} parallax={0} noise={0.08} transparent />
+                                </div>
+                              )}
                               <div className="absolute inset-0 flex items-center justify-center p-1">
                                 {getItemImage(
                                   (item as any).spriteId,
@@ -938,7 +966,17 @@ export default function ServerChat() {
                               </div>
                               {(item as any).enhancementLevel > 0 && (
                                 <div
-                                  className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
+                                  className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
+                                    (item as any).enhancementLevel >= 9
+                                      ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                                      : (item as any).enhancementLevel >= 8
+                                      ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
+                                      : (item as any).enhancementLevel >= 7
+                                      ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                                      : (item as any).enhancementLevel >= 6
+                                      ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+                                      : "bg-amber-600 border-amber-800"
+                                  }`}
                                   style={{ fontFamily: "monospace" }}
                                 >
                                   +{(item as any).enhancementLevel}
@@ -956,24 +994,50 @@ export default function ServerChat() {
                             </div>
                           )}
                         </div>
-                      ))}
+                      );})}
                       {/* Row 2 */}
                       {[
                         ["weapon", playerCharacter.weapon, "Weapon"],
                         ["armor", playerCharacter.armor, "Armor"],
                         ["gloves", playerCharacter.gloves, "Gloves"],
-                      ].map(([slot, item, label]) => (
+                      ].map(([slot, item, label]) => {
+                        const enhLevel = (item as any)?.enhancementLevel || 0;
+                        const getAnimation = () => {
+                          if (enhLevel >= 1 && enhLevel <= 2) return "shimmer 2s ease-in-out infinite";
+                          if (enhLevel >= 3 && enhLevel <= 4) return "glow-pulse 1.5s ease-in-out infinite";
+                          if (enhLevel === 5) return "sparkle-shine 1.2s ease-in-out infinite";
+                          return "";
+                        };
+                        return (
                         <div
                           key={slot as string}
                           className={`relative aspect-square bg-stone-900 border-2 ${
                             item
-                              ? getRarityBorder((item as any).rarity)
+                              ? enhLevel >= 9
+                                ? "border-purple-500"
+                                : enhLevel >= 8
+                                ? "border-pink-500"
+                                : enhLevel >= 7
+                                ? "border-indigo-500"
+                                : enhLevel >= 6
+                                ? "border-cyan-400"
+                                : getRarityBorder((item as any).rarity)
                               : "border-stone-700"
                           }`}
-                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)" }}
+                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)", animation: getAnimation() }}
                         >
                           {item ? (
                             <>
+                              {(item as any).enhancementLevel >= 9 && (
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                  <Lightning hue={270} xOffset={0} speed={1.5} intensity={0.8} size={2} />
+                                </div>
+                              )}
+                              {(item as any).enhancementLevel === 8 && (
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                  <ColorBends colors={["#ff5c7a", "#8a5cff", "#00ffd1"]} rotation={30} speed={0.3} scale={1.2} frequency={1.4} warpStrength={1.2} mouseInfluence={0} parallax={0} noise={0.08} transparent />
+                                </div>
+                              )}
                               <div className="absolute inset-0 flex items-center justify-center p-1">
                                 {getItemImage(
                                   (item as any).spriteId,
@@ -994,7 +1058,17 @@ export default function ServerChat() {
                               </div>
                               {(item as any).enhancementLevel > 0 && (
                                 <div
-                                  className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
+                                  className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
+                                    (item as any).enhancementLevel >= 9
+                                      ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                                      : (item as any).enhancementLevel >= 8
+                                      ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
+                                      : (item as any).enhancementLevel >= 7
+                                      ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                                      : (item as any).enhancementLevel >= 6
+                                      ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+                                      : "bg-amber-600 border-amber-800"
+                                  }`}
                                   style={{ fontFamily: "monospace" }}
                                 >
                                   +{(item as any).enhancementLevel}
@@ -1012,24 +1086,50 @@ export default function ServerChat() {
                             </div>
                           )}
                         </div>
-                      ))}
+                      );})}
                       {/* Row 3 */}
                       {[
                         ["ring", playerCharacter.ring, "Ring"],
                         ["shoes", playerCharacter.shoes, "Shoes"],
                         ["belt", playerCharacter.belt, "Belt"],
-                      ].map(([slot, item, label]) => (
+                      ].map(([slot, item, label]) => {
+                        const enhLevel = (item as any)?.enhancementLevel || 0;
+                        const getAnimation = () => {
+                          if (enhLevel >= 1 && enhLevel <= 2) return "shimmer 2s ease-in-out infinite";
+                          if (enhLevel >= 3 && enhLevel <= 4) return "glow-pulse 1.5s ease-in-out infinite";
+                          if (enhLevel === 5) return "sparkle-shine 1.2s ease-in-out infinite";
+                          return "";
+                        };
+                        return (
                         <div
                           key={slot as string}
                           className={`relative aspect-square bg-stone-900 border-2 ${
                             item
-                              ? getRarityBorder((item as any).rarity)
+                              ? enhLevel >= 9
+                                ? "border-purple-500"
+                                : enhLevel >= 8
+                                ? "border-pink-500"
+                                : enhLevel >= 7
+                                ? "border-indigo-500"
+                                : enhLevel >= 6
+                                ? "border-cyan-400"
+                                : getRarityBorder((item as any).rarity)
                               : "border-stone-700"
                           }`}
-                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)" }}
+                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)", animation: getAnimation() }}
                         >
                           {item ? (
                             <>
+                              {(item as any).enhancementLevel >= 9 && (
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                  <Lightning hue={270} xOffset={0} speed={1.5} intensity={0.8} size={2} />
+                                </div>
+                              )}
+                              {(item as any).enhancementLevel === 8 && (
+                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                  <ColorBends colors={["#ff5c7a", "#8a5cff", "#00ffd1"]} rotation={30} speed={0.3} scale={1.2} frequency={1.4} warpStrength={1.2} mouseInfluence={0} parallax={0} noise={0.08} transparent />
+                                </div>
+                              )}
                               <div className="absolute inset-0 flex items-center justify-center p-1">
                                 {getItemImage(
                                   (item as any).spriteId,
@@ -1050,7 +1150,17 @@ export default function ServerChat() {
                               </div>
                               {(item as any).enhancementLevel > 0 && (
                                 <div
-                                  className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
+                                  className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
+                                    (item as any).enhancementLevel >= 9
+                                      ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                                      : (item as any).enhancementLevel >= 8
+                                      ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
+                                      : (item as any).enhancementLevel >= 7
+                                      ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                                      : (item as any).enhancementLevel >= 6
+                                      ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+                                      : "bg-amber-600 border-amber-800"
+                                  }`}
                                   style={{ fontFamily: "monospace" }}
                                 >
                                   +{(item as any).enhancementLevel}
@@ -1068,7 +1178,7 @@ export default function ServerChat() {
                             </div>
                           )}
                         </div>
-                      ))}
+                      );})}
                     </div>
                   </div>
 

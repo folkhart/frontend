@@ -6,6 +6,7 @@ import { getRarityColor, getRarityBorder, formatGold } from "@/utils/format";
 import { Check } from "lucide-react";
 import sellItemIcon from "@/assets/ui/sellItemIcon.png";
 import inventoryIcon from "@/assets/ui/inventory.png";
+import refiningBonusIcon from "@/assets/ui/character_panel/refining_bonus.png";
 
 type CategoryFilter =
   | "All"
@@ -1108,6 +1109,53 @@ export default function InventoryTab() {
                   )}
               </div>
             </div>
+
+            {/* Refining Stats */}
+            {selectedItemDetail.refineStats && Object.keys(selectedItemDetail.refineStats).length > 0 && (
+              <div className="bg-gradient-to-r from-purple-900/50 to-indigo-900/50 p-3 rounded mb-3 border border-purple-600">
+                <h3
+                  className="text-xs sm:text-sm font-bold text-purple-400 mb-2 flex items-center gap-1"
+                  style={{ fontFamily: "monospace" }}
+                >
+                  <img src={refiningBonusIcon} alt="Refining" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                  REFINING BONUSES
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  {Object.entries(selectedItemDetail.refineStats).map(([stat, value]) => {
+                    const statIcons: Record<string, string> = {
+                      fireAttack: '🔥',
+                      iceAttack: '❄️',
+                      lightningAttack: '⚡',
+                      poisonAttack: '☠️',
+                      critChance: '💥',
+                      critDamage: '💢',
+                      lifeSteal: '💖',
+                      dodgeChance: '🌀',
+                    };
+                    const statNames: Record<string, string> = {
+                      fireAttack: 'Fire Attack',
+                      iceAttack: 'Ice Attack',
+                      lightningAttack: 'Lightning Attack',
+                      poisonAttack: 'Poison Attack',
+                      critChance: 'Critical Chance',
+                      critDamage: 'Critical Damage',
+                      lifeSteal: 'Life Steal',
+                      dodgeChance: 'Dodge Chance',
+                    };
+                    return (
+                      <div key={stat} className="flex items-center gap-2">
+                        <span className="text-purple-200">
+                          {statIcons[stat] || '⭐'} {statNames[stat] || stat}:
+                        </span>
+                        <span className="text-purple-300 font-bold">
+                          +{value as number}{stat.includes('Chance') || stat.includes('Damage') || stat.includes('Steal') ? '%' : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Sell Value */}
             <div className="bg-amber-900/20 border-2 border-amber-600 rounded p-2 sm:p-3 mb-3 sm:mb-4">

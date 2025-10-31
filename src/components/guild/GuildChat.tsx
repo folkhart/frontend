@@ -252,9 +252,13 @@ export default function GuildChat({
       }
 
       if (spriteId.includes("/")) {
-        const fullPath = spriteId.startsWith("woodenSet/")
-          ? `accessories/${spriteId}`
-          : spriteId;
+        // Handle accessories with path prefixes (woodenSet/, ironSet/, dungeonDrops/)
+        const fullPath =
+          spriteId.startsWith("woodenSet/") ||
+          spriteId.startsWith("ironSet/") ||
+          spriteId.startsWith("dungeonDrops/")
+            ? `accessories/${spriteId}`
+            : spriteId;
         const path = `../../assets/items/${fullPath}.png`;
         return images[path] || null;
       }

@@ -712,15 +712,48 @@ export default function BlacksmithTab() {
             )}
             {result.refineStats && (
               <div>
-                <div className="text-purple-400 font-bold">
+                <div className="text-purple-400 font-bold text-center mb-2" style={{ fontFamily: 'monospace' }}>
+                  ✨ SUCCESS! ✨
+                </div>
+                <div className="text-purple-300 font-bold text-center mb-2">
                   Refining Complete!
                 </div>
-                <div className="text-sm">
-                  {Object.entries(result.refineStats).map(([stat, value]) => (
-                    <div key={stat}>
-                      +{value as number} {stat}
-                    </div>
-                  ))}
+                <div className="bg-purple-950/50 border border-purple-700 rounded p-2 space-y-1">
+                  {Object.entries(result.refineStats).map(([stat, value]) => {
+                    const statIcons: Record<string, string> = {
+                      fireAttack: '🔥',
+                      iceAttack: '❄️',
+                      lightningAttack: '⚡',
+                      poisonAttack: '☠️',
+                      critChance: '💥',
+                      critDamage: '💢',
+                      lifeSteal: '💖',
+                      dodgeChance: '🌀',
+                    };
+                    const statNames: Record<string, string> = {
+                      fireAttack: 'Fire Attack',
+                      iceAttack: 'Ice Attack',
+                      lightningAttack: 'Lightning Attack',
+                      poisonAttack: 'Poison Attack',
+                      critChance: 'Critical Chance',
+                      critDamage: 'Critical Damage',
+                      lifeSteal: 'Life Steal',
+                      dodgeChance: 'Dodge Chance',
+                    };
+                    return (
+                      <div key={stat} className="flex items-center justify-between text-sm bg-black/30 p-2 rounded">
+                        <span className="text-purple-200">
+                          {statIcons[stat] || '⭐'} {statNames[stat] || stat}
+                        </span>
+                        <span className="text-purple-400 font-bold">
+                          +{value as number}{stat.includes('Chance') || stat.includes('Damage') || stat.includes('Steal') ? '%' : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="text-xs text-purple-300 text-center mt-2" style={{ fontFamily: 'monospace' }}>
+                  Special stats added to your character!
                 </div>
               </div>
             )}

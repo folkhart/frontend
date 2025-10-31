@@ -2,12 +2,16 @@ import { useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { characterApi, inventoryApi } from "@/lib/api";
-import { Sword, Shield, Heart, Zap, X, Circle, Gem } from "lucide-react";
+import { Sword, Shield, Heart, Zap, X, Circle } from "lucide-react";
 import { getRarityColor, getRarityBorder, getClassIcon } from "@/utils/format";
 import inventoryIcon from "@/assets/ui/inventory.png";
 import equipmentIcon from "@/assets/ui/equipment.png";
 import anvilIcon from "@/assets/ui/craft/anvil.png";
 import hammerIcon from "@/assets/ui/craft/hammer.png";
+import refiningBonusIcon from "@/assets/ui/character_panel/refining_bonus.png";
+import socketDrillIcon from "@/assets/items/craft/gems/socket_drill.png";
+import Lightning from "@/components/effects/Lightning";
+import ColorBends from "@/components/effects/ColorBends";
 import CraftingTab from "./CraftingTab";
 import InventoryTab from "./InventoryTab";
 import BlacksmithTab from "./BlacksmithTab";
@@ -331,11 +335,48 @@ export default function VillageTab() {
     const socketSlots = itemSlot?.socketSlots || 0;
     const socketedGems = itemSlot?.socketedGems || [];
 
-    // Get border color based on rarity
+    // Get border color based on rarity and enhancement level
     const getBorderClass = () => {
       if (selectedSlot === slotType) return "border-amber-500";
-      if (equippedItem) return getRarityBorder(equippedItem.rarity);
+      if (equippedItem) {
+        if (enhancementLevel >= 9) return "border-purple-500";
+        if (enhancementLevel >= 8) return "border-pink-500";
+        if (enhancementLevel >= 7) return "border-indigo-500";
+        if (enhancementLevel >= 6) return "border-cyan-400";
+        return getRarityBorder(equippedItem.rarity);
+      }
       return "border-stone-700";
+    };
+
+    // Get glow effect based on enhancement level
+    const getGlowEffect = () => {
+      if (enhancementLevel >= 9) {
+        return "shadow-[0_0_20px_rgba(168,85,247,0.8),0_0_40px_rgba(168,85,247,0.4)]";
+      }
+      if (enhancementLevel >= 8) {
+        return "shadow-[0_0_20px_rgba(236,72,153,0.8),0_0_40px_rgba(236,72,153,0.4)]";
+      }
+      if (enhancementLevel >= 7) {
+        return "shadow-[0_0_15px_rgba(99,102,241,0.6),0_0_30px_rgba(99,102,241,0.3)]";
+      }
+      if (enhancementLevel >= 6) {
+        return "shadow-[0_0_15px_rgba(34,211,238,0.6),0_0_30px_rgba(34,211,238,0.3)]";
+      }
+      return "";
+    };
+
+    // Get animation effect based on enhancement level
+    const getAnimationStyle = () => {
+      if (enhancementLevel >= 1 && enhancementLevel <= 2) {
+        return { animation: "shimmer 2s ease-in-out infinite" };
+      }
+      if (enhancementLevel >= 3 && enhancementLevel <= 4) {
+        return { animation: "glow-pulse 1.5s ease-in-out infinite" };
+      }
+      if (enhancementLevel === 5) {
+        return { animation: "sparkle-shine 1.2s ease-in-out infinite" };
+      }
+      return {};
     };
 
     return (
@@ -349,46 +390,126 @@ export default function VillageTab() {
         }}
         className={`relative aspect-square bg-stone-900 border-2 cursor-pointer transition ${getBorderClass()} ${
           equippedItem ? "hover:border-amber-500" : "hover:border-amber-600"
-        }`}
-        style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)" }}
+        } ${getGlowEffect()}`}
+        style={{ 
+          boxShadow: "0 2px 0 rgba(0,0,0,0.3)",
+          ...getAnimationStyle()
+        }}
       >
         {equippedItem ? (
           <div className="absolute inset-0 flex items-center justify-center p-2">
+            {/* +9 WebGL Lightning Effect */}
+            {enhancementLevel >= 9 && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <Lightning
+                  hue={270}
+                  xOffset={0}
+                  speed={1.5}
+                  intensity={0.8}
+                  size={2}
+                />
+              </div>
+            )}
+            {/* +8 WebGL ColorBends Effect */}
+            {enhancementLevel === 8 && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <ColorBends
+                  colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+                  rotation={30}
+                  speed={0.3}
+                  scale={1.2}
+                  frequency={1.4}
+                  warpStrength={1.2}
+                  mouseInfluence={0}
+                  parallax={0}
+                  noise={0.08}
+                  transparent
+                />
+              </div>
+            )}
+            {/* +7 Galaxy Effect */}
+            {enhancementLevel === 7 && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 via-purple-600/20 to-pink-600/20" />
+                {Array.from({ length: 15 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-1 h-1 bg-white rounded-full"
+                    style={{
+                      top: `${Math.random() * 100}%`,
+                      left: `${Math.random() * 100}%`,
+                      animation: `twinkle 3s ease-in-out infinite ${Math.random() * 3}s`,
+                      opacity: 0.8,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            {/* +6 Electric Border Effect */}
+            {enhancementLevel === 6 && (
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute inset-0" style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(34,211,238,0.3), transparent)',
+                  animation: 'electricSweep 2s linear infinite',
+                }} />
+              </div>
+            )}
             <div className="relative w-full h-full">
               {getItemImage(equippedItem.spriteId, equippedItem.type) && (
                 <img
                   src={getItemImage(equippedItem.spriteId, equippedItem.type)!}
                   alt={equippedItem.name}
-                  className="w-full h-full object-contain"
+                  className={`w-full h-full object-contain ${
+                    enhancementLevel >= 9 ? "filter drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" : 
+                    enhancementLevel >= 8 ? "filter drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]" : 
+                    enhancementLevel >= 7 ? "filter drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]" : 
+                    enhancementLevel >= 6 ? "filter drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]" : ""
+                  }`}
                   style={{ imageRendering: "pixelated" }}
                 />
               )}
-              {/* Enhancement Level Badge */}
-              {enhancementLevel > 0 && (
-                <div
-                  className="absolute top-0 right-0 bg-amber-600 text-white text-xs font-bold px-1.5 py-0.5 border-2 border-amber-800"
-                  style={{ fontFamily: "monospace" }}
-                >
-                  +{enhancementLevel}
-                </div>
-              )}
-              {/* Socket Indicators */}
-              {socketSlots > 0 && (
-                <div className="absolute bottom-0 right-0 flex gap-0.5 bg-black/50 px-1">
-                  {Array.from({ length: socketSlots }).map((_, i) => (
-                    <Circle
-                      key={i}
-                      size={6}
-                      className={
-                        socketedGems[i]
-                          ? "fill-green-400 text-green-400"
-                          : "fill-stone-600 text-stone-600"
-                      }
-                    />
-                  ))}
-                </div>
-              )}
             </div>
+            {/* Enhancement Level Badge */}
+            {enhancementLevel > 0 && (
+              <div
+                className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
+                  enhancementLevel >= 9
+                    ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                    : enhancementLevel >= 8
+                    ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
+                    : enhancementLevel >= 7
+                    ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                    : enhancementLevel >= 6
+                    ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+                    : "bg-amber-600 border-amber-800"
+                }`}
+                style={{ fontFamily: "monospace" }}
+              >
+                +{enhancementLevel}
+              </div>
+            )}
+            {/* Socket Indicators */}
+            {socketSlots > 0 && (
+              <div className="absolute bottom-0 right-0 flex gap-0.5 bg-black/50 px-1">
+                {Array.from({ length: socketSlots }).map((_, i) => (
+                  <Circle
+                    key={i}
+                    size={6}
+                    className={
+                      socketedGems[i]
+                        ? "fill-green-400 text-green-400"
+                        : "fill-stone-600 text-stone-600"
+                    }
+                  />
+                ))}
+              </div>
+            )}
+            {/* Refining Indicator */}
+            {itemSlot?.refineStats && Object.keys(itemSlot.refineStats).length > 0 && (
+              <div className="absolute bottom-0 left-0 bg-purple-600 border border-purple-400 text-white text-xs font-bold px-1 py-0.5" style={{ fontFamily: "monospace", textShadow: '0 0 4px rgba(168,85,247,0.8)' }}>
+                ✨
+              </div>
+            )}
           </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
@@ -527,11 +648,55 @@ export default function VillageTab() {
               </div>
             )}
 
+            {/* Refining Stats */}
+            {selectedItemDetails.refineStats && typeof selectedItemDetails.refineStats === 'object' && Object.keys(selectedItemDetails.refineStats).length > 0 && (
+              <div className="bg-gradient-to-r from-purple-900/50 to-indigo-900/50 p-3 rounded mb-3 border border-purple-600">
+                <h4 className="text-sm font-bold text-purple-400 mb-2 flex items-center gap-1">
+                  <img src={refiningBonusIcon} alt="Refining" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                  Refining Bonuses
+                </h4>
+                <div className="space-y-1 text-sm">
+                  {Object.entries(selectedItemDetails.refineStats).map(([stat, value]) => {
+                    const statIcons: Record<string, string> = {
+                      fireAttack: '🔥',
+                      iceAttack: '❄️',
+                      lightningAttack: '⚡',
+                      poisonAttack: '☠️',
+                      critChance: '💥',
+                      critDamage: '💢',
+                      lifeSteal: '💖',
+                      dodgeChance: '🌀',
+                    };
+                    const statNames: Record<string, string> = {
+                      fireAttack: 'Fire Attack',
+                      iceAttack: 'Ice Attack',
+                      lightningAttack: 'Lightning Attack',
+                      poisonAttack: 'Poison Attack',
+                      critChance: 'Critical Chance',
+                      critDamage: 'Critical Damage',
+                      lifeSteal: 'Life Steal',
+                      dodgeChance: 'Dodge Chance',
+                    };
+                    return (
+                      <div key={stat} className="flex justify-between">
+                        <span className="text-purple-200">
+                          {statIcons[stat] || '⭐'} {statNames[stat] || stat}:
+                        </span>
+                        <span className="text-purple-300 font-bold">
+                          +{value as number}{stat.includes('Chance') || stat.includes('Damage') || stat.includes('Steal') ? '%' : ''}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Socketed Gems */}
             {selectedItemDetails.socketSlots > 0 && (
               <div className="bg-stone-800 p-3 rounded mb-3">
                 <h4 className="text-sm font-bold text-green-400 mb-2 flex items-center gap-1">
-                  <Gem size={16} />
+                  <img src={socketDrillIcon} alt="Socket" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
                   Sockets ({selectedItemDetails.socketedGems?.length || 0}/
                   {selectedItemDetails.socketSlots})
                 </h4>
@@ -937,28 +1102,110 @@ export default function VillageTab() {
             </div>
           </div>
 
-          {/* Stats Summary */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            <div className="bg-stone-800 rounded p-2 text-center">
-              <Heart size={16} className="text-red-400 mx-auto mb-1" />
-              <p className="text-white font-bold text-sm">
-                {character.maxHealth}
-              </p>
+          {/* Character Stats - Retro RPG Style */}
+          <div className="bg-gradient-to-b from-stone-900 to-stone-800 rounded-lg border-2 border-amber-600 p-4 mb-4">
+            <h3 className="text-amber-400 font-bold text-lg mb-3 text-center" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+              ═══ CHARACTER STATS ═══
+            </h3>
+            
+            {/* Core Stats */}
+            <div className="bg-black/40 rounded p-3 mb-3 border border-amber-800">
+              <h4 className="text-amber-300 font-bold text-sm mb-2" style={{ fontFamily: 'monospace' }}>
+                ▸ CORE ATTRIBUTES
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-sm" style={{ fontFamily: 'monospace' }}>
+                <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-red-900/50">
+                  <span className="text-red-400 flex items-center gap-1">
+                    <Heart size={14} /> HP
+                  </span>
+                  <span className="text-white font-bold">{character.maxHealth}</span>
+                </div>
+                <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-orange-900/50">
+                  <span className="text-orange-400 flex items-center gap-1">
+                    <Sword size={14} /> ATK
+                  </span>
+                  <span className="text-white font-bold">{character.attack}</span>
+                </div>
+                <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-blue-900/50">
+                  <span className="text-blue-400 flex items-center gap-1">
+                    <Shield size={14} /> DEF
+                  </span>
+                  <span className="text-white font-bold">{character.defense}</span>
+                </div>
+                <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-green-900/50">
+                  <span className="text-green-400 flex items-center gap-1">
+                    <Zap size={14} /> SPD
+                  </span>
+                  <span className="text-white font-bold">{character.speed}</span>
+                </div>
+              </div>
             </div>
-            <div className="bg-stone-800 rounded p-2 text-center">
-              <Sword size={16} className="text-orange-400 mx-auto mb-1" />
-              <p className="text-white font-bold text-sm">{character.attack}</p>
-            </div>
-            <div className="bg-stone-800 rounded p-2 text-center">
-              <Shield size={16} className="text-blue-400 mx-auto mb-1" />
-              <p className="text-white font-bold text-sm">
-                {character.defense}
-              </p>
-            </div>
-            <div className="bg-stone-800 rounded p-2 text-center">
-              <Zap size={16} className="text-green-400 mx-auto mb-1" />
-              <p className="text-white font-bold text-sm">{character.speed}</p>
-            </div>
+
+            {/* Special Stats - Only show if character has any */}
+            {((character as any).fireAttack > 0 || 
+              (character as any).iceAttack > 0 || 
+              (character as any).lightningAttack > 0 || 
+              (character as any).poisonAttack > 0 || 
+              (character as any).critChance > 0 || 
+              (character as any).critDamage > 0 || 
+              (character as any).lifeSteal > 0 || 
+              (character as any).dodgeChance > 0) && (
+              <div className="bg-black/40 rounded p-3 border border-purple-800">
+                <h4 className="text-purple-300 font-bold text-sm mb-2" style={{ fontFamily: 'monospace' }}>
+                  ▸ SPECIAL ATTRIBUTES
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-xs" style={{ fontFamily: 'monospace' }}>
+                  {(character as any).fireAttack > 0 && (
+                    <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-red-700/30">
+                      <span className="text-red-300">🔥 Fire</span>
+                      <span className="text-red-400 font-bold">+{(character as any).fireAttack}</span>
+                    </div>
+                  )}
+                  {(character as any).iceAttack > 0 && (
+                    <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-cyan-700/30">
+                      <span className="text-cyan-300">❄️ Ice</span>
+                      <span className="text-cyan-400 font-bold">+{(character as any).iceAttack}</span>
+                    </div>
+                  )}
+                  {(character as any).lightningAttack > 0 && (
+                    <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-yellow-700/30">
+                      <span className="text-yellow-300">⚡ Lightning</span>
+                      <span className="text-yellow-400 font-bold">+{(character as any).lightningAttack}</span>
+                    </div>
+                  )}
+                  {(character as any).poisonAttack > 0 && (
+                    <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-green-700/30">
+                      <span className="text-green-300">☠️ Poison</span>
+                      <span className="text-green-400 font-bold">+{(character as any).poisonAttack}</span>
+                    </div>
+                  )}
+                  {(character as any).critChance > 0 && (
+                    <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-amber-700/30">
+                      <span className="text-amber-300">💥 Crit %</span>
+                      <span className="text-amber-400 font-bold">{(character as any).critChance}%</span>
+                    </div>
+                  )}
+                  {(character as any).critDamage > 0 && (
+                    <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-orange-700/30">
+                      <span className="text-orange-300">💢 Crit DMG</span>
+                      <span className="text-orange-400 font-bold">+{(character as any).critDamage}%</span>
+                    </div>
+                  )}
+                  {(character as any).lifeSteal > 0 && (
+                    <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-pink-700/30">
+                      <span className="text-pink-300">💖 Lifesteal</span>
+                      <span className="text-pink-400 font-bold">{(character as any).lifeSteal}%</span>
+                    </div>
+                  )}
+                  {(character as any).dodgeChance > 0 && (
+                    <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-indigo-700/30">
+                      <span className="text-indigo-300">🌀 Dodge</span>
+                      <span className="text-indigo-400 font-bold">{(character as any).dodgeChance}%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Item Selection Modal */}
