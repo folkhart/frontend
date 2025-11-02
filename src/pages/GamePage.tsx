@@ -228,6 +228,49 @@ export default function GamePage() {
     }
   };
 
+  // Show version popup FIRST (highest priority)
+  if (showVersionPopup) {
+    return (
+      <>
+        <LoadingScreen />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-75 animate-fade-in">
+          <div className="relative bg-stone-800 border-4 border-red-600 shadow-2xl max-w-lg w-full animate-bounce-in">
+            {/* Header */}
+            <div className="bg-red-600 px-6 py-4 border-b-4 border-red-700">
+              <h2 className="text-white font-bold retro-text text-lg text-center">
+                ⚠️ VERSION UPDATED ⚠️
+              </h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div className="bg-red-900 border-2 border-red-700 p-4 text-center">
+                <p className="text-red-200 retro-text text-sm mb-2">
+                  The game has been updated!
+                </p>
+                <p className="text-red-400 retro-text text-base font-bold">
+                  You will be logged out.
+                </p>
+              </div>
+
+              <p className="text-red-200 retro-text text-xs text-center leading-relaxed">
+                Please log in again to continue playing with the latest version.
+              </p>
+
+              {/* Button */}
+              <button
+                onClick={handleVersionLogout}
+                className="w-full py-3 bg-gradient-to-r from-red-700 to-red-600 text-white font-bold border-4 border-red-800 hover:from-red-600 hover:to-red-500 transform hover:scale-105 transition-all retro-text text-sm"
+              >
+                🔄 LOG OUT & CONTINUE
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   if (loading) {
     return <LoadingScreen />;
   }
@@ -250,53 +293,6 @@ export default function GamePage() {
     localStorage.setItem('hasSeenOnboarding', 'true');
     setShowOnboarding(false);
   };
-
-  // Show loading screen while checking version and loading player data
-  // OR show loading screen behind version popup
-  if (loading) {
-    return (
-      <>
-        <LoadingScreen />
-        {/* Version popup will render on top of loading screen */}
-        {showVersionPopup && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-75 animate-fade-in">
-            <div className="relative bg-stone-800 border-4 border-red-600 shadow-2xl max-w-lg w-full animate-bounce-in">
-              {/* Header */}
-              <div className="bg-red-600 px-6 py-4 border-b-4 border-red-700">
-                <h2 className="text-white font-bold retro-text text-lg text-center">
-                  ⚠️ VERSION UPDATED ⚠️
-                </h2>
-              </div>
-
-              {/* Content */}
-              <div className="p-6 space-y-4">
-                <div className="bg-red-900 border-2 border-red-700 p-4 text-center">
-                  <p className="text-red-200 retro-text text-sm mb-2">
-                    The game has been updated!
-                  </p>
-                  <p className="text-red-400 retro-text text-base font-bold">
-                    You will be logged out.
-                  </p>
-                </div>
-
-                <p className="text-red-200 retro-text text-xs text-center leading-relaxed">
-                  Please log in again to continue playing with the latest version.
-                </p>
-
-                {/* Button */}
-                <button
-                  onClick={handleVersionLogout}
-                  className="w-full py-3 bg-gradient-to-r from-red-700 to-red-600 text-white font-bold border-4 border-red-800 hover:from-red-600 hover:to-red-500 transform hover:scale-105 transition-all retro-text text-sm"
-                >
-                  🔄 LOG OUT & CONTINUE
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </>
-    );
-  }
 
   // Adjust padding based on Electron
   const isElectron = typeof window !== 'undefined' && window.electron?.isElectron;
