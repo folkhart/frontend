@@ -329,9 +329,13 @@ export default function TopBar() {
 
   if (!player || !character) return null;
 
+  // Check if running in Electron
+  const isElectron = typeof window !== 'undefined' && window.electron?.isElectron;
+  const topBarTopClass = isElectron ? 'top-12' : 'top-0'; // Add space for custom titlebar in Electron
+
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 z-40 bg-stone-800 p-3 flex justify-between items-center border-b-2 border-amber-700">
+      <div className={`fixed ${topBarTopClass} left-0 right-0 z-40 bg-stone-800 p-3 flex justify-between items-center border-b-2 border-amber-700`}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowStats(true)}

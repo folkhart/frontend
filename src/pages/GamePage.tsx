@@ -4,7 +4,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useGameStore } from '@/store/gameStore';
 import { authApi } from '@/lib/api';
 import { onIdleComplete, onDungeonComplete, onLevelUp, getSocket } from '@/lib/socket';
+import { useElectron, useTraySync, useEnergyTracking } from '@/hooks/useElectron';
 import LoadingScreen from '@/components/LoadingScreen';
+import ElectronTitleBar from '@/components/ElectronTitleBar';
 import TopBar from '@/components/TopBar';
 import BottomNav from '@/components/BottomNav';
 import VillageTab from '@/components/tabs/VillageTab';
@@ -33,6 +35,18 @@ export default function GamePage() {
   const [levelUpData, setLevelUpData] = useState<{ newLevel: number; unlocks?: string[] } | null>(null);
   const [showVersionPopup, setShowVersionPopup] = useState(false);
 
+  // Electron hooks
+  const {
+    sendIdleComplete,
+    sendDungeonComplete,
+    sendLevelUp,
+    sendAchievementUnlocked
+  } = useElectron();
+
+  // Auto-sync tray and energy
+  useTraySync(player, character);
+  useEnergyTracking(player);
+
   useEffect(() => {
     checkVersionAndLoad();
     // Request notification permission
@@ -50,11 +64,14 @@ export default function GamePage() {
 
   const checkVersionAndLoad = async () => {
     try {
+      console.log('🔍 Starting version check...');
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       const response = await fetch(`${API_URL}/api/version/check`);
       const data = await response.json();
+      console.log('📦 Version data:', data);
       
       const lastLoginTime = localStorage.getItem('lastLoginTime');
+      console.log('⏰ Last login time:', lastLoginTime);
       
       // Force logout if user logged in before the force logout timestamp
       // OR if lastLoginTime doesn't exist (old users before this feature was added)
@@ -69,11 +86,11 @@ export default function GamePage() {
         return;
       }
       
-      console.log('✅ Version check passed, loading player data');
-      loadPlayerData();
+      console.log('✅ Version check passed, loading player data...');
+      await loadPlayerData();
     } catch (error) {
-      console.error('Version check failed, proceeding with login:', error);
-      loadPlayerData();
+      console.error('❌ Version check failed, proceeding with login:', error);
+      await loadPlayerData();
     }
   };
 
@@ -104,22 +121,30 @@ export default function GamePage() {
 
   const loadPlayerData = async () => {
     try {
+      console.log('📡 Fetching player profile...');
       const { data: profile } = await authApi.getProfile();
+      console.log('✅ Profile loaded:', profile);
       setPlayer(profile);
 
       // Check if player has a character
       if (!profile.character) {
+        console.log('⚠️ No character found, redirecting to character creation');
         navigate('/create-character');
         return;
       }
 
+      console.log('✅ Character found:', profile.character.name);
       // Use character data from profile (it's already included)
       setCharacter(profile.character);
-    } catch (err) {
-      console.error('Failed to load player data:', err);
+      console.log('✅ Game loaded successfully!');
+    } catch (err: any) {
+      console.error('❌ Failed to load player data:', err);
+      console.error('Error details:', err.response?.data || err.message);
       // If profile fetch fails, redirect to login
-      navigate('/login');
+      console.log('🔄 Redirecting to login...');
+      navigate('/');
     } finally {
+      console.log('🏁 Loading finished, hiding loading screen');
       setLoading(false);
     }
   };
@@ -131,6 +156,10 @@ export default function GamePage() {
         title: 'Idle Farming Complete!',
         message: `Earned ${data.goldEarned} gold and ${data.expEarned} exp`,
       });
+      
+      // Electron notification
+      sendIdleComplete(data.goldEarned, data.expEarned);
+      
       loadPlayerData();
     });
 
@@ -141,6 +170,14 @@ export default function GamePage() {
           title: 'Dungeon Complete!',
           message: `Earned ${data.goldEarned} gold and ${data.expEarned} exp`,
         });
+        
+        // Electron notification
+        sendDungeonComplete(
+          data.dungeonName || 'Dungeon',
+          data.goldEarned,
+          data.expEarned,
+          data.items?.map((item: any) => item.name)
+        );
       } else {
         setNotification({
           type: 'error',
@@ -157,6 +194,10 @@ export default function GamePage() {
         newLevel: data.newLevel,
         unlocks: data.unlocks || [],
       });
+      
+      // Electron notification
+      sendLevelUp(data.newLevel);
+      
       // Refresh character data
       loadPlayerData();
     });
@@ -176,6 +217,10 @@ export default function GamePage() {
           `🏆 Achievement Unlocked: ${data.name}! +${data.rewards.gold}g, +${data.rewards.gems} gems`,
           'success'
         );
+        
+        // Electron notification
+        sendAchievementUnlocked(data.name, data.description || 'Achievement unlocked!');
+        
         // Refresh achievement data
         queryClient.invalidateQueries({ queryKey: ['achievements'] });
         queryClient.invalidateQueries({ queryKey: ['achievement-stats'] });
@@ -253,11 +298,16 @@ export default function GamePage() {
     );
   }
 
+  // Adjust padding based on Electron
+  const isElectron = typeof window !== 'undefined' && window.electron?.isElectron;
+  const contentPaddingTop = isElectron ? '120px' : '72px'; // Titlebar (48px) + TopBar (72px) in Electron, just TopBar (72px) in browser
+
   return (
     <div className="h-screen bg-stone-900">
+      <ElectronTitleBar />
       <TopBar />
       
-      <div className="overflow-y-auto" style={{ paddingTop: '72px', paddingBottom: '80px', height: '100vh' }}>
+      <div className="overflow-y-auto" style={{ paddingTop: contentPaddingTop, paddingBottom: '80px', height: '100vh' }}>
         {activeTab === 'village' && <VillageTab />}
         {activeTab === 'adventure' && <AdventureTab />}
         {activeTab === 'guild' && <GuildTab />}

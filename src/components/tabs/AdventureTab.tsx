@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useGameStore } from "@/store/gameStore";
 import { dungeonApi, idleApi, authApi, characterApi } from "@/lib/api";
+import { useElectron } from "@/hooks/useElectron";
 import { formatGold, getRarityColor, getDifficultyColor } from "@/utils/format";
 import { Clock, Zap, Trophy, ChevronDown, ChevronUp } from "lucide-react";
 import energyIcon from "@/assets/ui/energy.png";
@@ -411,6 +412,8 @@ export default function AdventureTab() {
     }
   }, [idleStatus]);
 
+  const { sendDungeonComplete } = useElectron();
+
   const fastFinishMutation = useMutation({
     mutationFn: (runId: string) => dungeonApi.fastFinish(runId),
     onMutate: async () => {
@@ -440,6 +443,16 @@ export default function AdventureTab() {
         "unclaimedDungeonReward",
         JSON.stringify(rewardData)
       );
+
+      // Send Electron notification for fast finish
+      if (result.success) {
+        sendDungeonComplete(
+          activeDungeonRun?.dungeon?.name || "Dungeon",
+          result.goldEarned,
+          result.expEarned,
+          result.itemsDropped?.map((item: any) => item.name)
+        );
+      }
 
       // Clear active dungeon
       setActiveDungeonRun(null);
