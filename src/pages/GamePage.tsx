@@ -200,6 +200,11 @@ export default function GamePage() {
     setShowOnboarding(false);
   };
 
+  // Show loading screen while checking version and loading player data
+  if (loading && !showVersionPopup) {
+    return <LoadingScreen />;
+  }
+
   return (
     <div className="h-screen bg-stone-900">
       <TopBar />
@@ -246,9 +251,9 @@ export default function GamePage() {
         />
       )}
 
-      {/* Version Change Popup */}
+      {/* Version Change Popup - Always shows on top even if loading */}
       {showVersionPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75 animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black bg-opacity-75 animate-fade-in">
           <div className="relative bg-stone-800 border-4 border-red-600 shadow-2xl max-w-lg w-full animate-bounce-in">
             {/* Header */}
             <div className="bg-red-600 px-6 py-4 border-b-4 border-red-700">
