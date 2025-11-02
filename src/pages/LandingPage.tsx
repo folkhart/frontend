@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import logo from '../assets/ui/logo.png';
+import cpIcon from '../assets/ui/cp.png';
+import dungeonIcon from '../assets/ui/dungeons.png';
+import guildIcon from '../assets/ui/guild.png';
 import { useGameStore } from '@/store/gameStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -10,6 +13,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { setAuth } = useGameStore();
   const [isLogin, setIsLogin] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     emailOrUsername: '',
@@ -18,6 +22,20 @@ export default function LandingPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Load saved credentials on mount
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('folkhart_remembered_username');
+    const savedPassword = localStorage.getItem('folkhart_remembered_password');
+    if (savedUsername && savedPassword) {
+      setFormData(prev => ({
+        ...prev,
+        emailOrUsername: savedUsername,
+        password: savedPassword
+      }));
+      setRememberMe(true);
+    }
+  }, []);
 
   // Domain notification state
   const [showDomainNotif, setShowDomainNotif] = useState(() => {
@@ -76,6 +94,16 @@ export default function LandingPage() {
       
       // Store login timestamp for version check
       localStorage.setItem('lastLoginTime', Date.now().toString());
+      
+      // Save credentials if Remember Me is checked
+      if (isLogin && rememberMe) {
+        localStorage.setItem('folkhart_remembered_username', formData.emailOrUsername);
+        localStorage.setItem('folkhart_remembered_password', formData.password);
+      } else if (isLogin && !rememberMe) {
+        // Clear saved credentials if Remember Me is unchecked
+        localStorage.removeItem('folkhart_remembered_username');
+        localStorage.removeItem('folkhart_remembered_password');
+      }
       
       navigate('/game');
     } catch (err: any) {
@@ -266,6 +294,22 @@ export default function LandingPage() {
                 />
               </div>
 
+              {/* Remember Me - Only show for login */}
+              {isLogin && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 bg-stone-900 border-2 border-amber-600 checked:bg-amber-600 focus:ring-0 cursor-pointer"
+                  />
+                  <label htmlFor="rememberMe" className="text-amber-300 retro-text text-xs cursor-pointer select-none">
+                    💾 REMEMBER ME
+                  </label>
+                </div>
+              )}
+
               {error && (
                 <div className="bg-red-900 border-2 border-red-600 text-red-200 px-4 py-2 retro-text text-sm">
                   ❌ {error}
@@ -299,15 +343,36 @@ export default function LandingPage() {
         {/* Features */}
         <div className="mt-8 grid grid-cols-3 gap-4 text-center">
           <div className="bg-stone-800 border-2 border-amber-700 p-3">
-            <div className="text-2xl mb-1">⚔️</div>
+            <div className="flex justify-center mb-2">
+              <img 
+                src={cpIcon} 
+                alt="Epic Battles" 
+                className="w-8 h-8"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
             <div className="text-amber-300 text-xs retro-text">EPIC BATTLES</div>
           </div>
           <div className="bg-stone-800 border-2 border-amber-700 p-3">
-            <div className="text-2xl mb-1">🏰</div>
+            <div className="flex justify-center mb-2">
+              <img 
+                src={dungeonIcon} 
+                alt="Dungeons" 
+                className="w-8 h-8"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
             <div className="text-amber-300 text-xs retro-text">DUNGEONS</div>
           </div>
           <div className="bg-stone-800 border-2 border-amber-700 p-3">
-            <div className="text-2xl mb-1">👥</div>
+            <div className="flex justify-center mb-2">
+              <img 
+                src={guildIcon} 
+                alt="Guilds" 
+                className="w-8 h-8"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
             <div className="text-amber-300 text-xs retro-text">GUILDS</div>
           </div>
         </div>
