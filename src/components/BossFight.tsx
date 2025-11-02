@@ -68,32 +68,6 @@ const calculateDamage = (
   };
 };
 
-type AttackType = 'normal' | 'fire' | 'ice' | 'lightning' | 'poison';
-
-// Create fallback generic boss sprite
-const createFallbackBoss = () => {
-  const graphics = new PIXI.Graphics();
-  
-  // Boss body (pixel art style)
-  graphics.beginFill(0x8B0000); // Dark red
-  graphics.drawRect(-60, -80, 120, 160);
-  graphics.endFill();
-  
-  // Boss horns
-  graphics.beginFill(0x000000);
-  graphics.drawRect(-70, -90, 20, 30);
-  graphics.drawRect(50, -90, 20, 30);
-  graphics.endFill();
-  
-  // Boss eyes
-  graphics.beginFill(0xFF0000); // Red eyes
-  graphics.drawRect(-40, -50, 20, 20);
-  graphics.drawRect(20, -50, 20, 20);
-  graphics.endFill();
-  
-  return graphics;
-};
-
 export default function BossFight({
   dungeonName,
   bossName,
@@ -107,8 +81,8 @@ export default function BossFight({
   playerMaxHP,
   playerAttack,
   playerDefense,
-  playerSpeed,
-  playerCP,
+  playerSpeed: _playerSpeed,
+  playerCP: _playerCP,
   fireAttack = 0,
   iceAttack = 0,
   lightningAttack = 0,

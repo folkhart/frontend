@@ -497,8 +497,9 @@ function ForceLogoutButton() {
           Force Logout All Users
         </h3>
         <p className="text-sm text-gray-400 mb-4">
-          Use this when schema changes require users to re-login with fresh tokens. 
-          This will invalidate all user sessions. Users will just need to refresh and log back in.
+          Use this after schema changes or backend updates. Invalidates refresh tokens for all users except you.
+          <br />
+          <span className="text-yellow-400 font-bold">Note:</span> Users won't be logged out immediately - they'll be forced to re-login when their current session expires (usually 15-60 min) or when they refresh the page.
         </p>
         <button
           onClick={() => setShowConfirm(true)}
@@ -516,10 +517,18 @@ function ForceLogoutButton() {
           <div className="bg-stone-800 border-4 border-red-600 p-6 max-w-md">
             <h3 className="text-xl font-bold text-white mb-4">⚠️ Confirm Force Logout</h3>
             <p className="text-gray-300 mb-4">
-              This will invalidate ALL user sessions. All users will need to re-login.
+              This will invalidate refresh tokens for all users (except you).
             </p>
-            <p className="text-yellow-400 font-bold mb-4 text-sm">
-              This is useful after schema changes or backend updates.
+            <p className="text-yellow-400 font-bold mb-2 text-sm">
+              ⏰ Users will be logged out when:
+            </p>
+            <ul className="text-gray-300 text-sm mb-4 list-disc list-inside">
+              <li>Their access token expires (15-60 min)</li>
+              <li>They try to refresh their session</li>
+              <li>They manually refresh the page</li>
+            </ul>
+            <p className="text-green-400 font-bold mb-4 text-sm">
+              ✅ You will stay logged in.
             </p>
             <div className="flex gap-2">
               <button
