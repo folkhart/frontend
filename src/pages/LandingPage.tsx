@@ -5,6 +5,8 @@ import logo from '../assets/ui/logo.png';
 import cpIcon from '../assets/ui/cp.png';
 import dungeonIcon from '../assets/ui/dungeons.png';
 import guildIcon from '../assets/ui/guild.png';
+import discordIcon from '../assets/ui/discord.png';
+import redditIcon from '../assets/ui/reddit.png';
 import { useGameStore } from '@/store/gameStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -296,16 +298,23 @@ export default function LandingPage() {
 
               {/* Remember Me - Only show for login */}
               {isLogin && (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="rememberMe"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 bg-stone-900 border-2 border-amber-600 checked:bg-amber-600 focus:ring-0 cursor-pointer"
-                  />
-                  <label htmlFor="rememberMe" className="text-amber-300 retro-text text-xs cursor-pointer select-none">
-                    💾 REMEMBER ME
+                <div className="flex items-center gap-3 bg-stone-900 border-4 border-amber-700 px-4 py-3">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      id="rememberMe"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="appearance-none w-6 h-6 border-4 border-amber-600 bg-black cursor-pointer checked:bg-black checked:border-amber-500 focus:outline-none focus:ring-0"
+                    />
+                    {rememberMe && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-amber-500 retro-text" style={{ fontSize: '18px', lineHeight: '1' }}>X</span>
+                      </div>
+                    )}
+                  </div>
+                  <label htmlFor="rememberMe" className="text-amber-300 retro-text text-sm cursor-pointer select-none tracking-wider">
+                    REMEMBER ME
                   </label>
                 </div>
               )}
@@ -375,6 +384,39 @@ export default function LandingPage() {
             </div>
             <div className="text-amber-300 text-xs retro-text">GUILDS</div>
           </div>
+        </div>
+
+        {/* Community Links */}
+        <div className="mt-8 flex gap-4 justify-center">
+          <a
+            href="https://discord.gg/tzT36qXbWr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-6 py-3 bg-stone-800 border-2 border-amber-700 hover:border-amber-500 hover:bg-stone-700 transition-all transform hover:scale-105"
+          >
+            <img 
+              src={discordIcon} 
+              alt="Discord" 
+              className="w-6 h-6"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <span className="text-amber-300 retro-text text-xs font-bold">JOIN DISCORD</span>
+          </a>
+          
+          <a
+            href="https://www.reddit.com/r/folkhart/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-6 py-3 bg-stone-800 border-2 border-amber-700 hover:border-amber-500 hover:bg-stone-700 transition-all transform hover:scale-105"
+          >
+            <img 
+              src={redditIcon} 
+              alt="Reddit" 
+              className="w-6 h-6"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <span className="text-amber-300 retro-text text-xs font-bold">r/folkhart</span>
+          </a>
         </div>
 
         {/* Footer */}
