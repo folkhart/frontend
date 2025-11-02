@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3 } from 'lucide-react';
+import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3, Calendar } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
 import AdminNewsTab from './AdminNewsTab';
 import AnalyticsDashboard from '../admin/AnalyticsDashboard';
 import PlayersList from '../admin/PlayersList';
 import PlayerDetailView from '../admin/PlayerDetailView';
+import DailyLoginRewardsEditor from '../admin/DailyLoginRewardsEditor';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -101,7 +102,7 @@ const adminApi = {
 export default function AdminTab() {
   const queryClient = useQueryClient();
   const { player } = useGameStore();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'players' | 'items' | 'shop' | 'news' | 'backups'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'players' | 'items' | 'shop' | 'news' | 'backups' | 'rewards'>('analytics');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -281,6 +282,24 @@ export default function AdminTab() {
           <Database size={16} className="inline mr-1" />
           Backups
         </button>
+        <button
+          onClick={() => setActiveTab('rewards')}
+          className={`flex-1 py-2 font-bold transition relative overflow-hidden ${
+            activeTab === 'rewards'
+              ? 'bg-purple-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #7e22ce',
+            borderRadius: '0',
+            boxShadow: activeTab === 'rewards' ? '0 2px 0 #9333ea, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeTab === 'rewards' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <Calendar size={16} className="inline mr-1" />
+          Daily Rewards
+        </button>
       </div>
 
       {/* Analytics Dashboard */}
@@ -444,6 +463,9 @@ export default function AdminTab() {
 
       {/* Backups Tab */}
       {activeTab === 'backups' && <BackupsTab />}
+
+      {/* Daily Login Rewards Tab */}
+      {activeTab === 'rewards' && <DailyLoginRewardsEditor />}
     </div>
   );
 }

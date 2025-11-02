@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trophy, Award, Star, Lock, Check, Gift } from 'lucide-react';
-import { achievementApi } from '@/lib/api';
+import { achievementApi, authApi } from '@/lib/api';
 import { useGameStore } from '@/store/gameStore';
 import achievementIcon from '@/assets/ui/achievement.png';
 
@@ -58,7 +58,7 @@ interface AchievementStats {
 
 export default function AchievementTab() {
   const queryClient = useQueryClient();
-  const { player, setPlayer } = useGameStore();
+  const { player, setPlayer, setCharacter } = useGameStore();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   const { data: achievements = [] } = useQuery<Achievement[]>({
@@ -86,9 +86,14 @@ export default function AchievementTab() {
       const { data } = await achievementApi.equipTitle(achievementId);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
+      
+      // Refetch profile to update character stats immediately
+      const { data: profile } = await authApi.getProfile();
+      setCharacter(profile.character);
+      
       (window as any).showToast?.('Title equipped!', 'success');
     },
   });
@@ -98,9 +103,14 @@ export default function AchievementTab() {
       const { data } = await achievementApi.unequipTitle();
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
+      
+      // Refetch profile to update character stats immediately
+      const { data: profile } = await authApi.getProfile();
+      setCharacter(profile.character);
+      
       (window as any).showToast?.('Title unequipped!', 'success');
     },
   });

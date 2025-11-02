@@ -39,6 +39,9 @@ export default function SettingsTab() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newCharacterName, setNewCharacterName] = useState("");
 
   // Query for unread friend messages count
@@ -278,50 +281,103 @@ export default function SettingsTab() {
             </div>
           </div>
 
-        {/* Change Password Form */}
+        {/* Change Password Form - Retro Style */}
         {showChangePassword && (
-          <div className="mt-4 p-3 bg-stone-900 border-2 border-blue-600 rounded">
-            <h4 className="text-sm font-bold text-blue-400 mb-2">
-              Change Password
+          <div className="mt-4 p-4 bg-stone-900 border-4 border-amber-600" style={{ borderRadius: '0', boxShadow: '0 4px 0 #78350f, inset 0 2px 0 rgba(255,255,255,0.1)' }}>
+            <h4 className="text-base font-bold text-amber-400 mb-3 retro-text" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+              🔐 CHANGE PASSWORD
             </h4>
-            <div className="space-y-2">
-              <input
-                type="password"
-                placeholder="Current Password"
-                value={passwordData.currentPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    currentPassword: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 bg-stone-800 border border-stone-700 text-white text-sm"
-              />
-              <input
-                type="password"
-                placeholder="New Password"
-                value={passwordData.newPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    newPassword: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 bg-stone-800 border border-stone-700 text-white text-sm"
-              />
-              <input
-                type="password"
-                placeholder="Confirm New Password"
-                value={passwordData.confirmPassword}
-                onChange={(e) =>
-                  setPasswordData({
-                    ...passwordData,
-                    confirmPassword: e.target.value,
-                  })
-                }
-                className="w-full px-3 py-2 bg-stone-800 border border-stone-700 text-white text-sm"
-              />
-              <div className="flex gap-2">
+            <div className="space-y-3">
+              {/* Current Password */}
+              <div>
+                <label className="block text-amber-300 text-xs font-bold mb-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  CURRENT PASSWORD:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    placeholder="Enter current password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        currentPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-stone-950 border-2 border-stone-700 text-white text-sm retro-input"
+                    style={{ borderRadius: '0', fontFamily: 'monospace' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-300 text-xs font-bold"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {showCurrentPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label className="block text-amber-300 text-xs font-bold mb-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  NEW PASSWORD:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="Enter new password"
+                    value={passwordData.newPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        newPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-stone-950 border-2 border-stone-700 text-white text-sm retro-input"
+                    style={{ borderRadius: '0', fontFamily: 'monospace' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-300 text-xs font-bold"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {showNewPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-amber-300 text-xs font-bold mb-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  CONFIRM NEW PASSWORD:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Re-enter new password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-stone-950 border-2 border-stone-700 text-white text-sm retro-input"
+                    style={{ borderRadius: '0', fontFamily: 'monospace' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-300 text-xs font-bold"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
                 <button
                   onClick={async () => {
                     if (
@@ -334,7 +390,7 @@ export default function SettingsTab() {
                       return;
                     }
                     try {
-                      await api.post('/player/change-password', {
+                      await api.post('/players/change-password', {
                         currentPassword: passwordData.currentPassword,
                         newPassword: passwordData.newPassword,
                       });
@@ -348,6 +404,9 @@ export default function SettingsTab() {
                         confirmPassword: "",
                       });
                       setShowChangePassword(false);
+                      setShowCurrentPassword(false);
+                      setShowNewPassword(false);
+                      setShowConfirmPassword(false);
                     } catch (error: any) {
                       (window as any).showToast?.(
                         error.response?.data?.error ||
@@ -356,9 +415,10 @@ export default function SettingsTab() {
                       );
                     }
                   }}
-                  className="flex-1 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-bold"
+                  className="flex-1 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-bold border-2 border-green-900 retro-text"
+                  style={{ borderRadius: '0', boxShadow: '0 2px 0 #14532d', fontFamily: 'monospace' }}
                 >
-                  CONFIRM
+                  ✓ CONFIRM
                 </button>
                 <button
                   onClick={() => {
@@ -368,33 +428,53 @@ export default function SettingsTab() {
                       newPassword: "",
                       confirmPassword: "",
                     });
+                    setShowCurrentPassword(false);
+                    setShowNewPassword(false);
+                    setShowConfirmPassword(false);
                   }}
-                  className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold"
+                  className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold border-2 border-red-900 retro-text"
+                  style={{ borderRadius: '0', boxShadow: '0 2px 0 #7f1d1d', fontFamily: 'monospace' }}
                 >
-                  CANCEL
+                  ✕ CANCEL
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Change Character Name Form */}
+        {/* Change Character Name Form - Retro Style */}
         {showChangeName && (
-          <div className="mt-4 p-3 bg-stone-900 border-2 border-purple-600 rounded">
-            <h4 className="text-sm font-bold text-purple-400 mb-2">
-              Change Character Name
+          <div className="mt-4 p-4 bg-stone-900 border-4 border-purple-600" style={{ borderRadius: '0', boxShadow: '0 4px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.1)' }}>
+            <h4 className="text-base font-bold text-purple-400 mb-2 retro-text" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+              ✏️ CHANGE CHARACTER NAME
             </h4>
-            <p className="text-xs text-gray-400 mb-2">Cost: 100 Gems 💎</p>
-            <div className="space-y-2">
-              <input
-                type="text"
-                placeholder="New Character Name"
-                value={newCharacterName}
-                onChange={(e) => setNewCharacterName(e.target.value)}
-                maxLength={20}
-                className="w-full px-3 py-2 bg-stone-800 border border-stone-700 text-white text-sm"
-              />
-              <div className="flex gap-2">
+            <div className="bg-purple-900 border-2 border-purple-700 p-2 mb-3 text-center">
+              <p className="text-purple-300 text-xs font-bold retro-text" style={{ fontFamily: 'monospace' }}>
+                COST: 100 💎 GEMS
+              </p>
+              <p className="text-purple-200 text-xs retro-text mt-1" style={{ fontFamily: 'monospace' }}>
+                Your Gems: {player?.gems || 0} 💎
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-purple-300 text-xs font-bold mb-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  NEW CHARACTER NAME:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter new name (3-20 chars)"
+                  value={newCharacterName}
+                  onChange={(e) => setNewCharacterName(e.target.value)}
+                  maxLength={20}
+                  className="w-full px-3 py-2 bg-stone-950 border-2 border-stone-700 text-white text-sm retro-input"
+                  style={{ borderRadius: '0', fontFamily: 'monospace' }}
+                />
+                <p className="text-purple-400 text-xs mt-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  ⚠️ Names must be unique across all players!
+                </p>
+              </div>
+              <div className="flex gap-2 mt-4">
                 <button
                   onClick={async () => {
                     if (!newCharacterName.trim()) {
@@ -404,12 +484,19 @@ export default function SettingsTab() {
                       );
                       return;
                     }
+                    if (newCharacterName.trim().length < 3) {
+                      (window as any).showToast?.(
+                        "Name must be at least 3 characters",
+                        "error"
+                      );
+                      return;
+                    }
                     if (player && player.gems < 100) {
-                      (window as any).showToast?.("Not enough gems!", "error");
+                      (window as any).showToast?.("Not enough gems! Need 100 💎", "error");
                       return;
                     }
                     try {
-                      await api.post('/player/change-character-name', {
+                      await api.post('/players/change-character-name', {
                         newName: newCharacterName,
                       });
                       (window as any).showToast?.(
@@ -431,18 +518,20 @@ export default function SettingsTab() {
                     }
                   }}
                   disabled={!player || player.gems < 100}
-                  className="flex-1 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-bold disabled:opacity-50"
+                  className="flex-1 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-bold border-2 border-green-900 retro-text disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ borderRadius: '0', boxShadow: '0 2px 0 #14532d', fontFamily: 'monospace' }}
                 >
-                  CONFIRM (100 💎)
+                  ✓ CONFIRM (100 💎)
                 </button>
                 <button
                   onClick={() => {
                     setShowChangeName(false);
                     setNewCharacterName("");
                   }}
-                  className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold"
+                  className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold border-2 border-red-900 retro-text"
+                  style={{ borderRadius: '0', boxShadow: '0 2px 0 #7f1d1d', fontFamily: 'monospace' }}
                 >
-                  CANCEL
+                  ✕ CANCEL
                 </button>
               </div>
             </div>

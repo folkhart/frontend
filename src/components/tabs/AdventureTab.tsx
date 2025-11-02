@@ -3,13 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useGameStore } from "@/store/gameStore";
 import { dungeonApi, idleApi, authApi, characterApi } from "@/lib/api";
 import { formatGold, getRarityColor, getDifficultyColor } from "@/utils/format";
-import {
-  Clock,
-  Zap,
-  Trophy,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Clock, Zap, Trophy, ChevronDown, ChevronUp } from "lucide-react";
 import energyIcon from "@/assets/ui/energy.png";
 import hpIcon from "@/assets/ui/hp.png";
 import expIcon from "@/assets/ui/exp.png";
@@ -26,6 +20,7 @@ import searchIcon from "@/assets/ui/search.png";
 import expandedIcon from "@/assets/ui/expanded.png";
 import compactIcon from "@/assets/ui/compact.png";
 import ServerChat from "@/components/ServerChat";
+import BossFight from "@/components/BossFight";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
@@ -58,13 +53,19 @@ const getDungeonIcon = (dungeonName: string) => {
   return iconMap[dungeonName] || ratCellarIcon; // Default to rat cellar if not found
 };
 
+// Calculate recommended CP based on dungeon level
+const getRecommendedCP = (level: number): number => {
+  // Base CP formula: level * 50 (scales with dungeon level)
+  return Math.floor(level * 50);
+};
+
 // Format time remaining (hours/minutes for >1hr, minutes/seconds for <1hr)
 const formatTimeRemaining = (seconds: number) => {
   const totalSeconds = Math.floor(seconds);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const secs = totalSeconds % 60;
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m`;
   }
@@ -135,7 +136,7 @@ const getGuildItemPath = (spriteId: string, itemType?: string) => {
   return `${fileName}.png`;
 };
 
-// Helper to get item images
+// Helper function to get item image based on sprite ID
 const getItemImage = (spriteId: string, itemType?: string) => {
   if (!spriteId) return null;
 
@@ -174,9 +175,12 @@ const getItemImage = (spriteId: string, itemType?: string) => {
     }
 
     if (spriteId.includes("/")) {
-      const fullPath = (spriteId.startsWith("woodenSet/") || spriteId.startsWith("ironSet/") || spriteId.startsWith("dungeonDrops/"))
-        ? `accessories/${spriteId}`
-        : spriteId;
+      const fullPath =
+        spriteId.startsWith("woodenSet/") ||
+        spriteId.startsWith("ironSet/") ||
+        spriteId.startsWith("dungeonDrops/")
+          ? `accessories/${spriteId}`
+          : spriteId;
       const path = `../../assets/items/${fullPath}.png`;
       return images[path] || null;
     }
@@ -205,7 +209,9 @@ export default function AdventureTab() {
   const queryClient = useQueryClient();
   const { character, player, setPlayer, setCharacter } = useGameStore();
   const fastFinishCost = 10; // gems
-  const [view, setView] = useState<"dungeons" | "idle" | "history" | "serverchat">("dungeons");
+  const [view, setView] = useState<
+    "dungeons" | "idle" | "history" | "serverchat"
+  >("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showRewards, setShowRewards] = useState(false);
   const [collapsedView, setCollapsedView] = useState(() => {
@@ -231,6 +237,9 @@ export default function AdventureTab() {
     const saved = localStorage.getItem("unclaimedIdleReward");
     return saved ? JSON.parse(saved) : null;
   });
+
+  // Boss fight state
+  const [showBossFight, setShowBossFight] = useState(false);
 
   const [timeRemaining, setTimeRemaining] = useState<number>(() => {
     const saved = localStorage.getItem("activeDungeonRun");
@@ -314,8 +323,14 @@ export default function AdventureTab() {
       );
       // For Active mode, calculate display duration (1.5x of actual)
       const actualDuration = backendActiveDungeonRun.dungeon.duration;
-      const displayDuration = backendActiveDungeonRun.mode === 'Active' ? Math.floor(actualDuration * 1.5) : actualDuration;
-      const displayElapsed = backendActiveDungeonRun.mode === 'Active' ? Math.floor(elapsed * 1.5) : elapsed;
+      const displayDuration =
+        backendActiveDungeonRun.mode === "Active"
+          ? Math.floor(actualDuration * 1.5)
+          : actualDuration;
+      const displayElapsed =
+        backendActiveDungeonRun.mode === "Active"
+          ? Math.floor(elapsed * 1.5)
+          : elapsed;
       const remaining = Math.max(0, displayDuration - displayElapsed);
       setTimeRemaining(remaining);
     } else if (
@@ -508,7 +523,7 @@ export default function AdventureTab() {
       // Only set up timers if there's time remaining
       if (actualTimeRemaining > 0) {
         // Active mode runs 1.5x faster
-        const speedMultiplier = activeDungeonRun.mode === 'Active' ? 1.5 : 1;
+        const speedMultiplier = activeDungeonRun.mode === "Active" ? 1.5 : 1;
         const interval = setInterval(() => {
           setTimeRemaining((prev) => {
             if (prev <= speedMultiplier) {
@@ -619,7 +634,10 @@ export default function AdventureTab() {
       // Set active dungeon run and save to localStorage
       setActiveDungeonRun(runWithTime);
       // For Active mode, show full duration but it will count down faster
-      const displayDuration = data.mode === 'Active' ? Math.floor(data.dungeon.duration * 1.5) : data.dungeon.duration;
+      const displayDuration =
+        data.mode === "Active"
+          ? Math.floor(data.dungeon.duration * 1.5)
+          : data.dungeon.duration;
       setTimeRemaining(displayDuration);
       localStorage.setItem("activeDungeonRun", JSON.stringify(runWithTime));
 
@@ -765,82 +783,31 @@ export default function AdventureTab() {
             </h3>
             {unclaimedReward.result?.success ? (
               <>
-                <div className="relative w-32 h-32 mx-auto mb-4">
-                  {/* Animated sparkles */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div
-                      className="absolute w-2 h-2 bg-yellow-300 rounded-full animate-ping"
-                      style={{
-                        animationDuration: "1s",
-                        top: "20%",
-                        left: "30%",
-                      }}
-                    ></div>
-                    <div
-                      className="absolute w-3 h-3 bg-amber-400 rounded-full animate-pulse"
-                      style={{
-                        animationDuration: "1.5s",
-                        top: "30%",
-                        right: "20%",
-                      }}
-                    ></div>
-                    <div
-                      className="absolute w-2 h-2 bg-yellow-200 rounded-full animate-ping"
-                      style={{
-                        animationDuration: "2s",
-                        bottom: "30%",
-                        left: "20%",
-                      }}
-                    ></div>
-                    <div
-                      className="absolute w-3 h-3 bg-amber-300 rounded-full animate-pulse"
-                      style={{
-                        animationDuration: "1.2s",
-                        bottom: "20%",
-                        right: "30%",
-                      }}
-                    ></div>
-                  </div>
-                  {/* Central glow */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div
-                      className="w-20 h-20 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 rounded-full animate-pulse"
-                      style={{
-                        boxShadow:
-                          "0 0 40px rgba(251, 191, 36, 0.8), 0 0 80px rgba(251, 191, 36, 0.4)",
-                        animationDuration: "2s",
-                      }}
-                    ></div>
-                  </div>
-                  {/* Star shape in center */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <svg
-                      className="w-12 h-12 text-white animate-spin"
-                      style={{ animationDuration: "4s" }}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  </div>
+                {/* Retro Pixel Star */}
+                <div className="w-16 h-16 mx-auto mb-4 bg-amber-500 relative" style={{ clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)", boxShadow: "0 4px 0 #92400e, 0 0 20px rgba(251, 191, 36, 0.6)" }}>
+                  <div className="absolute inset-2 bg-amber-300" style={{ clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)" }}></div>
                 </div>
-                <h2
-                  className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 mb-3 sm:mb-4 animate-pulse"
-                  style={{ textShadow: "0 0 20px rgba(251, 191, 36, 0.5)" }}
-                >
-                  Victory!
-                </h2>
-                <div className="bg-stone-900 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
-                  <div className="space-y-2 text-base sm:text-lg">
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Gold:</span>
-                      <span className="text-yellow-400 font-bold">
+                
+                <div className="bg-amber-600 border-4 border-amber-500 mb-3 sm:mb-4 py-2" style={{ borderRadius: "0", boxShadow: "0 4px 0 #92400e" }}>
+                  <h2
+                    className="text-2xl sm:text-3xl font-bold text-amber-200"
+                    style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
+                  >
+                    ★ VICTORY! ★
+                  </h2>
+                </div>
+                
+                <div className="bg-stone-900 border-4 border-amber-700 p-3 sm:p-4 mb-3 sm:mb-4" style={{ borderRadius: "0", boxShadow: "0 3px 0 #78350f, inset 0 2px 0 rgba(255,255,255,0.1)" }}>
+                  <div className="space-y-2 text-base sm:text-lg" style={{ fontFamily: "monospace" }}>
+                    <div className="flex justify-between items-center py-2 border-b-2 border-stone-700">
+                      <span className="text-amber-400 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>💰 GOLD:</span>
+                      <span className="text-yellow-300 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
                         +{unclaimedReward.result.goldEarned}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">EXP:</span>
-                      <span className="text-purple-400 font-bold">
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-amber-400 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>⭐ EXP:</span>
+                      <span className="text-purple-300 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
                         +{unclaimedReward.result.expEarned}
                       </span>
                     </div>
@@ -850,7 +817,7 @@ export default function AdventureTab() {
                 {/* Item Drops with Images */}
                 {unclaimedReward.result.itemsDropped &&
                   unclaimedReward.result.itemsDropped.length > 0 && (
-                    <div className="bg-stone-900 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4">
+                    <div className="bg-stone-900 border-4 border-purple-700 p-3 sm:p-4 mb-3 sm:mb-4" style={{ borderRadius: "0", boxShadow: "0 3px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.1)" }}>
                       <h3
                         className="text-xs sm:text-sm font-bold text-amber-400 mb-2 sm:mb-3"
                         style={{
@@ -865,7 +832,8 @@ export default function AdventureTab() {
                           (item: any, idx: number) => (
                             <div
                               key={idx}
-                              className="bg-stone-800 p-2 rounded border-2 border-amber-600 text-center"
+                              className="bg-stone-800 p-2 border-2 border-amber-600 text-center"
+                              style={{ borderRadius: "0" }}
                             >
                               <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center p-1">
                                 {item.spriteId &&
@@ -949,31 +917,39 @@ export default function AdventureTab() {
           }}
         >
           <div
-            className="bg-stone-800 rounded-lg border-2 border-green-600 p-8 max-w-md w-full text-center"
+            className="bg-stone-800 border-4 border-green-600 p-6 sm:p-8 max-w-md w-full text-center"
+            style={{ borderRadius: "0", boxShadow: "0 6px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.1)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="text-6xl mb-4">🌾</div>
-            <h3
-              className="text-xl font-bold text-green-400 mb-2"
-              style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
-            >
-              Idle Farming Complete!
-            </h3>
-            <p className="text-sm text-gray-400 mb-4">
+            {/* Retro Pixel Wheat */}
+            <div className="w-16 h-16 mx-auto mb-4 bg-green-600 border-4 border-green-500 flex items-center justify-center" style={{ borderRadius: "0", boxShadow: "0 4px 0 #15803d" }}>
+              <span className="text-4xl">🌾</span>
+            </div>
+            
+            <div className="bg-green-600 border-4 border-green-500 mb-3 sm:mb-4 py-2" style={{ borderRadius: "0", boxShadow: "0 4px 0 #15803d" }}>
+              <h3
+                className="text-xl sm:text-2xl font-bold text-green-200"
+                style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
+              >
+                ★ IDLE COMPLETE! ★
+              </h3>
+            </div>
+            
+            <p className="text-xs sm:text-sm text-amber-300 mb-4 font-bold" style={{ fontFamily: "monospace", textShadow: "1px 1px 0 #000" }}>
               You've been busy while away!
             </p>
 
-            <div className="bg-stone-900 rounded-lg p-4 mb-4">
-              <div className="space-y-2 text-lg">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Gold:</span>
-                  <span className="text-yellow-400 font-bold">
+            <div className="bg-stone-900 border-4 border-green-700 p-4 mb-4" style={{ borderRadius: "0", boxShadow: "0 3px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.1)" }}>
+              <div className="space-y-2 text-base sm:text-lg" style={{ fontFamily: "monospace" }}>
+                <div className="flex justify-between items-center py-2 border-b-2 border-stone-700">
+                  <span className="text-green-400 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>💰 GOLD:</span>
+                  <span className="text-yellow-300 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
                     +{unclaimedIdleReward.goldEarned}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">EXP:</span>
-                  <span className="text-purple-400 font-bold">
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-green-400 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>⭐ EXP:</span>
+                  <span className="text-purple-300 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
                     +{unclaimedIdleReward.expEarned}
                   </span>
                 </div>
@@ -983,9 +959,9 @@ export default function AdventureTab() {
             {/* Item Drops with Images */}
             {unclaimedIdleReward.itemsDropped &&
               unclaimedIdleReward.itemsDropped.length > 0 && (
-                <div className="bg-stone-900 rounded-lg p-4 mb-4">
+                <div className="bg-stone-900 border-4 border-purple-700 p-4 mb-4" style={{ borderRadius: "0", boxShadow: "0 3px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.1)" }}>
                   <h3
-                    className="text-sm font-bold text-green-400 mb-3"
+                    className="text-xs sm:text-sm font-bold text-amber-400 mb-3"
                     style={{
                       fontFamily: "monospace",
                       textShadow: "1px 1px 0 #000",
@@ -998,7 +974,8 @@ export default function AdventureTab() {
                       (item: any, idx: number) => (
                         <div
                           key={idx}
-                          className="bg-stone-800 p-2 rounded border-2 border-green-600 text-center"
+                          className="bg-stone-800 p-2 border-2 border-green-600 text-center"
+                          style={{ borderRadius: "0" }}
                         >
                           <div className="w-full aspect-square bg-stone-900 rounded mb-1 flex items-center justify-center p-1">
                             {item.spriteId &&
@@ -1037,9 +1014,10 @@ export default function AdventureTab() {
                 setUnclaimedIdleReward(null);
                 localStorage.removeItem("unclaimedIdleReward");
               }}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded transition btn-press"
+              className="w-full py-3 bg-green-700 hover:bg-green-600 text-white font-bold border-4 border-green-500 transition"
+              style={{ borderRadius: "0", fontFamily: "monospace", boxShadow: "0 4px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.2)", textShadow: "2px 2px 0 #000" }}
             >
-              Continue
+              ✓ CONTINUE
             </button>
           </div>
         </div>
@@ -1330,7 +1308,7 @@ export default function AdventureTab() {
                 src={searchIcon}
                 alt="Search"
                 className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-                style={{ imageRendering: 'pixelated' }}
+                style={{ imageRendering: "pixelated" }}
               />
               <input
                 type="text"
@@ -1339,7 +1317,7 @@ export default function AdventureTab() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-2 bg-stone-800 border-2 border-stone-600 text-white text-sm focus:border-amber-600 focus:outline-none"
                 style={{
-                  fontFamily: 'monospace',
+                  fontFamily: "monospace",
                 }}
               />
             </div>
@@ -1347,17 +1325,17 @@ export default function AdventureTab() {
               onClick={() => setCollapsedView(!collapsedView)}
               className="px-3 py-2 bg-stone-700 hover:bg-stone-600 text-white text-xs font-bold transition whitespace-nowrap flex items-center gap-2"
               style={{
-                border: '2px solid #57534e',
-                fontFamily: 'monospace',
+                border: "2px solid #57534e",
+                fontFamily: "monospace",
               }}
             >
               <img
                 src={collapsedView ? expandedIcon : compactIcon}
-                alt={collapsedView ? 'Expanded' : 'Compact'}
+                alt={collapsedView ? "Expanded" : "Compact"}
                 className="w-4 h-4"
-                style={{ imageRendering: 'pixelated' }}
+                style={{ imageRendering: "pixelated" }}
               />
-              {collapsedView ? 'EXPANDED' : 'COMPACT'}
+              {collapsedView ? "EXPANDED" : "COMPACT"}
             </button>
           </div>
 
@@ -1377,10 +1355,13 @@ export default function AdventureTab() {
                   dungeon.recommendedLevel.toString().includes(query)
                 );
               })
+              .sort((a: any, b: any) => a.recommendedLevel - b.recommendedLevel)
               .map((dungeon: any) => (
                 <div
                   key={dungeon.id}
-                  className={`${collapsedView ? 'p-2' : 'p-4'} bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600 hover:border-amber-600 transition-all cursor-pointer active:translate-y-1`}
+                  className={`${
+                    collapsedView ? "p-2" : "p-4"
+                  } bg-gradient-to-b from-stone-800 to-stone-900 border-4 border-stone-600 hover:border-amber-600 transition-all cursor-pointer active:translate-y-1`}
                   onClick={() => setSelectedDungeon(dungeon)}
                   style={{
                     borderRadius: "12px",
@@ -1412,19 +1393,44 @@ export default function AdventureTab() {
                             {dungeon.name}
                           </h3>
                           <div className="flex items-center gap-2 text-xs">
-                            <span className="text-blue-400">Lv.{dungeon.recommendedLevel}</span>
-                            <span className={`${getDifficultyColor(dungeon.difficulty)}`}>
+                            <span className="text-blue-400">
+                              Lv.{dungeon.recommendedLevel}
+                            </span>
+                            <span
+                              className={`${getDifficultyColor(
+                                dungeon.difficulty
+                              )}`}
+                            >
                               {dungeon.difficulty}
+                            </span>
+                            <span className="text-orange-400 flex items-center gap-1">
+                              <img
+                                src={cpIcon}
+                                alt="CP"
+                                className="w-3 h-3"
+                                style={{ imageRendering: "pixelated" }}
+                              />
+                              {getRecommendedCP(dungeon.recommendedLevel)}
                             </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
                           <div className="flex items-center gap-1 text-amber-400">
-                            <img src={goldIcon} alt="Gold" className="w-3 h-3" style={{ imageRendering: "pixelated" }} />
+                            <img
+                              src={goldIcon}
+                              alt="Gold"
+                              className="w-3 h-3"
+                              style={{ imageRendering: "pixelated" }}
+                            />
                             <span>{formatGold(dungeon.baseGoldReward)}</span>
                           </div>
                           <div className="flex items-center gap-1 text-blue-400">
-                            <img src={energyIcon} alt="Energy" className="w-3 h-3" style={{ imageRendering: "pixelated" }} />
+                            <img
+                              src={energyIcon}
+                              alt="Energy"
+                              className="w-3 h-3"
+                              style={{ imageRendering: "pixelated" }}
+                            />
                             <span>{dungeon.energyCost}</span>
                           </div>
                         </div>
@@ -1433,158 +1439,197 @@ export default function AdventureTab() {
                   ) : (
                     // Expanded View
                     <>
-                  <div className="flex items-start gap-3 mb-3">
-                    <img
-                      src={getDungeonIcon(dungeon.name)}
-                      alt={dungeon.name}
-                      className="w-14 h-14 border-2 border-stone-500"
-                      style={{
-                        imageRendering: "pixelated",
-                        borderRadius: "8px",
-                      }}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3
-                              className="font-bold text-white text-lg"
+                      <div className="flex items-start gap-3 mb-3">
+                        <img
+                          src={getDungeonIcon(dungeon.name)}
+                          alt={dungeon.name}
+                          className="w-14 h-14 border-2 border-stone-500"
+                          style={{
+                            imageRendering: "pixelated",
+                            borderRadius: "8px",
+                          }}
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3
+                                  className="font-bold text-white text-lg"
+                                  style={{
+                                    fontFamily: "monospace",
+                                    textShadow: "2px 2px 0 #000",
+                                  }}
+                                >
+                                  {dungeon.name}
+                                </h3>
+                                <span
+                                  className="text-xs font-bold px-2 py-0.5 bg-blue-600 text-white border-2 border-blue-800"
+                                  style={{ fontFamily: "monospace" }}
+                                >
+                                  Lv.{dungeon.recommendedLevel}
+                                </span>
+                              </div>
+                              <p
+                                className="text-sm text-gray-400"
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                {dungeon.zone.name}
+                              </p>
+                            </div>
+                            <span
+                              className={`text-sm font-bold px-2 py-1 ${getDifficultyColor(
+                                dungeon.difficulty
+                              )}`}
                               style={{
                                 fontFamily: "monospace",
-                                textShadow: "2px 2px 0 #000",
+                                textShadow: "1px 1px 0 #000",
+                                border: "2px solid rgba(0,0,0,0.3)",
+                                borderRadius: "4px",
+                                backgroundColor: "rgba(0,0,0,0.3)",
                               }}
                             >
-                              {dungeon.name}
-                            </h3>
-                            <span
-                              className="text-xs font-bold px-2 py-0.5 bg-blue-600 text-white border-2 border-blue-800"
-                              style={{ fontFamily: "monospace" }}
-                            >
-                              Lv.{dungeon.recommendedLevel}
+                              {dungeon.difficulty}
                             </span>
                           </div>
-                          <p
-                            className="text-sm text-gray-400"
-                            style={{ fontFamily: "monospace" }}
-                          >
-                            {dungeon.zone.name}
-                          </p>
                         </div>
-                        <span
-                          className={`text-sm font-bold px-2 py-1 ${getDifficultyColor(
-                            dungeon.difficulty
-                          )}`}
-                          style={{
-                            fontFamily: "monospace",
-                            textShadow: "1px 1px 0 #000",
-                            border: "2px solid rgba(0,0,0,0.3)",
-                            borderRadius: "4px",
-                            backgroundColor: "rgba(0,0,0,0.3)",
-                          }}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div
+                          className="flex items-center gap-1 text-amber-400"
+                          style={{ fontFamily: "monospace" }}
                         >
-                          {dungeon.difficulty}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div
-                      className="flex items-center gap-1 text-amber-400"
-                      style={{ fontFamily: "monospace" }}
-                    >
-                      <img
-                        src={goldIcon}
-                        alt="Gold"
-                        className="w-4 h-4"
-                        style={{ imageRendering: "pixelated" }}
-                      />
-                      <span>{formatGold(dungeon.baseGoldReward)} Gold</span>
-                    </div>
-                    <div
-                      className="flex items-center gap-1 text-blue-400"
-                      style={{ fontFamily: "monospace" }}
-                    >
-                      <img
-                        src={energyIcon}
-                        alt="Energy"
-                        className="w-4 h-4"
-                        style={{ imageRendering: "pixelated" }}
-                      />
-                      <span>{dungeon.energyCost} Energy</span>
-                    </div>
-                    <div
-                      className="flex items-center gap-1 text-green-400"
-                      style={{ fontFamily: "monospace" }}
-                    >
-                      <img
-                        src={clockIcon}
-                        alt="Time"
-                        className="w-4 h-4"
-                        style={{ imageRendering: "pixelated" }}
-                      />
-                      <span>{Math.floor(dungeon.duration / 60)} min</span>
-                    </div>
-                    <div
-                      className="flex items-center gap-1 text-purple-400"
-                      style={{ fontFamily: "monospace" }}
-                    >
-                      <img
-                        src={cpIcon}
-                        alt="CP"
-                        className="w-4 h-4"
-                        style={{ imageRendering: "pixelated" }}
-                      />
-                      <span>CP: {dungeon.recommendedCP}</span>
-                    </div>
-                  </div>
-
-                  {/* Avatar Drop Section */}
-                  <div className="mt-3 pt-3 border-t-2 border-stone-700">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="relative">
                           <img
-                            src={getDungeonIcon(dungeon.name)}
-                            alt="Avatar"
-                            className="w-8 h-8 border-2 border-amber-500"
-                            style={{
-                              imageRendering: "pixelated",
-                              borderRadius: "4px",
-                              opacity: (character as any)?.unlockedAvatars?.includes(dungeon.id) ? 0.5 : 1,
-                            }}
+                            src={goldIcon}
+                            alt="Gold"
+                            className="w-4 h-4"
+                            style={{ imageRendering: "pixelated" }}
                           />
-                          {(character as any)?.unlockedAvatars?.includes(dungeon.id) && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="text-red-500 text-2xl font-bold" style={{ textShadow: '2px 2px 0 #000' }}>✓</div>
-                            </div>
-                          )}
+                          <span>{formatGold(dungeon.baseGoldReward)} Gold</span>
                         </div>
-                        <div>
-                          <p className="text-xs font-bold text-amber-400" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
-                            AVATAR DROP
-                          </p>
-                          <p className="text-[10px] text-gray-400" style={{ fontFamily: 'monospace' }}>
-                            {(character as any)?.unlockedAvatars?.includes(dungeon.id) ? 'ALREADY HAVE' : 'FIRST-TIME ONLY'}
-                          </p>
+                        <div
+                          className="flex items-center gap-1 text-blue-400"
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          <img
+                            src={energyIcon}
+                            alt="Energy"
+                            className="w-4 h-4"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                          <span>{dungeon.energyCost} Energy</span>
+                        </div>
+                        <div
+                          className="flex items-center gap-1 text-green-400"
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          <img
+                            src={clockIcon}
+                            alt="Time"
+                            className="w-4 h-4"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                          <span>{Math.floor(dungeon.duration / 60)} min</span>
+                        </div>
+                        <div
+                          className="flex items-center gap-1 text-orange-400"
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          <img
+                            src={cpIcon}
+                            alt="CP"
+                            className="w-4 h-4"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                          <span>
+                            Rec. CP:{" "}
+                            {getRecommendedCP(dungeon.recommendedLevel)}
+                          </span>
                         </div>
                       </div>
-                      <div className={`text-xs font-bold px-2 py-1 border-2 ${
-                        (character as any)?.unlockedAvatars?.includes(dungeon.id) 
-                          ? 'bg-green-900 border-green-600 text-green-300' 
-                          : 'bg-amber-900 border-amber-600 text-amber-300'
-                      }`} style={{ fontFamily: 'monospace', borderRadius: '4px' }}>
-                        {(character as any)?.unlockedAvatars?.includes(dungeon.id) ? 'OWNED' : '100%'}
-                      </div>
-                    </div>
-                  </div>
 
-                  {character &&
-                    character.combatPower < dungeon.recommendedCP * 0.8 && (
-                      <div className="text-xs text-red-400 font-bold mt-2">
-                        ⚠️ Combat Power too low!
+                      {/* Avatar Drop Section */}
+                      <div className="mt-3 pt-3 border-t-2 border-stone-700">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="relative">
+                              <img
+                                src={getDungeonIcon(dungeon.name)}
+                                alt="Avatar"
+                                className="w-8 h-8 border-2 border-amber-500"
+                                style={{
+                                  imageRendering: "pixelated",
+                                  borderRadius: "4px",
+                                  opacity: (
+                                    character as any
+                                  )?.unlockedAvatars?.includes(dungeon.id)
+                                    ? 0.5
+                                    : 1,
+                                }}
+                              />
+                              {(character as any)?.unlockedAvatars?.includes(
+                                dungeon.id
+                              ) && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div
+                                    className="text-red-500 text-2xl font-bold"
+                                    style={{ textShadow: "2px 2px 0 #000" }}
+                                  >
+                                    ✓
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <p
+                                className="text-xs font-bold text-amber-400"
+                                style={{
+                                  fontFamily: "monospace",
+                                  textShadow: "1px 1px 0 #000",
+                                }}
+                              >
+                                AVATAR DROP
+                              </p>
+                              <p
+                                className="text-[10px] text-gray-400"
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                {(character as any)?.unlockedAvatars?.includes(
+                                  dungeon.id
+                                )
+                                  ? "ALREADY HAVE"
+                                  : "FIRST-TIME ONLY"}
+                              </p>
+                            </div>
+                          </div>
+                          <div
+                            className={`text-xs font-bold px-2 py-1 border-2 ${
+                              (character as any)?.unlockedAvatars?.includes(
+                                dungeon.id
+                              )
+                                ? "bg-green-900 border-green-600 text-green-300"
+                                : "bg-amber-900 border-amber-600 text-amber-300"
+                            }`}
+                            style={{
+                              fontFamily: "monospace",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            {(character as any)?.unlockedAvatars?.includes(
+                              dungeon.id
+                            )
+                              ? "OWNED"
+                              : "100%"}
+                          </div>
+                        </div>
                       </div>
-                    )}
+
+                      {character &&
+                        character.combatPower < dungeon.recommendedCP * 0.8 && (
+                          <div className="text-xs text-red-400 font-bold mt-2">
+                            ⚠️ Combat Power too low!
+                          </div>
+                        )}
                     </>
                   )}
                 </div>
@@ -1761,6 +1806,20 @@ export default function AdventureTab() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center gap-1 flex-nowrap">
                   <img
+                    src={cpIcon}
+                    alt="CP"
+                    className="w-5 h-5 flex-shrink-0"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                  <span className="text-gray-400 whitespace-nowrap">
+                    Rec. CP:
+                  </span>
+                  <span className="text-orange-400 font-bold whitespace-nowrap">
+                    {getRecommendedCP(selectedDungeon.recommendedLevel)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 flex-nowrap">
+                  <img
                     src={energyIcon}
                     alt="Energy"
                     className="w-5 h-5 flex-shrink-0"
@@ -1784,7 +1843,10 @@ export default function AdventureTab() {
                     HP Cost:
                   </span>
                   <span className="text-red-400 font-bold whitespace-nowrap">
-                    ~{Math.round(selectedDungeon.recommendedCP * 0.2)}
+                    ~
+                    {Math.round(
+                      getRecommendedCP(selectedDungeon.recommendedLevel) * 0.2
+                    )}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 flex-nowrap">
@@ -1991,7 +2053,7 @@ export default function AdventureTab() {
                   onClick={() => {
                     if (activeDungeonRun && !activeDungeonRun.completed) {
                       (window as any).showToast?.(
-                        `You are already doing this run: ${activeDungeonRun.dungeon.name}`,
+                        `You are already in a dungeon: ${activeDungeonRun.dungeon.name}`,
                         "warning"
                       );
                       return;
@@ -2017,34 +2079,34 @@ export default function AdventureTab() {
                   <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
                 </button>
               </div>
-              {/* BOSS FIGHT DISABLED - Coming Soon! */}
-              {/* <button
+              {/* BOSS FIGHT - Epic PixiJS Battle! */}
+              <button
                 onClick={() => {
-                  if (activeDungeonRun && !activeDungeonRun.completed) {
-                    (window as any).showToast?.(
-                      `You are already doing this run: ${activeDungeonRun.dungeon.name}`,
-                      "warning"
-                    );
-                    return;
+                  if (selectedDungeon.description && selectedDungeon.description.includes("Boss:")) {
+                    setShowBossFight(true);
+                  } else {
+                    (window as any).showToast?.("This dungeon has no boss!", "warning");
                   }
-                  setShowBossFight(true);
-                  setSelectedDungeon(null);
                 }}
-                className="w-full py-4 bg-red-700 hover:bg-red-600 text-white font-bold transition relative overflow-hidden group"
+                className="w-full py-4 bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 text-white font-bold transition relative overflow-hidden group"
                 style={{
-                  border: '4px solid #8B4513',
+                  border: '4px solid #991b1b',
                   borderRadius: '0',
-                  boxShadow: '0 4px 0 #4a0000, 0 8px 0 rgba(0,0,0,0.3)',
+                  boxShadow: '0 4px 0 #7f1d1d, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.2)',
                   textShadow: '2px 2px 0 #000',
                   imageRendering: 'pixelated',
                   fontFamily: 'monospace',
                   letterSpacing: '2px'
                 }}
               >
-                <span className="relative z-10 text-xl tracking-wider">⚔️ BOSS FIGHT ⚔️</span>
+                <span className="relative z-10 text-xl tracking-wider flex items-center justify-center gap-2">
+                  <span className="animate-pulse">👹</span>
+                  BOSS FIGHT
+                  <span className="animate-pulse">👹</span>
+                </span>
                 <div className="absolute inset-0 bg-gradient-to-b from-red-500/30 to-transparent group-hover:from-red-400/40"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400"></div>
-              </button> */}
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400 animate-pulse"></div>
+              </button>
             </div>
 
             <button
@@ -2064,15 +2126,40 @@ export default function AdventureTab() {
         </div>
       )}
 
-      {/* Boss Fight Component - DISABLED */}
-      {/* {showBossFight && character && selectedDungeon && (
+      {/* Boss Fight Component */}
+      {showBossFight && character && selectedDungeon && (
         <BossFight
           dungeonName={selectedDungeon.name}
-          bossName={selectedDungeon.description.split("Boss: ")[1] || "Boss"}
+          bossName={selectedDungeon.description.split("Boss: ")[1]?.split(".")[0] || `${selectedDungeon.name} Boss`}
+          bossLevel={selectedDungeon.requiredLevel}
+          bossHealth={(selectedDungeon as any).bossHealth || 1000}
+          bossAttack={(selectedDungeon as any).bossAttack || 50}
+          bossDefense={(selectedDungeon as any).bossDefense || 30}
+          dungeonIcon={getDungeonIcon(selectedDungeon.name)}
+          playerClass={character.class}
           playerHP={character.health}
           playerMaxHP={character.maxHealth}
           playerAttack={character.attack}
+          playerDefense={character.defense}
+          playerSpeed={character.speed}
+          playerCP={character.combatPower}
+          fireAttack={(character as any).fireAttack || 0}
+          iceAttack={(character as any).iceAttack || 0}
+          lightningAttack={(character as any).lightningAttack || 0}
+          poisonAttack={(character as any).poisonAttack || 0}
+          critChance={(character as any).critChance || 0}
+          critDamage={(character as any).critDamage || 0}
+          lifeSteal={(character as any).lifeSteal || 0}
+          dodgeChance={(character as any).dodgeChance || 0}
           onComplete={async (success, finalHP) => {
+            // Immediate optimistic update for instant UI feedback
+            if (character) {
+              setCharacter({
+                ...character,
+                health: finalHP,
+              });
+            }
+            
             // Update HP in backend
             try {
               await characterApi.updateHP(finalHP);
@@ -2083,14 +2170,15 @@ export default function AdventureTab() {
               // Also update player data
               const { data: profile } = await authApi.getProfile();
               setPlayer(profile);
+              setCharacter(profile.character);
 
               if (success) {
                 (window as any).showToast?.(
-                  "Boss defeated! Rewards earned!",
+                  "🎉 Boss defeated! Rewards earned!",
                   "success"
                 );
               } else {
-                (window as any).showToast?.("Defeated by the boss...", "error");
+                (window as any).showToast?.("💀 Defeated by the boss...", "error");
               }
             } catch (error) {
               console.error("Failed to update HP:", error);
@@ -2100,7 +2188,6 @@ export default function AdventureTab() {
           onClose={() => setShowBossFight(false)}
         />
       )}
-      */}
     </div>
   );
 }

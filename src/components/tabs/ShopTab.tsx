@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useGameStore } from "@/store/gameStore";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { shopApi, chestApi } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { shopApi, chestApi, dailyRewardApi } from "@/lib/api";
 import { RefreshCw, Coins, Gem } from "lucide-react";
 import { getRarityColor, getRarityBorder } from "@/utils/format";
 import ChestOpening from "@/components/ChestOpening";
+import DailyLoginCalendar from "@/components/DailyLoginCalendar";
 
 type ShopView = "daily" | "chests";
 
@@ -65,10 +66,19 @@ export default function ShopTab() {
   const queryClient = useQueryClient();
   const { player, setPlayer, character } = useGameStore();
   const [view, setView] = useState<ShopView>("daily");
-  const [dailyGemsClaimed, setDailyGemsClaimed] = useState(false);
   const [timeUntilNextClaim, setTimeUntilNextClaim] = useState("");
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [openingChest, setOpeningChest] = useState<any>(null);
+
+  // Check daily gems status from backend
+  const { data: dailyGemsStatus } = useQuery({
+    queryKey: ['daily-gems-status'],
+    queryFn: async () => {
+      const { data } = await dailyRewardApi.checkStatus();
+      return data;
+    },
+    refetchInterval: 60000, // Check every minute
+  });
   const refreshCost = 50;
 
   // Fetch shop items
@@ -136,31 +146,29 @@ export default function ShopTab() {
     },
   });
 
+  // Update countdown timer
   useEffect(() => {
-    const updateClaimStatus = () => {
-      const lastClaim = localStorage.getItem("lastDailyGemClaim");
-      const now = new Date();
-      const today = now.toDateString();
+    if (!dailyGemsStatus?.nextClaimAt) return;
 
-      if (lastClaim !== today) {
-        setDailyGemsClaimed(false);
+    const updateTimer = () => {
+      const now = new Date();
+      const next = new Date(dailyGemsStatus.nextClaimAt);
+      const diff = next.getTime() - now.getTime();
+
+      if (diff <= 0) {
         setTimeUntilNextClaim("");
+        queryClient.invalidateQueries({ queryKey: ['daily-gems-status'] });
       } else {
-        setDailyGemsClaimed(true);
-        const tomorrow = new Date(now);
-        tomorrow.setHours(24, 0, 0, 0);
-        const diff = tomorrow.getTime() - now.getTime();
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setTimeUntilNextClaim(`${hours}h ${minutes}m ${seconds}s`);
+        const hours = Math.floor(diff / 1000 / 60 / 60);
+        const minutes = Math.floor((diff / 1000 / 60) % 60);
+        setTimeUntilNextClaim(`${hours}h ${minutes}m`);
       }
     };
 
-    updateClaimStatus();
-    const interval = setInterval(updateClaimStatus, 1000);
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [dailyGemsClaimed]);
+  }, [dailyGemsStatus, queryClient]);
 
   const getItemImage = (spriteId: string, itemType?: string) => {
     if (!spriteId) return null;
@@ -169,39 +177,35 @@ export default function ShopTab() {
         eager: true,
         as: "url",
       });
+      
+      // Handle numeric sprite IDs (potions)
       if (/^\d+$/.test(spriteId)) {
         const num = parseInt(spriteId);
         if (num >= 985 && num <= 992)
-          return (
-            images[`../../assets/items/potions/hp/${spriteId}.png`] || null
-          );
+          return images[`../../assets/items/potions/hp/${spriteId}.png`] || null;
         if (num >= 1001 && num <= 1008)
-          return (
-            images[`../../assets/items/potions/mp/${spriteId}.png`] || null
-          );
+          return images[`../../assets/items/potions/mp/${spriteId}.png`] || null;
         if (num >= 1033 && num <= 1040)
-          return (
-            images[`../../assets/items/potions/attack/${spriteId}.png`] || null
-          );
+          return images[`../../assets/items/potions/attack/${spriteId}.png`] || null;
         if (num >= 1065 && num <= 1072)
-          return (
-            images[`../../assets/items/potions/energy/${spriteId}.png`] || null
-          );
+          return images[`../../assets/items/potions/energy/${spriteId}.png`] || null;
       }
+      
+      // If spriteId includes "/" it already has the full path
       if (spriteId.includes("/")) {
-        const fullPath = spriteId.startsWith("woodenSet/") || spriteId.startsWith("ironSet/")
-          ? `accessories/${spriteId}`
-          : spriteId;
-        return images[`../../assets/items/${fullPath}.png`] || null;
+        return images[`../../assets/items/${spriteId}.png`] || null;
       }
+      
+      // Otherwise, determine folder based on item type
       let folder = "weapons";
       if (itemType === "Armor") folder = "armors";
       else if (itemType === "Accessory") folder = "accessories";
       else if (itemType === "Consumable") folder = "consumables";
-      else if (itemType === "Material" || itemType === "Gem")
-        return images[`../../assets/items/craft/gems/${spriteId}.png`] || null;
+      else if (itemType === "Material" || itemType === "Gem") folder = "craft/gems";
+      
       return images[`../../assets/items/${folder}/${spriteId}.png`] || null;
     } catch (e) {
+      console.error("Error loading item image:", e);
       return null;
     }
   };
@@ -218,13 +222,22 @@ export default function ShopTab() {
     if (player && player.gems >= refreshCost) refreshMutation.mutate();
   };
 
-  const claimDailyGems = () => {
-    if (player && !dailyGemsClaimed) {
-      localStorage.setItem("lastDailyGemClaim", new Date().toDateString());
-      setDailyGemsClaimed(true);
-      setPlayer({ ...player, gems: player.gems + 10 });
-    }
-  };
+  const claimDailyGemsMutation = useMutation({
+    mutationFn: async () => {
+      const { data } = await dailyRewardApi.claimGems();
+      return data;
+    },
+    onSuccess: (data) => {
+      if (player) {
+        setPlayer({ ...player, gems: data.totalGems });
+      }
+      queryClient.invalidateQueries({ queryKey: ['daily-gems-status'] });
+      (window as any).showToast?.(`Claimed ${data.gemsEarned} gems! 💎`, 'success');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.response?.data?.error || 'Failed to claim gems', 'error');
+    },
+  });
 
   const openChestMutation = useMutation({
     mutationFn: async (tier: number) => {
@@ -353,30 +366,35 @@ export default function ShopTab() {
       {/* Daily View */}
       {view === "daily" && (
         <>
+          {/* 7-Day Login Calendar */}
+          <DailyLoginCalendar />
+
           {/* Daily Free Gems */}
           <div className="mb-2">
             <button
-              onClick={claimDailyGems}
-              disabled={dailyGemsClaimed}
+              onClick={() => claimDailyGemsMutation.mutate()}
+              disabled={!dailyGemsStatus?.canClaim || claimDailyGemsMutation.isPending}
               className="w-full py-3 bg-green-700 hover:bg-green-600 text-white font-bold transition relative overflow-hidden disabled:opacity-50 disabled:grayscale"
               style={{
                 border: "3px solid #15803d",
-                boxShadow: dailyGemsClaimed
-                  ? "none"
-                  : "0 3px 0 #166534, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+                boxShadow: dailyGemsStatus?.canClaim
+                  ? "0 3px 0 #166534, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)"
+                  : "none",
                 textShadow: "1px 1px 0 #000",
                 fontFamily: "monospace",
               }}
             >
               <Gem size={16} className="inline mr-2" />
-              {dailyGemsClaimed
-                ? "DAILY GEMS CLAIMED!"
-                : "🎁 CLAIM 10 FREE GEMS!"}
-              {!dailyGemsClaimed && (
+              {claimDailyGemsMutation.isPending
+                ? "CLAIMING..."
+                : dailyGemsStatus?.canClaim
+                ? "🎁 CLAIM 10 FREE GEMS!"
+                : "DAILY GEMS CLAIMED!"}
+              {dailyGemsStatus?.canClaim && (
                 <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent" />
               )}
             </button>
-            {dailyGemsClaimed && timeUntilNextClaim && (
+            {!dailyGemsStatus?.canClaim && timeUntilNextClaim && (
               <p
                 className="text-center text-xs text-gray-400 mt-1"
                 style={{ fontFamily: "monospace" }}

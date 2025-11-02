@@ -218,8 +218,8 @@ export default function InventoryTab() {
   console.log("Query state:", { inventory, isLoading, error });
 
   const equipMutation = useMutation({
-    mutationFn: async ({ itemId, slot }: { itemId: string; slot: string }) => {
-      const result = await characterApi.equip(itemId, slot);
+    mutationFn: async ({ slotId, slot }: { slotId: string; slot: string }) => {
+      const result = await characterApi.equip(slotId, slot);
       return result;
     },
     onSuccess: async () => {
@@ -255,7 +255,7 @@ export default function InventoryTab() {
   });
 
   const useItemMutation = useMutation({
-    mutationFn: (itemId: string) => inventoryApi.use(itemId),
+    mutationFn: (slotId: string) => inventoryApi.use(slotId),
     onSuccess: async (response) => {
       // Handle chest opening rewards
       if (response.data?.effect === "chest_opened" && response.data?.reward) {
@@ -418,15 +418,15 @@ export default function InventoryTab() {
   const isEquipped = (itemId: string) => {
     if (!character) return false;
     return (
-      character.weapon?.id === itemId ||
-      character.armor?.id === itemId ||
-      character.helmet?.id === itemId ||
-      character.gloves?.id === itemId ||
-      character.shoes?.id === itemId ||
-      character.ring?.id === itemId ||
-      character.necklace?.id === itemId ||
-      character.belt?.id === itemId ||
-      character.earring?.id === itemId
+      character.weaponSlot?.item?.id === itemId ||
+      character.armorSlot?.item?.id === itemId ||
+      character.helmetSlot?.item?.id === itemId ||
+      character.glovesSlot?.item?.id === itemId ||
+      character.shoesSlot?.item?.id === itemId ||
+      character.ringSlot?.item?.id === itemId ||
+      character.necklaceSlot?.item?.id === itemId ||
+      character.beltSlot?.item?.id === itemId ||
+      character.earringSlot?.item?.id === itemId
     );
   };
 
@@ -639,7 +639,7 @@ export default function InventoryTab() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    useItemMutation.mutate(slot.item.id);
+                    useItemMutation.mutate(slot.id);
                   }}
                   disabled={useItemMutation.isPending}
                   className="w-full py-2 bg-green-700 hover:bg-green-600 text-white text-xs font-bold transition relative overflow-hidden disabled:opacity-50"
@@ -725,7 +725,7 @@ export default function InventoryTab() {
                       const slotType = getSlotForItem(slot.item);
                       if (slotType) {
                         equipMutation.mutate({
-                          itemId: slot.item.id,
+                          slotId: slot.id,
                           slot: slotType,
                         });
                       } else {
@@ -1183,7 +1183,7 @@ export default function InventoryTab() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      useItemMutation.mutate(selectedItemDetail.item.id);
+                      useItemMutation.mutate(selectedItemDetail.id);
                       setSelectedItemDetail(null);
                     }}
                     disabled={useItemMutation.isPending}
@@ -1262,7 +1262,7 @@ export default function InventoryTab() {
                       const slotType = getSlotForItem(selectedItemDetail.item);
                       if (slotType) {
                         equipMutation.mutate({
-                          itemId: selectedItemDetail.item.id,
+                          slotId: selectedItemDetail.id,
                           slot: slotType,
                         });
                         setSelectedItemDetail(null);

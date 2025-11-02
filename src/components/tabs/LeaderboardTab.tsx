@@ -7,8 +7,14 @@ import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
 import dragonLairIcon from "@/assets/ui/dungeonIcons/dragonLair.png";
-import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
 import darkForestIcon from "@/assets/ui/dungeonIcons/darkForest.png";
+import obsidianVaultIcon from "@/assets/ui/dungeonIcons/obsidianVault.png";
+import hollowrootSanctuaryIcon from "@/assets/ui/dungeonIcons/hollowrootSanctuary.png";
+import theMawOfSilenceIcon from "@/assets/ui/dungeonIcons/theMawOfSilence.png";
+import clockworkNecropolisIcon from "@/assets/ui/dungeonIcons/clockworkNecropolis.png";
+import paleCitadelIcon from "@/assets/ui/dungeonIcons/paleCitadel.png";
+import theAbyssalSpireIcon from "@/assets/ui/dungeonIcons/theAbyssalSpire.png";
+import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -17,12 +23,12 @@ const getDungeonIconByName = (dungeonName: string) => {
     "Slime Den": slimeDenIcon,
     "Dark Forest": darkForestIcon,
     "Dragon's Lair": dragonLairIcon,
-    "Shattered Obsidian Vault": ratCellarIcon,
-    "Hollowroot Sanctuary": slimeDenIcon,
-    "The Maw of Silence": goblinCaveIcon,
-    "The Clockwork Necropolis": ratCellarIcon,
-    "The Pale Citadel": eclipticThroneIcon,
-    "The Abyssal Spire": dragonLairIcon,
+    "Shattered Obsidian Vault": obsidianVaultIcon,
+    "Hollowroot Sanctuary": hollowrootSanctuaryIcon,
+    "The Maw of Silence": theMawOfSilenceIcon,
+    "The Clockwork Necropolis": clockworkNecropolisIcon,
+    "The Pale Citadel": paleCitadelIcon,
+    "The Abyssal Spire": theAbyssalSpireIcon,
     "The Ecliptic Throne": eclipticThroneIcon,
   };
   return iconMap[dungeonName] || ratCellarIcon;

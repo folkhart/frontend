@@ -45,8 +45,8 @@ export default function VillageTab() {
   });
 
   const equipMutation = useMutation({
-    mutationFn: async ({ itemId, slot }: { itemId: string; slot: string }) => {
-      const { data } = await characterApi.equip(itemId, slot);
+    mutationFn: async ({ slotId, slot }: { slotId: string; slot: string }) => {
+      const { data } = await characterApi.equip(slotId, slot);
       return data;
     },
     onSuccess: async () => {
@@ -97,6 +97,39 @@ export default function VillageTab() {
   });
 
   // Removed useItemMutation - handled in InventoryTab
+
+  // Helper functions to get items from slots
+  const getSlotItem = (slotType: string) => {
+    if (!character) return null;
+    const slotMap: Record<string, any> = {
+      weapon: character.weaponSlot,
+      armor: character.armorSlot,
+      helmet: character.helmetSlot,
+      gloves: character.glovesSlot,
+      shoes: character.shoesSlot,
+      ring: character.ringSlot,
+      necklace: character.necklaceSlot,
+      belt: character.beltSlot,
+      earring: character.earringSlot,
+    };
+    return slotMap[slotType]?.item || null;
+  };
+
+  const getSlotId = (slotType: string) => {
+    if (!character) return null;
+    const slotMap: Record<string, any> = {
+      weapon: character.weaponSlotId,
+      armor: character.armorSlotId,
+      helmet: character.helmetSlotId,
+      gloves: character.glovesSlotId,
+      shoes: character.shoesSlotId,
+      ring: character.ringSlotId,
+      necklace: character.necklaceSlotId,
+      belt: character.beltSlotId,
+      earring: character.earringSlotId,
+    };
+    return slotMap[slotType];
+  };
 
   if (!character || isInventoryLoading) return null;
 
@@ -293,23 +326,21 @@ export default function VillageTab() {
     }
   };
 
-  // Get equipped item with enhancement data
+  // Get equipped item with enhancement data from slot
   const getEquippedItemData = (slotName: string) => {
-    if (!inventory) return null;
-    const slot = inventory.find((s: any) => {
-      const item = s.item;
-      if (slotName === "weapon") return character.weapon?.id === item.id;
-      if (slotName === "armor") return character.armor?.id === item.id;
-      if (slotName === "helmet") return character.helmet?.id === item.id;
-      if (slotName === "gloves") return character.gloves?.id === item.id;
-      if (slotName === "shoes") return character.shoes?.id === item.id;
-      if (slotName === "ring") return character.ring?.id === item.id;
-      if (slotName === "necklace") return character.necklace?.id === item.id;
-      if (slotName === "belt") return character.belt?.id === item.id;
-      if (slotName === "earring") return character.earring?.id === item.id;
-      return false;
-    });
-    return slot || null;
+    if (!character) return null;
+    const slotMap: Record<string, any> = {
+      weapon: character.weaponSlot,
+      armor: character.armorSlot,
+      helmet: character.helmetSlot,
+      gloves: character.glovesSlot,
+      shoes: character.shoesSlot,
+      ring: character.ringSlot,
+      necklace: character.necklaceSlot,
+      belt: character.beltSlot,
+      earring: character.earringSlot,
+    };
+    return slotMap[slotName] || null;
   };
 
   const EquipmentSlot = ({
@@ -781,26 +812,26 @@ export default function VillageTab() {
                     | "belt"
                     | "earring"
                     | null = null;
-                  if (character.weapon?.id === selectedItemDetails.item.id)
+                  if (getSlotItem("weapon")?.id === selectedItemDetails.item.id)
                     slotType = "weapon";
-                  else if (character.armor?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("armor")?.id === selectedItemDetails.item.id)
                     slotType = "armor";
-                  else if (character.helmet?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("helmet")?.id === selectedItemDetails.item.id)
                     slotType = "helmet";
-                  else if (character.gloves?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("gloves")?.id === selectedItemDetails.item.id)
                     slotType = "gloves";
-                  else if (character.shoes?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("shoes")?.id === selectedItemDetails.item.id)
                     slotType = "shoes";
-                  else if (character.ring?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("ring")?.id === selectedItemDetails.item.id)
                     slotType = "ring";
                   else if (
-                    character.necklace?.id === selectedItemDetails.item.id
+                    getSlotItem("necklace")?.id === selectedItemDetails.item.id
                   )
                     slotType = "necklace";
-                  else if (character.belt?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("belt")?.id === selectedItemDetails.item.id)
                     slotType = "belt";
                   else if (
-                    character.earring?.id === selectedItemDetails.item.id
+                    getSlotItem("earring")?.id === selectedItemDetails.item.id
                   )
                     slotType = "earring";
 
@@ -842,26 +873,26 @@ export default function VillageTab() {
                     | "belt"
                     | "earring"
                     | null = null;
-                  if (character.weapon?.id === selectedItemDetails.item.id)
+                  if (getSlotItem("weapon")?.id === selectedItemDetails.item.id)
                     slotType = "weapon";
-                  else if (character.armor?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("armor")?.id === selectedItemDetails.item.id)
                     slotType = "armor";
-                  else if (character.helmet?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("helmet")?.id === selectedItemDetails.item.id)
                     slotType = "helmet";
-                  else if (character.gloves?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("gloves")?.id === selectedItemDetails.item.id)
                     slotType = "gloves";
-                  else if (character.shoes?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("shoes")?.id === selectedItemDetails.item.id)
                     slotType = "shoes";
-                  else if (character.ring?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("ring")?.id === selectedItemDetails.item.id)
                     slotType = "ring";
                   else if (
-                    character.necklace?.id === selectedItemDetails.item.id
+                    getSlotItem("necklace")?.id === selectedItemDetails.item.id
                   )
                     slotType = "necklace";
-                  else if (character.belt?.id === selectedItemDetails.item.id)
+                  else if (getSlotItem("belt")?.id === selectedItemDetails.item.id)
                     slotType = "belt";
                   else if (
-                    character.earring?.id === selectedItemDetails.item.id
+                    getSlotItem("earring")?.id === selectedItemDetails.item.id
                   )
                     slotType = "earring";
 
@@ -1051,51 +1082,51 @@ export default function VillageTab() {
                 {/* Row 1: Earring, Helmet, Necklace */}
                 <EquipmentSlot
                   slotType="earring"
-                  equippedItem={character.earring}
+                  equippedItem={getSlotItem("earring")}
                   label="Earring"
                 />
                 <EquipmentSlot
                   slotType="helmet"
-                  equippedItem={character.helmet}
+                  equippedItem={getSlotItem("helmet")}
                   label="Helmet"
                 />
                 <EquipmentSlot
                   slotType="necklace"
-                  equippedItem={character.necklace}
+                  equippedItem={getSlotItem("necklace")}
                   label="Necklace"
                 />
 
                 {/* Row 2: Weapon, Armor, Gloves */}
                 <EquipmentSlot
                   slotType="weapon"
-                  equippedItem={character.weapon}
+                  equippedItem={getSlotItem("weapon")}
                   label="Weapon"
                 />
                 <EquipmentSlot
                   slotType="armor"
-                  equippedItem={character.armor}
+                  equippedItem={getSlotItem("armor")}
                   label="Armor"
                 />
                 <EquipmentSlot
                   slotType="gloves"
-                  equippedItem={character.gloves}
+                  equippedItem={getSlotItem("gloves")}
                   label="Gloves"
                 />
 
                 {/* Row 3: Ring, Shoes, Belt */}
                 <EquipmentSlot
                   slotType="ring"
-                  equippedItem={character.ring}
+                  equippedItem={getSlotItem("ring")}
                   label="Ring"
                 />
                 <EquipmentSlot
                   slotType="shoes"
-                  equippedItem={character.shoes}
+                  equippedItem={getSlotItem("shoes")}
                   label="Shoes"
                 />
                 <EquipmentSlot
                   slotType="belt"
-                  equippedItem={character.belt}
+                  equippedItem={getSlotItem("belt")}
                   label="Belt"
                 />
               </div>
@@ -1241,7 +1272,7 @@ export default function VillageTab() {
                         onClick={() =>
                           canEquip &&
                           equipMutation.mutate({
-                            itemId: slot.item.id,
+                            slotId: slot.id,
                             slot: selectedSlot,
                           })
                         }

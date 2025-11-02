@@ -65,8 +65,8 @@ export const characterApi = {
   create: (name: string, classType: string) =>
     api.post('/character/create', { name, class: classType }),
   get: () => api.get('/character'),
-  equip: (itemId: string, slot: string) =>
-    api.post('/character/equip', { itemId, slot }),
+  equip: (slotId: string, slot: string) =>
+    api.post('/character/equip', { slotId, slot }),
   unequip: (slot: string) =>
     api.post('/character/unequip', { slot }),
   updateHP: (hp: number) =>
@@ -96,7 +96,7 @@ export const dungeonApi = {
 // Inventory API
 export const inventoryApi = {
   get: () => api.get('/inventory'),
-  use: (itemId: string) => api.post('/inventory/use', { itemId }),
+  use: (slotId: string) => api.post('/inventory/use', { slotId }),
 };
 
 // Leaderboard API
@@ -222,4 +222,16 @@ export const achievementApi = {
 export const avatarApi = {
   setAvatar: (avatarId: string | null) => api.post('/avatar/set', { avatarId }),
   getUnlocked: () => api.get('/avatar/unlocked'),
+};
+
+// Daily Reward API
+export const dailyRewardApi = {
+  claimGems: () => api.post('/daily/claim-gems'),
+  checkStatus: () => api.get('/daily/check-daily-gems'),
+};
+
+// Daily Login Reward API
+export const dailyLoginRewardApi = {
+  getRewards: () => api.get('/daily-login/rewards'),
+  claimReward: (day: number) => api.post(`/daily-login/claim/${day}`),
 };

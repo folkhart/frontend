@@ -3,7 +3,7 @@ import { useGameStore } from '@/store/gameStore';
 import { formatGold, getClassIcon, getRarityColor, getRarityBorder } from '@/utils/format';
 import { X, Circle } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryApi, achievementApi, avatarApi, dungeonApi } from '@/lib/api';
+import { inventoryApi, achievementApi, avatarApi, dungeonApi, authApi } from '@/lib/api';
 import energyIcon from '@/assets/ui/energy.png';
 import hpIcon from '@/assets/ui/hp.png';
 import goldIcon from '@/assets/ui/gold.png';
@@ -21,6 +21,12 @@ import goblinCaveIcon from '@/assets/ui/dungeonIcons/goblinCave.png';
 import slimeDenIcon from '@/assets/ui/dungeonIcons/slimeDen.png';
 import darkForestIcon from '@/assets/ui/dungeonIcons/darkForest.png';
 import dragonLairIcon from '@/assets/ui/dungeonIcons/dragonLair.png';
+import obsidianVaultIcon from '@/assets/ui/dungeonIcons/obsidianVault.png';
+import hollowrootSanctuaryIcon from '@/assets/ui/dungeonIcons/hollowrootSanctuary.png';
+import theMawOfSilenceIcon from '@/assets/ui/dungeonIcons/theMawOfSilence.png';
+import clockworkNecropolisIcon from '@/assets/ui/dungeonIcons/clockworkNecropolis.png';
+import paleCitadelIcon from '@/assets/ui/dungeonIcons/paleCitadel.png';
+import theAbyssalSpireIcon from '@/assets/ui/dungeonIcons/theAbyssalSpire.png';
 import eclipticThroneIcon from '@/assets/ui/dungeonIcons/eclipticThrone.png';
 
 const getDungeonIconByName = (dungeonName: string) => {
@@ -30,12 +36,12 @@ const getDungeonIconByName = (dungeonName: string) => {
     "Slime Den": slimeDenIcon,
     "Dark Forest": darkForestIcon,
     "Dragon's Lair": dragonLairIcon,
-    "Shattered Obsidian Vault": ratCellarIcon,
-    "Hollowroot Sanctuary": slimeDenIcon,
-    "The Maw of Silence": goblinCaveIcon,
-    "The Clockwork Necropolis": ratCellarIcon,
-    "The Pale Citadel": eclipticThroneIcon,
-    "The Abyssal Spire": dragonLairIcon,
+    "Shattered Obsidian Vault": obsidianVaultIcon,
+    "Hollowroot Sanctuary": hollowrootSanctuaryIcon,
+    "The Maw of Silence": theMawOfSilenceIcon,
+    "The Clockwork Necropolis": clockworkNecropolisIcon,
+    "The Pale Citadel": paleCitadelIcon,
+    "The Abyssal Spire": theAbyssalSpireIcon,
     "The Ecliptic Throne": eclipticThroneIcon,
   };
   return iconMap[dungeonName] || ratCellarIcon;
@@ -122,9 +128,14 @@ export default function TopBar() {
       const { data } = await achievementApi.equipTitle(achievementId);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
+      
+      // Refetch profile to update character stats immediately
+      const { data: profile } = await authApi.getProfile();
+      setCharacter(profile.character);
+      
       (window as any).showToast?.('Title equipped!', 'success');
       setShowTitleChooser(false);
     },
@@ -135,9 +146,14 @@ export default function TopBar() {
       const { data } = await achievementApi.unequipTitle();
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['achievements'] });
       queryClient.invalidateQueries({ queryKey: ['character'] });
+      
+      // Refetch profile to update character stats immediately
+      const { data: profile } = await authApi.getProfile();
+      setCharacter(profile.character);
+      
       (window as any).showToast?.('Title removed!', 'success');
       setShowTitleChooser(false);
     },
@@ -231,22 +247,37 @@ export default function TopBar() {
     return `${fileName}.png`;
   };
 
+  // Get item from slot
+  const getSlotItem = (slotType: string) => {
+    if (!character) return null;
+    const slotMap: Record<string, any> = {
+      weapon: character.weaponSlot,
+      armor: character.armorSlot,
+      helmet: character.helmetSlot,
+      gloves: character.glovesSlot,
+      shoes: character.shoesSlot,
+      ring: character.ringSlot,
+      necklace: character.necklaceSlot,
+      belt: character.beltSlot,
+      earring: character.earringSlot,
+    };
+    return slotMap[slotType]?.item || null;
+  };
+
   const getEquippedItemData = (slotName: string) => {
-    if (!inventory) return null;
-    const slot = inventory.find((s: any) => {
-      const item = s.item;
-      if (slotName === 'weapon') return character?.weapon?.id === item.id;
-      if (slotName === 'armor') return character?.armor?.id === item.id;
-      if (slotName === 'helmet') return character?.helmet?.id === item.id;
-      if (slotName === 'gloves') return character?.gloves?.id === item.id;
-      if (slotName === 'shoes') return character?.shoes?.id === item.id;
-      if (slotName === 'ring') return character?.ring?.id === item.id;
-      if (slotName === 'necklace') return character?.necklace?.id === item.id;
-      if (slotName === 'belt') return character?.belt?.id === item.id;
-      if (slotName === 'earring') return character?.earring?.id === item.id;
-      return false;
-    });
-    return slot || null;
+    if (!character) return null;
+    const slotMap: Record<string, any> = {
+      weapon: character.weaponSlot,
+      armor: character.armorSlot,
+      helmet: character.helmetSlot,
+      gloves: character.glovesSlot,
+      shoes: character.shoesSlot,
+      ring: character.ringSlot,
+      necklace: character.necklaceSlot,
+      belt: character.beltSlot,
+      earring: character.earringSlot,
+    };
+    return slotMap[slotName] || null;
   };
 
   const getGemDetails = (gemItemId: string) => {
@@ -260,8 +291,8 @@ export default function TopBar() {
     const iconMap: Record<string, string> = {
       // Kill achievements
       'achievement_kills_100': 'monster_hunter',
-      'achievement_100k_kills': 'monster_slayer',
-      'achievement_1m_kills': 'monster_annihilator',
+      'achievement_kills_500': 'monster_slayer',
+      'achievement_kills_1000': 'monster_annihilator',
       
       // Gold achievements  
       'achievement_gold_10k': 'rich_adventurer',
@@ -269,15 +300,16 @@ export default function TopBar() {
       'achievement_gold_1m': 'millionaire',
       
       // Blacksmith achievements
-      'achievement_blacksmith_10': 'blacksmith_apprentice',
-      'achievement_blacksmith_100': 'master_blacksmith',
-      'achievement_blacksmith_1000': 'legendary_blacksmith',
+      'achievement_enhance_3': 'blacksmith_apprentice',
+      'achievement_enhance_6': 'master_blacksmith',
+      'achievement_enhance_9': 'legendary_blacksmith',
       
       // Collection achievements
-      'achievement_weapons_50': 'weapon_collector',
-      'achievement_armors_50': 'armor_enthusiast',
+      'achievement_weapons_10': 'weapon_collector',
+      'achievement_armor_10': 'armor_enthusiast',
       
       // Social achievements
+      'achievement_friends_5': 'social_butterfly',
       'achievement_guild_join': 'social_butterfly',
     };
     
@@ -472,7 +504,7 @@ export default function TopBar() {
                 <h3 className="text-lg font-bold text-amber-400 mb-3" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>Equipment</h3>
                 <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(3, 85px)', gridTemplateRows: 'repeat(3, 85px)', justifyContent: 'center' }}>
                   {/* Row 1 */}
-                  {[['earring', character.earring, 'Earring'], ['helmet', character.helmet, 'Helmet'], ['necklace', character.necklace, 'Necklace']].map(([slot, item, label]) => {
+                  {[['earring', getSlotItem('earring'), 'Earring'], ['helmet', getSlotItem('helmet'), 'Helmet'], ['necklace', getSlotItem('necklace'), 'Necklace']].map(([slot, item, label]) => {
                     const itemSlot = getEquippedItemData(slot as string);
                     return (
                       <div key={slot as string} onClick={() => item && itemSlot && setSelectedItemDetails(itemSlot)} className={`relative aspect-square bg-stone-900 border-2 cursor-pointer transition ${item ? getRarityBorder((item as any).rarity) + ' hover:border-amber-500' : 'border-stone-700'}`} style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}>
@@ -498,7 +530,7 @@ export default function TopBar() {
                     );
                   })}
                   {/* Row 2 */}
-                  {[['weapon', character.weapon, 'Weapon'], ['armor', character.armor, 'Armor'], ['gloves', character.gloves, 'Gloves']].map(([slot, item, label]) => {
+                  {[['weapon', getSlotItem('weapon'), 'Weapon'], ['armor', getSlotItem('armor'), 'Armor'], ['gloves', getSlotItem('gloves'), 'Gloves']].map(([slot, item, label]) => {
                     const itemSlot = getEquippedItemData(slot as string);
                     return (
                       <div key={slot as string} onClick={() => item && itemSlot && setSelectedItemDetails(itemSlot)} className={`relative aspect-square bg-stone-900 border-2 cursor-pointer transition ${item ? getRarityBorder((item as any).rarity) + ' hover:border-amber-500' : 'border-stone-700'}`} style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}>
@@ -524,7 +556,7 @@ export default function TopBar() {
                     );
                   })}
                   {/* Row 3 */}
-                  {[['ring', character.ring, 'Ring'], ['shoes', character.shoes, 'Shoes'], ['belt', character.belt, 'Belt']].map(([slot, item, label]) => {
+                  {[['ring', getSlotItem('ring'), 'Ring'], ['shoes', getSlotItem('shoes'), 'Shoes'], ['belt', getSlotItem('belt'), 'Belt']].map(([slot, item, label]) => {
                     const itemSlot = getEquippedItemData(slot as string);
                     return (
                       <div key={slot as string} onClick={() => item && itemSlot && setSelectedItemDetails(itemSlot)} className={`relative aspect-square bg-stone-900 border-2 cursor-pointer transition ${item ? getRarityBorder((item as any).rarity) + ' hover:border-amber-500' : 'border-stone-700'}`} style={{ boxShadow: '0 2px 0 rgba(0,0,0,0.3)' }}>
@@ -922,34 +954,38 @@ export default function TopBar() {
                 const isSelected = (character as any).avatarId === dungeon.id;
                 
                 return (
-                  <button
-                    key={dungeon.id}
-                    onClick={() => isUnlocked && setAvatarMutation.mutate(dungeon.id)}
-                    disabled={!isUnlocked || setAvatarMutation.isPending}
-                    className={`relative aspect-square bg-stone-900 border-2 ${
-                      isSelected ? 'border-amber-500' : isUnlocked ? 'border-stone-700 hover:border-amber-500' : 'border-stone-800'
-                    } transition p-2 disabled:cursor-not-allowed`}
-                    style={{ borderRadius: '0', boxShadow: isSelected ? '0 3px 0 #d97706' : '0 2px 0 rgba(0,0,0,0.3)', opacity: isUnlocked ? 1 : 0.5 }}
-                    title={isUnlocked ? dungeon.name : `Complete ${dungeon.name} to unlock`}
-                  >
-                    {isUnlocked ? (
-                      <img
-                        src={getDungeonIconByName(dungeon.name)}
-                        alt={dungeon.name}
-                        className="w-full h-full object-cover"
-                        style={{ imageRendering: 'pixelated' }}
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <img src={lockedIcon} alt="Locked" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
-                      </div>
-                    )}
-                    {isSelected && (
-                      <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-xs font-bold px-2 py-1" style={{ fontFamily: 'monospace' }}>
-                        ✓
-                      </div>
-                    )}
-                  </button>
+                  <div key={dungeon.id} className="flex flex-col">
+                    <button
+                      onClick={() => isUnlocked && setAvatarMutation.mutate(dungeon.id)}
+                      disabled={!isUnlocked || setAvatarMutation.isPending}
+                      className={`relative aspect-square bg-stone-900 border-2 ${
+                        isSelected ? 'border-amber-500' : isUnlocked ? 'border-stone-700 hover:border-amber-500' : 'border-stone-800'
+                      } transition p-2 disabled:cursor-not-allowed`}
+                      style={{ borderRadius: '0', boxShadow: isSelected ? '0 3px 0 #d97706' : '0 2px 0 rgba(0,0,0,0.3)', opacity: isUnlocked ? 1 : 0.5 }}
+                      title={isUnlocked ? dungeon.name : `Complete ${dungeon.name} to unlock`}
+                    >
+                      {isUnlocked ? (
+                        <img
+                          src={getDungeonIconByName(dungeon.name)}
+                          alt={dungeon.name}
+                          className="w-full h-full object-cover"
+                          style={{ imageRendering: 'pixelated' }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <img src={lockedIcon} alt="Locked" className="w-8 h-8" style={{ imageRendering: 'pixelated' }} />
+                        </div>
+                      )}
+                      {isSelected && (
+                        <div className="absolute -top-2 -right-2 bg-amber-500 text-black text-xs font-bold px-2 py-1" style={{ fontFamily: 'monospace' }}>
+                          ✓
+                        </div>
+                      )}
+                    </button>
+                    <p className="text-[10px] text-gray-400 mt-1 text-center leading-tight" style={{ fontFamily: 'monospace' }}>
+                      {dungeon.name}
+                    </p>
+                  </div>
                 );
               })}
             </div>
