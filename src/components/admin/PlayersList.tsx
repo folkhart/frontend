@@ -45,7 +45,7 @@ export default function PlayersList({ onSelectPlayer }: PlayersListProps) {
   }
 
   filteredPlayers = [...filteredPlayers].sort((a: any, b: any) => {
-    if (sortBy === 'level') return (b.level || 0) - (a.level || 0);
+    if (sortBy === 'level') return (b.character?.level || 0) - (a.character?.level || 0);
     if (sortBy === 'gold') return (b.gold || 0) - (a.gold || 0);
     if (sortBy === 'created') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     return 0;
@@ -150,7 +150,11 @@ export default function PlayersList({ onSelectPlayer }: PlayersListProps) {
                     )}
                   </td>
                   <td className="p-3 text-right">
-                    <span className="text-green-400 font-bold">Lv {player.level}</span>
+                    {player.character ? (
+                      <span className="text-green-400 font-bold">Lv {player.character.level}</span>
+                    ) : (
+                      <span className="text-gray-500">-</span>
+                    )}
                   </td>
                   <td className="p-3 text-right">
                     <span className="text-yellow-400">{player.gold.toLocaleString()}g</span>

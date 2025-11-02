@@ -115,22 +115,6 @@ export default function VillageTab() {
     return slotMap[slotType]?.item || null;
   };
 
-  const getSlotId = (slotType: string) => {
-    if (!character) return null;
-    const slotMap: Record<string, any> = {
-      weapon: character.weaponSlotId,
-      armor: character.armorSlotId,
-      helmet: character.helmetSlotId,
-      gloves: character.glovesSlotId,
-      shoes: character.shoesSlotId,
-      ring: character.ringSlotId,
-      necklace: character.necklaceSlotId,
-      belt: character.beltSlotId,
-      earring: character.earringSlotId,
-    };
-    return slotMap[slotType];
-  };
-
   if (!character || isInventoryLoading) return null;
 
   const getGuildItemPath = (spriteId: string) => {

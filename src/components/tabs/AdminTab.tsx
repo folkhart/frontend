@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3, Calendar } from 'lucide-react';
+import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3, Calendar, LogOut } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
 import AdminNewsTab from './AdminNewsTab';
@@ -97,6 +97,11 @@ const adminApi = {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   },
+
+  logoutAllUsers: () => fetch(`${API_URL}/api/admin/logout-all-users`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
+  }).then(r => r.json()),
 };
 
 export default function AdminTab() {
@@ -110,12 +115,6 @@ export default function AdminTab() {
   const [currency, setCurrency] = useState<'gold' | 'gems'>('gold');
 
   // Queries
-  const { data: players } = useQuery({
-    queryKey: ['admin', 'players'],
-    queryFn: adminApi.getPlayers,
-    enabled: activeTab === 'players',
-  });
-
   const { data: items } = useQuery({
     queryKey: ['admin', 'items'],
     queryFn: adminApi.getItems,
@@ -303,7 +302,12 @@ export default function AdminTab() {
       </div>
 
       {/* Analytics Dashboard */}
-      {activeTab === 'analytics' && <AnalyticsDashboard />}
+      {activeTab === 'analytics' && (
+        <div className="space-y-4">
+          <ForceLogoutButton />
+          <AnalyticsDashboard />
+        </div>
+      )}
 
       {/* Players Tab */}
       {activeTab === 'players' && !selectedPlayerId && (
@@ -467,6 +471,78 @@ export default function AdminTab() {
       {/* Daily Login Rewards Tab */}
       {activeTab === 'rewards' && <DailyLoginRewardsEditor />}
     </div>
+  );
+}
+
+// Force Logout All Users Component
+function ForceLogoutButton() {
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const logoutAllMutation = useMutation({
+    mutationFn: adminApi.logoutAllUsers,
+    onSuccess: (data) => {
+      setShowConfirm(false);
+      (window as any).showToast?.(`✅ ${data.message}`, 'success');
+    },
+    onError: (error: any) => {
+      (window as any).showToast?.(error.message || 'Failed to logout all users', 'error');
+    },
+  });
+
+  return (
+    <>
+      <div className="bg-stone-800 border-2 border-red-600 p-4" style={{ borderRadius: '0' }}>
+        <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <LogOut className="text-red-400" />
+          Force Logout All Users
+        </h3>
+        <p className="text-sm text-gray-400 mb-4">
+          Use this when schema changes require users to re-login with fresh tokens. 
+          This will invalidate all user sessions. Users will just need to refresh and log back in.
+        </p>
+        <button
+          onClick={() => setShowConfirm(true)}
+          className="py-2 px-4 bg-red-700 hover:bg-red-600 text-white font-bold flex items-center gap-2"
+          style={{ border: '2px solid #991b1b', borderRadius: '0' }}
+        >
+          <LogOut size={16} />
+          Logout All Users
+        </button>
+      </div>
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-stone-800 border-4 border-red-600 p-6 max-w-md">
+            <h3 className="text-xl font-bold text-white mb-4">⚠️ Confirm Force Logout</h3>
+            <p className="text-gray-300 mb-4">
+              This will invalidate ALL user sessions. All users will need to re-login.
+            </p>
+            <p className="text-yellow-400 font-bold mb-4 text-sm">
+              This is useful after schema changes or backend updates.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => logoutAllMutation.mutate()}
+                disabled={logoutAllMutation.isPending}
+                className="flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:bg-gray-600 text-white font-bold"
+                style={{ border: '2px solid #991b1b', borderRadius: '0' }}
+              >
+                {logoutAllMutation.isPending ? 'Processing...' : 'Yes, Logout All'}
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                disabled={logoutAllMutation.isPending}
+                className="flex-1 py-2 bg-stone-700 hover:bg-stone-600 text-white font-bold"
+                style={{ border: '2px solid #374151', borderRadius: '0' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

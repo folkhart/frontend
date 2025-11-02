@@ -26,7 +26,7 @@ interface BossFightProps {
   critDamage?: number;
   lifeSteal?: number;
   dodgeChance?: number;
-  onComplete: (success: boolean, finalHP: number) => void;
+  onComplete: (success: boolean, finalHP: number, rewards?: any) => void;
   onClose: () => void;
 }
 
@@ -424,8 +424,8 @@ export default function BossFight({
       addLog('🎉 Victory! Boss defeated!');
       
       // Generate rewards (3x XP, 3x Gold, items, gems)
-      const baseXP = Math.floor(bossLevel * 150);
-      const baseGold = Math.floor(bossLevel * 100);
+      const baseXP = bossLevel * 150;
+      const baseGold = bossLevel * 100;
       const rewards = {
         xp: Math.floor(baseXP * 3),
         gold: Math.floor(baseGold * 3),
@@ -443,6 +443,7 @@ export default function BossFight({
         rewards.items.push({ name: 'Socket Drill', quantity: 1 });
       }
       
+      console.log('Boss Fight Victory Rewards:', rewards); // Debug log
       setVictoryRewards(rewards);
       setTimeout(() => setShowVictoryScreen(true), 1000);
     }
@@ -905,7 +906,7 @@ export default function BossFight({
               
               <button
                 onClick={() => {
-                  onComplete(true, playerHP);
+                  onComplete(true, playerHP, victoryRewards);
                   onClose();
                 }}
                 className="w-full py-3 bg-green-700 hover:bg-green-600 text-white font-bold border-4 border-green-500 transition"

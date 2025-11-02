@@ -157,7 +157,7 @@ export default function PlayerDetailView({ playerId, onBack }: PlayerDetailViewP
           <div className="space-y-2 text-sm">
             <div><span className="text-gray-400">Username:</span> <span className="text-white font-bold">{player.username}</span></div>
             <div><span className="text-gray-400">Email:</span> <span className="text-white">{player.email}</span></div>
-            <div><span className="text-gray-400">Level:</span> <span className="text-green-400 font-bold">Lv {player.level}</span></div>
+            <div><span className="text-gray-400">Level:</span> <span className="text-green-400 font-bold">Lv {player.character?.level || 0}</span></div>
             <div><span className="text-gray-400">Gold:</span> <span className="text-yellow-400">{player.gold.toLocaleString()}g</span></div>
             <div><span className="text-gray-400">Gems:</span> <span className="text-cyan-400">{player.gems}</span></div>
             <div><span className="text-gray-400">Energy:</span> <span className="text-orange-400">{player.energy}/{player.maxEnergy}</span></div>
@@ -374,7 +374,6 @@ function EditStatsModal({ player, onClose }: { player: any; onClose: () => void 
   const queryClient = useQueryClient();
   const [gold, setGold] = useState(player.gold);
   const [gems, setGems] = useState(player.gems);
-  const [level, setLevel] = useState(player.level);
   const [energy, setEnergy] = useState(player.energy);
 
   const updateStatsMutation = useMutation({
@@ -382,7 +381,7 @@ function EditStatsModal({ player, onClose }: { player: any; onClose: () => void 
       const token = localStorage.getItem('accessToken');
       await axios.post(
         `${API_URL}/api/admin/players/${player.id}/update-stats`,
-        { gold, gems, level, energy },
+        { gold, gems, energy },
         { headers: { Authorization: `Bearer ${token}` } }
       );
     },
@@ -413,15 +412,6 @@ function EditStatsModal({ player, onClose }: { player: any; onClose: () => void 
               type="number"
               value={gems}
               onChange={(e) => setGems(parseInt(e.target.value))}
-              className="w-full bg-gray-900 text-white p-2 border-2 border-gray-700"
-            />
-          </div>
-          <div>
-            <label className="text-white block mb-2">Level</label>
-            <input
-              type="number"
-              value={level}
-              onChange={(e) => setLevel(parseInt(e.target.value))}
               className="w-full bg-gray-900 text-white p-2 border-2 border-gray-700"
             />
           </div>

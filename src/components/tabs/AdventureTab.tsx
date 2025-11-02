@@ -73,7 +73,7 @@ const formatTimeRemaining = (seconds: number) => {
 };
 
 // Helper for guild item paths
-const getGuildItemPath = (spriteId: string, itemType?: string) => {
+const getGuildItemPath = (spriteId: string) => {
   let fileName = spriteId;
   const tierMap: { [key: string]: string } = {
     bronze: "1",
@@ -168,10 +168,7 @@ const getItemImage = (spriteId: string, itemType?: string) => {
       spriteId.startsWith("Chest") ||
       spriteId.startsWith("key")
     ) {
-      return `/assets/items/guildshop_items/${getGuildItemPath(
-        spriteId,
-        itemType
-      )}`;
+      return `/assets/items/guildshop_items/${getGuildItemPath(spriteId)}`;
     }
 
     if (spriteId.includes("/")) {
@@ -1741,16 +1738,34 @@ export default function AdventureTab() {
 
       {/* Dungeon Modal */}
       {selectedDungeon && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
+        <div 
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedDungeon(null)}
+        >
           <div
-            className="bg-stone-800 border-4 border-amber-600 p-6 max-w-lg w-full"
+            className="bg-stone-800 border-4 border-amber-600 p-6 max-w-lg w-full relative max-h-[90vh] overflow-y-auto"
             style={{
               borderRadius: "0",
               boxShadow:
                 "0 6px 0 #78350f, 0 12px 0 rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.2)",
               fontFamily: "monospace",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedDungeon(null)}
+              className="absolute top-2 right-2 w-8 h-8 bg-red-700 hover:bg-red-600 text-white font-bold flex items-center justify-center transition z-10"
+              style={{
+                border: "2px solid #7f1d1d",
+                borderRadius: "0",
+                boxShadow: "0 2px 0 #991b1b",
+                textShadow: "1px 1px 0 #000",
+              }}
+            >
+              ✕
+            </button>
+
             {/* Header with Dungeon Icon */}
             <div className="flex items-start gap-4 mb-4 pb-4 border-b-2 border-stone-700">
               <img
@@ -2131,7 +2146,7 @@ export default function AdventureTab() {
         <BossFight
           dungeonName={selectedDungeon.name}
           bossName={selectedDungeon.description.split("Boss: ")[1]?.split(".")[0] || `${selectedDungeon.name} Boss`}
-          bossLevel={selectedDungeon.requiredLevel}
+          bossLevel={selectedDungeon.recommendedLevel || selectedDungeon.requiredLevel || 1}
           bossHealth={(selectedDungeon as any).bossHealth || 1000}
           bossAttack={(selectedDungeon as any).bossAttack || 50}
           bossDefense={(selectedDungeon as any).bossDefense || 30}
@@ -2151,21 +2166,51 @@ export default function AdventureTab() {
           critDamage={(character as any).critDamage || 0}
           lifeSteal={(character as any).lifeSteal || 0}
           dodgeChance={(character as any).dodgeChance || 0}
-          onComplete={async (success, finalHP) => {
+          onComplete={async (success, finalHP, rewards) => {
             // Immediate optimistic update for instant UI feedback
-            if (character) {
+            if (character && success && rewards) {
+              // Optimistically update character with rewards
+              setCharacter({
+                ...character,
+                health: finalHP,
+                experience: character.experience + rewards.xp,
+              });
+              setPlayer({
+                ...player!,
+                gold: (player?.gold || 0) + rewards.gold,
+              });
+            } else if (character) {
               setCharacter({
                 ...character,
                 health: finalHP,
               });
             }
             
-            // Update HP in backend
+            // Update backend with rewards
             try {
               await characterApi.updateHP(finalHP);
-              // Force refresh character data
+              
+              if (success && rewards) {
+                // Grant rewards via API
+                await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/boss-fight/claim-rewards`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    xp: rewards.xp,
+                    gold: rewards.gold,
+                    items: rewards.items,
+                    gems: rewards.gems,
+                  }),
+                });
+              }
+              
+              // Force refresh character and player data
               await queryClient.invalidateQueries({ queryKey: ["character"] });
               await queryClient.refetchQueries({ queryKey: ["character"] });
+              await queryClient.invalidateQueries({ queryKey: ["inventory"] });
               
               // Also update player data
               const { data: profile } = await authApi.getProfile();
@@ -2174,14 +2219,14 @@ export default function AdventureTab() {
 
               if (success) {
                 (window as any).showToast?.(
-                  "🎉 Boss defeated! Rewards earned!",
+                  `🎉 Boss defeated! +${rewards?.xp || 0} XP, +${rewards?.gold || 0}g`,
                   "success"
                 );
               } else {
                 (window as any).showToast?.("💀 Defeated by the boss...", "error");
               }
             } catch (error) {
-              console.error("Failed to update HP:", error);
+              console.error("Failed to update HP or grant rewards:", error);
             }
             setShowBossFight(false);
           }}
