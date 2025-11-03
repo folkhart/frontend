@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { leaderboardApi, dungeonApi } from "@/lib/api";
 import { Swords, Users, Trophy } from "lucide-react";
 import leaderboardIcon from "@/assets/ui/leaderboard.png";
+import leaderboard1Icon from "@/assets/ui/leaderboard/leaderboard_number1.png";
+import leaderboard2Icon from "@/assets/ui/leaderboard/leaderboard_number2.png";
+import leaderboard3Icon from "@/assets/ui/leaderboard/leaderboard_number3.png";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
@@ -38,6 +41,7 @@ export default function LeaderboardTab() {
   const [activeBoard, setActiveBoard] = useState<"level" | "combat" | "guilds">(
     "level"
   );
+  const [displayLimit, setDisplayLimit] = useState(50);
 
   const { data: levelBoard, isLoading: levelLoading } = useQuery({
     queryKey: ["leaderboard", "level"],
@@ -88,14 +92,17 @@ export default function LeaderboardTab() {
     if (rank === 1) return "text-yellow-400";
     if (rank === 2) return "text-gray-300";
     if (rank === 3) return "text-amber-600";
+    if (rank >= 4 && rank <= 10) return "text-red-400";
+    if (rank >= 11 && rank <= 20) return "text-orange-400";
+    if (rank >= 21 && rank <= 50) return "text-blue-400";
     return "text-gray-400";
   };
 
-  const getRankEmoji = (rank: number) => {
-    if (rank === 1) return "🥇";
-    if (rank === 2) return "🥈";
-    if (rank === 3) return "🥉";
-    return `#${rank}`;
+  const getRankImage = (rank: number) => {
+    if (rank === 1) return leaderboard1Icon;
+    if (rank === 2) return leaderboard2Icon;
+    if (rank === 3) return leaderboard3Icon;
+    return null;
   };
 
   const isLoading = levelLoading || combatLoading || guildLoading;
@@ -211,7 +218,7 @@ export default function LeaderboardTab() {
         <div className="space-y-2">
           {activeBoard !== "guilds"
             ? // Player Leaderboard
-              currentData.map((entry: any) => (
+              currentData.slice(0, displayLimit).map((entry: any) => (
                 <div
                   key={entry.rank}
                   className={`p-3 bg-stone-800 border-2 ${
@@ -224,14 +231,27 @@ export default function LeaderboardTab() {
                   }}
                 >
                   <div
-                    className={`text-2xl font-bold ${getRankColor(
+                    className={`text-xl font-bold ${getRankColor(
                       entry.rank
-                    )} min-w-[50px]`}
+                    )} min-w-[30px] flex items-center justify-center`}
+                    style={{
+                      fontFamily: "monospace",
+                      textShadow: "2px 2px 0 #000",
+                    }}
                   >
-                    {getRankEmoji(entry.rank)}
+                    {getRankImage(entry.rank) ? (
+                      <img
+                        src={getRankImage(entry.rank)!}
+                        alt={`Rank ${entry.rank}`}
+                        className="w-4 h-6"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                    ) : (
+                      `#${entry.rank}`
+                    )}
                   </div>
                   {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-amber-500 overflow-hidden bg-stone-900">
+                  <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 border-2 border-amber-500 overflow-hidden bg-stone-900">
                     {entry.avatarId ? (
                       <img
                         src={getDungeonIcon(entry.avatarId)}
@@ -258,23 +278,45 @@ export default function LeaderboardTab() {
                     )}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-white">
+                    <p
+                      className="font-bold text-white"
+                      style={{
+                        fontFamily: "monospace",
+                        textShadow: "1px 1px 0 #000",
+                      }}
+                    >
                       {entry.characterName}
                     </p>
-                    <p className="text-xs text-gray-400">@{entry.username}</p>
+                    <p
+                      className="text-xs text-gray-400"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      @{entry.username}
+                    </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-amber-400 font-bold">
+                    <p
+                      className="text-sm text-amber-400 font-bold"
+                      style={{
+                        fontFamily: "monospace",
+                        textShadow: "1px 1px 0 #000",
+                      }}
+                    >
                       {activeBoard === "level"
                         ? `Lv.${entry.level}`
                         : `CP ${entry.combatPower}`}
                     </p>
-                    <p className="text-xs text-gray-400">{entry.class}</p>
+                    <p
+                      className="text-xs text-gray-400"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      {entry.class}
+                    </p>
                   </div>
                 </div>
               ))
             : // Guild Leaderboard
-              currentData.map((entry: any) => (
+              currentData.slice(0, displayLimit).map((entry: any) => (
                 <div
                   key={entry.rank}
                   className={`p-3 bg-stone-800 border-2 ${
@@ -287,25 +329,73 @@ export default function LeaderboardTab() {
                   }}
                 >
                   <div
-                    className={`text-2xl font-bold ${getRankColor(
+                    className={`text-xl font-bold ${getRankColor(
                       entry.rank
-                    )} min-w-[50px]`}
+                    )} min-w-[30px] flex items-center justify-center`}
+                    style={{
+                      fontFamily: "monospace",
+                      textShadow: "2px 2px 0 #000",
+                    }}
                   >
-                    {getRankEmoji(entry.rank)}
+                    {getRankImage(entry.rank) ? (
+                      <img
+                        src={getRankImage(entry.rank)!}
+                        alt={`Rank ${entry.rank}`}
+                        className="w-4 h-6"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                    ) : (
+                      `#${entry.rank}`
+                    )}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-white">{entry.name}</p>
-                    <p className="text-xs text-gray-400">
+                    <p
+                      className="font-bold text-white"
+                      style={{
+                        fontFamily: "monospace",
+                        textShadow: "1px 1px 0 #000",
+                      }}
+                    >
+                      {entry.name}
+                    </p>
+                    <p
+                      className="text-xs text-gray-400"
+                      style={{ fontFamily: "monospace" }}
+                    >
                       {entry.memberCount}/{entry.maxMembers} members
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-purple-400 font-bold">
+                    <p
+                      className="text-sm text-purple-400 font-bold"
+                      style={{
+                        fontFamily: "monospace",
+                        textShadow: "1px 1px 0 #000",
+                      }}
+                    >
                       Lv.{entry.level}
                     </p>
                   </div>
                 </div>
               ))}
+        </div>
+      )}
+
+      {/* Show More Button */}
+      {!isLoading && currentData && currentData.length > displayLimit && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={() => setDisplayLimit(displayLimit + 50)}
+            className="px-6 py-3 bg-amber-700 text-white font-bold border-2 border-amber-900 hover:bg-amber-600 transition"
+            style={{
+              borderRadius: "0",
+              boxShadow: "0 2px 0 #78350f, inset 0 1px 0 rgba(255,255,255,0.2)",
+              textShadow: "1px 1px 0 #000",
+              fontFamily: "monospace",
+            }}
+          >
+            ⬇️ SHOW MORE ⬇️
+          </button>
         </div>
       )}
 

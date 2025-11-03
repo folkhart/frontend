@@ -12,7 +12,7 @@
     "package.json"
   ],
   "extraMetadata": {
-    "main": "electron/main.js"
+    "main": "electron/main.cjs"
   },
   "win": {
     "target": [
@@ -25,7 +25,6 @@
         "arch": ["x64"]
       }
     ],
-    "icon": "electron/assets/icon.png",
     "artifactName": "${productName}-${version}-${arch}.${ext}",
     "publisherName": "Folkhart",
     "verifyUpdateCodeSignature": false
@@ -33,13 +32,18 @@
   "nsis": {
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
-    "createDesktopShortcut": true,
+    "allowElevation": true,
+    "createDesktopShortcut": "always",
     "createStartMenuShortcut": true,
     "shortcutName": "Folkhart",
-    "installerIcon": "electron/assets/icon.png",
-    "uninstallerIcon": "electron/assets/icon.png",
-    "installerHeaderIcon": "electron/assets/icon.png",
-    "displayLanguageSelector": true
+    "license": "electron/assets/license.txt",
+    "warningsAsErrors": false,
+    "runAfterFinish": true,
+    "menuCategory": "Games",
+    "displayLanguageSelector": false,
+    "deleteAppDataOnUninstall": false,
+    "perMachine": false,
+    "artifactName": "${productName}-Setup-${version}.${ext}"
   },
   "portable": {
     "artifactName": "${productName}-${version}-Portable.${ext}"
@@ -55,12 +59,9 @@
         "arch": ["x64", "arm64"]
       }
     ],
-    "icon": "electron/assets/icon.icns",
     "category": "public.app-category.games",
     "hardenedRuntime": true,
-    "gatekeeperAssess": false,
-    "entitlements": "electron/entitlements.mac.plist",
-    "entitlementsInherit": "electron/entitlements.mac.plist"
+    "gatekeeperAssess": false
   },
   "dmg": {
     "contents": [
@@ -92,7 +93,6 @@
         "arch": ["x64"]
       }
     ],
-    "icon": "electron/assets/icon.png",
     "category": "Game",
     "synopsis": "Cozy Fantasy RPG",
     "description": "A cozy browser-based fantasy RPG with dungeons, crafting, and guilds.",

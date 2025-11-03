@@ -49,6 +49,10 @@ contextBridge.exposeInMainWorld('electron', {
     ipcRenderer.send('direct-message', data);
   },
 
+  sendServerChatMention: (data) => {
+    ipcRenderer.send('server-chat-mention', data);
+  },
+
   // Game events
   sendIdleComplete: (data) => {
     ipcRenderer.send('idle-complete', data);

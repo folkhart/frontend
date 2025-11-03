@@ -20,6 +20,7 @@ export interface ElectronAPI {
   sendFriendRequest: (data: { username: string }) => void;
   sendFriendOnline: (data: { username: string }) => void;
   sendDirectMessage: (data: { username: string; message: string }) => void;
+  sendServerChatMention: (data: { username: string; message: string }) => void;
   
   // Game events
   sendIdleComplete: (data: { gold: number; exp: number }) => void;

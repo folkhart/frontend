@@ -94,6 +94,12 @@ export function useElectron() {
     }
   }, [isElectron]);
 
+  const sendServerChatMention = useCallback((username: string, message: string) => {
+    if (isElectron && window.electron) {
+      window.electron.sendServerChatMention({ username, message });
+    }
+  }, [isElectron]);
+
   // Game event methods
   const sendIdleComplete = useCallback((gold: number, exp: number) => {
     if (isElectron && window.electron) {
@@ -150,6 +156,7 @@ export function useElectron() {
     sendFriendRequest,
     sendFriendOnline,
     sendDirectMessage,
+    sendServerChatMention,
     // Game events
     sendIdleComplete,
     sendDungeonComplete,

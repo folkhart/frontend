@@ -2,6 +2,12 @@ const { app, BrowserWindow, ipcMain, Notification, Tray, Menu, nativeImage } = r
 const path = require('path');
 const isDev = process.env.NODE_ENV === 'development';
 
+// Set app name and user model ID for proper Windows notifications
+app.setName('Folkhart');
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.folkhart.app');
+}
+
 let mainWindow = null;
 let tray = null;
 
@@ -335,6 +341,16 @@ ipcMain.on('direct-message', (event, data) => {
   const { username, message } = data;
   showNotification({
     title: `💬 ${username}`,
+    body: message.substring(0, 100),
+    urgency: 'normal'
+  });
+});
+
+// Server chat mention
+ipcMain.on('server-chat-mention', (event, data) => {
+  const { username, message } = data;
+  showNotification({
+    title: `📢 ${username} mentioned you!`,
     body: message.substring(0, 100),
     urgency: 'normal'
   });

@@ -27,6 +27,7 @@ import guildInviteIcon from "@/assets/ui/guild_invite.png";
 import removeFriendIcon from "@/assets/ui/remove_friend.png";
 import Lightning from "@/components/effects/Lightning";
 import ColorBends from "@/components/effects/ColorBends";
+import { useElectron } from "@/hooks/useElectron";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -135,11 +136,12 @@ const EMOJIS = [
 ];
 
 export default function ServerChat() {
-  const { player } = useGameStore();
+  const { player, character } = useGameStore();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const { sendServerChatMention } = useElectron();
 
   // Fetch all dungeons for avatar icon mapping
   const { data: allDungeons } = useQuery({
@@ -294,17 +296,24 @@ export default function ServerChat() {
 
   // Socket listeners
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !character) return;
 
     // Listen for server chat messages
     socket.on("server_chat_message", (message: ChatMessage) => {
       setMessages((prev) => [...prev, message]);
+      
+      // Check if this message mentions the current user
+      const mentionPattern = new RegExp(`@${character.name}\\b`, 'i');
+      if (mentionPattern.test(message.message) && message.player.username !== character.name) {
+        // Send notification for mention
+        sendServerChatMention(message.player.username, message.message);
+      }
     });
 
     return () => {
       socket.off("server_chat_message");
     };
-  }, [socket]);
+  }, [socket, character, sendServerChatMention]);
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -445,27 +454,52 @@ export default function ServerChat() {
   };
 
   const renderMessageWithEmojis = (text: string) => {
-    // Replace :emoji: codes with actual emoji images
-    const parts = text.split(
-      /(:(?:Coins|Diamond|Dragon|Emerald|Enchanter|Royal|Skull|Sword|Icon\d+|blood|book|chest|eye|goldfish|goldpile|heart|hp|questionmark|shield|silverpile|skull|staff|star|swords)(?:_Animated_32x32)?:)/g
-    );
+    // First, split by mentions (@username)
+    const mentionPattern = /(@\w+)/g;
+    const segments = text.split(mentionPattern);
 
-    return parts.map((part, index) => {
-      const match = part.match(/:(.+):/);
-      if (match) {
-        const emojiName = match[1];
-        const ext = emojiName.includes("Animated") ? "gif" : "png";
+    return segments.map((segment, segmentIndex) => {
+      // Check if this segment is a mention
+      if (segment.match(mentionPattern)) {
+        const mentionedName = segment.substring(1); // Remove @
+        const isCurrentUser = character?.name === mentionedName;
+        
         return (
-          <img
-            key={index}
-            src={`/assets/ui/chat/emojis/${emojiName}.${ext}`}
-            alt={emojiName}
-            className="inline-block w-6 h-6 mx-0.5"
-            style={{ imageRendering: "pixelated", verticalAlign: "middle" }}
-          />
+          <span
+            key={`mention-${segmentIndex}`}
+            className={`font-bold ${
+              isCurrentUser 
+                ? 'text-amber-400 bg-amber-900/30 px-1 rounded' 
+                : 'text-blue-400'
+            }`}
+          >
+            {segment}
+          </span>
         );
       }
-      return <span key={index}>{part}</span>;
+
+      // Replace :emoji: codes with actual emoji images
+      const parts = segment.split(
+        /(:(?:Coins|Diamond|Dragon|Emerald|Enchanter|Royal|Skull|Sword|Icon\d+|blood|book|chest|eye|goldfish|goldpile|heart|hp|questionmark|shield|silverpile|skull|staff|star|swords)(?:_Animated_32x32)?:)/g
+      );
+
+      return parts.map((part, index) => {
+        const match = part.match(/:(.+):/);
+        if (match) {
+          const emojiName = match[1];
+          const ext = emojiName.includes("Animated") ? "gif" : "png";
+          return (
+            <img
+              key={`${segmentIndex}-${index}`}
+              src={`/assets/ui/chat/emojis/${emojiName}.${ext}`}
+              alt={emojiName}
+              className="inline-block w-6 h-6 mx-0.5"
+              style={{ imageRendering: "pixelated", verticalAlign: "middle" }}
+            />
+          );
+        }
+        return <span key={`${segmentIndex}-${index}`}>{part}</span>;
+      });
     });
   };
 
