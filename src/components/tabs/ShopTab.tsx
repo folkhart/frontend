@@ -193,7 +193,22 @@ export default function ShopTab() {
       
       // If spriteId includes "/" it already has the full path
       if (spriteId.includes("/")) {
-        return images[`../../assets/items/${spriteId}.png`] || null;
+        // If it already starts with weapons/, armors/, accessories/, or craft/, use as-is
+        // Otherwise, for bare set names (woodenSet, ironSet, steelSet, dungeonDrops), prepend accessories/
+        let fullPath = spriteId;
+        if (
+          !spriteId.startsWith("weapons/") &&
+          !spriteId.startsWith("armors/") &&
+          !spriteId.startsWith("accessories/") &&
+          !spriteId.startsWith("craft/") &&
+          (spriteId.startsWith("woodenSet/") ||
+            spriteId.startsWith("ironSet/") ||
+            spriteId.startsWith("steelSet/") ||
+            spriteId.startsWith("dungeonDrops/"))
+        ) {
+          fullPath = `accessories/${spriteId}`;
+        }
+        return images[`../../assets/items/${fullPath}.png`] || null;
       }
       
       // Otherwise, determine folder based on item type

@@ -148,16 +148,23 @@ export default function BlacksmithTab() {
         }
       }
 
-      // Check if spriteId contains a path (for gems, materials, accessories with woodenSet/, ironSet/, etc.)
+      // Check if spriteId contains a path (for gems, materials, weapons/steelSet, armors/steelSet, accessories with woodenSet/, ironSet/, steelSet/, etc.)
       if (spriteId.includes("/")) {
-        // spriteId already contains the full path like 'craft/gems/red_gem' or 'woodenSet/woodenRing' or 'ironSet/ironRing'
-        // For accessories with woodenSet/ or ironSet/, the path is accessories/woodenSet/... or accessories/ironSet/...
-        const fullPath =
-          spriteId.startsWith("woodenSet/") ||
-          spriteId.startsWith("ironSet/") ||
-          spriteId.startsWith("dungeonDrops/")
-            ? `accessories/${spriteId}`
-            : spriteId;
+        // If it already starts with weapons/, armors/, accessories/, or craft/, use as-is
+        // Otherwise, for bare set names (woodenSet, ironSet, steelSet, dungeonDrops), prepend accessories/
+        let fullPath = spriteId;
+        if (
+          !spriteId.startsWith("weapons/") &&
+          !spriteId.startsWith("armors/") &&
+          !spriteId.startsWith("accessories/") &&
+          !spriteId.startsWith("craft/") &&
+          (spriteId.startsWith("woodenSet/") ||
+            spriteId.startsWith("ironSet/") ||
+            spriteId.startsWith("steelSet/") ||
+            spriteId.startsWith("dungeonDrops/"))
+        ) {
+          fullPath = `accessories/${spriteId}`;
+        }
         const path = `../../assets/items/${fullPath}.png`;
         return images[path] || null;
       }

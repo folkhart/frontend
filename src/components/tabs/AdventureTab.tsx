@@ -173,12 +173,21 @@ const getItemImage = (spriteId: string, itemType?: string) => {
     }
 
     if (spriteId.includes("/")) {
-      const fullPath =
-        spriteId.startsWith("woodenSet/") ||
-        spriteId.startsWith("ironSet/") ||
-        spriteId.startsWith("dungeonDrops/")
-          ? `accessories/${spriteId}`
-          : spriteId;
+      // Handle paths - if it starts with weapons/, armors/, accessories/, or craft/, use as-is
+      // Otherwise, for accessory sets (woodenSet, ironSet, steelSet, dungeonDrops), prepend accessories/
+      let fullPath = spriteId;
+      if (
+        !spriteId.startsWith("weapons/") &&
+        !spriteId.startsWith("armors/") &&
+        !spriteId.startsWith("accessories/") &&
+        !spriteId.startsWith("craft/") &&
+        (spriteId.startsWith("woodenSet/") ||
+          spriteId.startsWith("ironSet/") ||
+          spriteId.startsWith("steelSet/") ||
+          spriteId.startsWith("dungeonDrops/"))
+      ) {
+        fullPath = `accessories/${spriteId}`;
+      }
       const path = `../../assets/items/${fullPath}.png`;
       return images[path] || null;
     }
