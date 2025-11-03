@@ -23,6 +23,7 @@ import Toast from '@/components/Toast';
 import Onboarding from '@/components/Onboarding';
 import LevelUpModal from '@/components/modals/LevelUpModal';
 import DailyLoginPopup from '@/components/DailyLoginPopup';
+import HalloweenFramePopup from '@/components/HalloweenFramePopup';
 
 export default function GamePage() {
   const navigate = useNavigate();
@@ -347,6 +348,9 @@ export default function GamePage() {
 
       {/* Daily Login Popup - Shows on login */}
       <DailyLoginPopup />
+
+      {/* Halloween Frame Popup - Shows after login (one time) */}
+      <HalloweenFramePopup />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { leaderboardApi, dungeonApi } from "@/lib/api";
 import { Swords, Users, Trophy } from "lucide-react";
+import FramedAvatar from "@/components/FramedAvatar";
 import leaderboardIcon from "@/assets/ui/leaderboard.png";
 import leaderboard1Icon from "@/assets/ui/leaderboard/leaderboard_number1.png";
 import leaderboard2Icon from "@/assets/ui/leaderboard/leaderboard_number2.png";
@@ -251,32 +252,17 @@ export default function LeaderboardTab() {
                     )}
                   </div>
                   {/* Avatar */}
-                  <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 border-2 border-amber-500 overflow-hidden bg-stone-900">
-                    {entry.avatarId ? (
-                      <img
-                        src={getDungeonIcon(entry.avatarId)}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                        style={{ imageRendering: "pixelated" }}
-                        onError={(e) => {
-                          (
-                            e.target as HTMLImageElement
-                          ).src = `/assets/ui/chat/classIcons/${
-                            entry.class?.toLowerCase() || "warrior"
-                          }.png`;
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={`/assets/ui/chat/classIcons/${
-                          entry.class?.toLowerCase() || "warrior"
-                        }.png`}
-                        alt={entry.class}
-                        className="w-6 h-6"
-                        style={{ imageRendering: "pixelated" }}
-                      />
-                    )}
-                  </div>
+                  <FramedAvatar
+                    src={
+                      entry.avatarId
+                        ? getDungeonIcon(entry.avatarId)
+                        : `/assets/ui/chat/classIcons/${entry.class?.toLowerCase() || "warrior"}.png`
+                    }
+                    alt={entry.characterName}
+                    frame={(entry as any).avatarFrame || 'default'}
+                    size="small"
+                    borderColor="border-amber-500"
+                  />
                   <div className="flex-1">
                     <p
                       className="font-bold text-white"

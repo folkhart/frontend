@@ -222,6 +222,8 @@ export const achievementApi = {
 export const avatarApi = {
   setAvatar: (avatarId: string | null) => api.post('/avatar/set', { avatarId }),
   getUnlocked: () => api.get('/avatar/unlocked'),
+  setFrame: (frameId: string) => api.post('/avatar/frame/set', { frameId }),
+  getFrames: () => api.get('/avatar/frames'),
 };
 
 // Daily Reward API

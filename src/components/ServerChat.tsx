@@ -28,6 +28,7 @@ import removeFriendIcon from "@/assets/ui/remove_friend.png";
 import Lightning from "@/components/effects/Lightning";
 import ColorBends from "@/components/effects/ColorBends";
 import { useElectron } from "@/hooks/useElectron";
+import FramedAvatar from "@/components/FramedAvatar";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -70,6 +71,21 @@ const EMOJIS = [
   "Royal_Animated_32x32",
   "Skull_Animated_32x32",
   "Sword_Animated_32x32",
+  "blood",
+  "book",
+  "chest",
+  "eye",
+  "goldfish",
+  "goldpile",
+  "heart",
+  "hp",
+  "questionmark",
+  "shield",
+  "silverpile",
+  "skull",
+  "staff",
+  "star",
+  "swords",
   "Icon1",
   "Icon2",
   "Icon3",
@@ -118,21 +134,6 @@ const EMOJIS = [
   "Icon46",
   "Icon47",
   "Icon48",
-  "blood",
-  "book",
-  "chest",
-  "eye",
-  "goldfish",
-  "goldpile",
-  "heart",
-  "hp",
-  "questionmark",
-  "shield",
-  "silverpile",
-  "skull",
-  "staff",
-  "star",
-  "swords",
 ];
 
 export default function ServerChat() {
@@ -190,7 +191,7 @@ export default function ServerChat() {
 
   // Fetch friends list
   const { data: friendsList } = useQuery({
-    queryKey: ['friends'],
+    queryKey: ["friends"],
     queryFn: async () => {
       const { data } = await friendApi.getFriends();
       return data;
@@ -223,7 +224,8 @@ export default function ServerChat() {
   useEffect(() => {
     if (playerCharacter && friendsList) {
       const isFriend = friendsList.some(
-        (friend: any) => friend.friend?.character?.name === selectedPlayerUsername
+        (friend: any) =>
+          friend.friend?.character?.name === selectedPlayerUsername
       );
       setIsAlreadyFriend(isFriend);
     }
@@ -237,10 +239,13 @@ export default function ServerChat() {
     },
     onSuccess: () => {
       setFriendRequestSent(true);
-      (window as any).showToast?.('Friend request sent!', 'success');
+      (window as any).showToast?.("Friend request sent!", "success");
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Failed to send friend request', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Failed to send friend request",
+        "error"
+      );
     },
   });
 
@@ -252,10 +257,13 @@ export default function ServerChat() {
     },
     onSuccess: () => {
       setFriendRequestSent(false);
-      (window as any).showToast?.('Friend request cancelled', 'success');
+      (window as any).showToast?.("Friend request cancelled", "success");
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Failed to cancel request', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Failed to cancel request",
+        "error"
+      );
     },
   });
 
@@ -267,11 +275,14 @@ export default function ServerChat() {
     },
     onSuccess: () => {
       setIsAlreadyFriend(false);
-      queryClient.invalidateQueries({ queryKey: ['friends'] });
-      (window as any).showToast?.('Friend removed', 'success');
+      queryClient.invalidateQueries({ queryKey: ["friends"] });
+      (window as any).showToast?.("Friend removed", "success");
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Failed to remove friend', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Failed to remove friend",
+        "error"
+      );
     },
   });
 
@@ -282,10 +293,13 @@ export default function ServerChat() {
       return data;
     },
     onSuccess: () => {
-      (window as any).showToast?.('Guild invitation sent!', 'success');
+      (window as any).showToast?.("Guild invitation sent!", "success");
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Failed to send guild invitation', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Failed to send guild invitation",
+        "error"
+      );
     },
   });
 
@@ -301,10 +315,13 @@ export default function ServerChat() {
     // Listen for server chat messages
     socket.on("server_chat_message", (message: ChatMessage) => {
       setMessages((prev) => [...prev, message]);
-      
+
       // Check if this message mentions the current user
-      const mentionPattern = new RegExp(`@${character.name}\\b`, 'i');
-      if (mentionPattern.test(message.message) && message.player.username !== character.name) {
+      const mentionPattern = new RegExp(`@${character.name}\\b`, "i");
+      if (
+        mentionPattern.test(message.message) &&
+        message.player.username !== character.name
+      ) {
         // Send notification for mention
         sendServerChatMention(message.player.username, message.message);
       }
@@ -463,14 +480,14 @@ export default function ServerChat() {
       if (segment.match(mentionPattern)) {
         const mentionedName = segment.substring(1); // Remove @
         const isCurrentUser = character?.name === mentionedName;
-        
+
         return (
           <span
             key={`mention-${segmentIndex}`}
             className={`font-bold ${
-              isCurrentUser 
-                ? 'text-amber-400 bg-amber-900/30 px-1 rounded' 
-                : 'text-blue-400'
+              isCurrentUser
+                ? "text-amber-400 bg-amber-900/30 px-1 rounded"
+                : "text-blue-400"
             }`}
           >
             {segment}
@@ -544,46 +561,30 @@ export default function ServerChat() {
             >
               <div className="flex items-start gap-2">
                 {/* Player Avatar - Clickable */}
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 border-2 ${
-                    isSystemMessage(msg.player.username)
-                      ? "border-orange-600"
-                      : "border-amber-500"
-                  } ${
-                    !isSystemMessage(msg.player.username)
-                      ? "cursor-pointer hover:opacity-80"
-                      : ""
-                  } transition overflow-hidden bg-stone-900`}
-                  onClick={() =>
-                    !isSystemMessage(msg.player.username) &&
-                    handlePlayerClick(msg.player.username)
-                  }
-                >
-                  {isSystemMessage(msg.player.username) ? (
-                    <img
-                      src="/assets/ui/system.png"
-                      alt="System"
-                      className="w-full h-full object-cover"
-                      style={{ imageRendering: "pixelated" }}
-                    />
-                  ) : msg.player.avatarId ? (
-                    <img
-                      src={getDungeonIcon(msg.player.avatarId)}
-                      alt="Avatar"
-                      className="w-full h-full object-cover"
-                      style={{ imageRendering: "pixelated" }}
-                    />
-                  ) : (
-                    <img
-                      src={`/assets/ui/chat/classIcons/${
-                        msg.player.class?.toLowerCase() || "warrior"
-                      }.png`}
-                      alt={msg.player.class}
-                      className="w-6 h-6"
-                      style={{ imageRendering: "pixelated" }}
-                    />
-                  )}
-                </div>
+                {isSystemMessage(msg.player.username) ? (
+                  <FramedAvatar
+                    src="/assets/ui/avatar_frames/system_avatar.png"
+                    alt="System"
+                    frame="system_frame"
+                    size="small"
+                    borderColor="border-orange-600"
+                  />
+                ) : (
+                  <FramedAvatar
+                    src={
+                      msg.player.avatarId
+                        ? getDungeonIcon(msg.player.avatarId)
+                        : `/assets/ui/chat/classIcons/${
+                            msg.player.class?.toLowerCase() || "warrior"
+                          }.png`
+                    }
+                    alt={msg.player.username}
+                    frame={msg.player.avatarFrame || "default"}
+                    size="small"
+                    onClick={() => handlePlayerClick(msg.player.username)}
+                    borderColor="border-amber-500"
+                  />
+                )}
 
                 {/* Message Content */}
                 <div className="flex-1 min-w-0">
@@ -951,90 +952,114 @@ export default function ServerChat() {
                       ].map(([slot, item, label]) => {
                         const enhLevel = (item as any)?.enhancementLevel || 0;
                         const getAnimation = () => {
-                          if (enhLevel >= 1 && enhLevel <= 2) return "shimmer 2s ease-in-out infinite";
-                          if (enhLevel >= 3 && enhLevel <= 4) return "glow-pulse 1.5s ease-in-out infinite";
-                          if (enhLevel === 5) return "sparkle-shine 1.2s ease-in-out infinite";
+                          if (enhLevel >= 1 && enhLevel <= 2)
+                            return "shimmer 2s ease-in-out infinite";
+                          if (enhLevel >= 3 && enhLevel <= 4)
+                            return "glow-pulse 1.5s ease-in-out infinite";
+                          if (enhLevel === 5)
+                            return "sparkle-shine 1.2s ease-in-out infinite";
                           return "";
                         };
                         return (
-                        <div
-                          key={slot as string}
-                          className={`relative aspect-square bg-stone-900 border-2 ${
-                            item
-                              ? enhLevel >= 9
-                                ? "border-purple-500"
-                                : enhLevel >= 8
-                                ? "border-pink-500"
-                                : enhLevel >= 7
-                                ? "border-indigo-500"
-                                : enhLevel >= 6
-                                ? "border-cyan-400"
-                                : getRarityBorder((item as any).rarity)
-                              : "border-stone-700"
-                          }`}
-                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)", animation: getAnimation() }}
-                        >
-                          {item ? (
-                            <>
-                              {(item as any).enhancementLevel >= 9 && (
-                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                                  <Lightning hue={270} xOffset={0} speed={1.5} intensity={0.8} size={2} />
-                                </div>
-                              )}
-                              {(item as any).enhancementLevel === 8 && (
-                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                                  <ColorBends colors={["#ff5c7a", "#8a5cff", "#00ffd1"]} rotation={30} speed={0.3} scale={1.2} frequency={1.4} warpStrength={1.2} mouseInfluence={0} parallax={0} noise={0.08} transparent />
-                                </div>
-                              )}
-                              <div className="absolute inset-0 flex items-center justify-center p-1">
-                                {getItemImage(
-                                  (item as any).spriteId,
-                                  (item as any).type
-                                ) && (
-                                  <img
-                                    src={
-                                      getItemImage(
-                                        (item as any).spriteId,
-                                        (item as any).type
-                                      )!
-                                    }
-                                    alt={(item as any).name}
-                                    className="w-full h-full object-contain"
-                                    style={{ imageRendering: "pixelated" }}
-                                  />
+                          <div
+                            key={slot as string}
+                            className={`relative aspect-square bg-stone-900 border-2 ${
+                              item
+                                ? enhLevel >= 9
+                                  ? "border-purple-500"
+                                  : enhLevel >= 8
+                                  ? "border-pink-500"
+                                  : enhLevel >= 7
+                                  ? "border-indigo-500"
+                                  : enhLevel >= 6
+                                  ? "border-cyan-400"
+                                  : getRarityBorder((item as any).rarity)
+                                : "border-stone-700"
+                            }`}
+                            style={{
+                              boxShadow: "0 2px 0 rgba(0,0,0,0.3)",
+                              animation: getAnimation(),
+                            }}
+                          >
+                            {item ? (
+                              <>
+                                {(item as any).enhancementLevel >= 9 && (
+                                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                    <Lightning
+                                      hue={270}
+                                      xOffset={0}
+                                      speed={1.5}
+                                      intensity={0.8}
+                                      size={2}
+                                    />
+                                  </div>
                                 )}
-                              </div>
-                              {(item as any).enhancementLevel > 0 && (
-                                <div
-                                  className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
-                                    (item as any).enhancementLevel >= 9
-                                      ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
-                                      : (item as any).enhancementLevel >= 8
-                                      ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
-                                      : (item as any).enhancementLevel >= 7
-                                      ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
-                                      : (item as any).enhancementLevel >= 6
-                                      ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
-                                      : "bg-amber-600 border-amber-800"
-                                  }`}
+                                {(item as any).enhancementLevel === 8 && (
+                                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                    <ColorBends
+                                      colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+                                      rotation={30}
+                                      speed={0.3}
+                                      scale={1.2}
+                                      frequency={1.4}
+                                      warpStrength={1.2}
+                                      mouseInfluence={0}
+                                      parallax={0}
+                                      noise={0.08}
+                                      transparent
+                                    />
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 flex items-center justify-center p-1">
+                                  {getItemImage(
+                                    (item as any).spriteId,
+                                    (item as any).type
+                                  ) && (
+                                    <img
+                                      src={
+                                        getItemImage(
+                                          (item as any).spriteId,
+                                          (item as any).type
+                                        )!
+                                      }
+                                      alt={(item as any).name}
+                                      className="w-full h-full object-contain"
+                                      style={{ imageRendering: "pixelated" }}
+                                    />
+                                  )}
+                                </div>
+                                {(item as any).enhancementLevel > 0 && (
+                                  <div
+                                    className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
+                                      (item as any).enhancementLevel >= 9
+                                        ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                                        : (item as any).enhancementLevel >= 8
+                                        ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
+                                        : (item as any).enhancementLevel >= 7
+                                        ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                                        : (item as any).enhancementLevel >= 6
+                                        ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+                                        : "bg-amber-600 border-amber-800"
+                                    }`}
+                                    style={{ fontFamily: "monospace" }}
+                                  >
+                                    +{(item as any).enhancementLevel}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
+                                <p
+                                  className="text-[9px] font-bold"
                                   style={{ fontFamily: "monospace" }}
                                 >
-                                  +{(item as any).enhancementLevel}
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
-                              <p
-                                className="text-[9px] font-bold"
-                                style={{ fontFamily: "monospace" }}
-                              >
-                                {label as string}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      );})}
+                                  {label as string}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                       {/* Row 2 */}
                       {[
                         ["weapon", playerCharacter.weapon, "Weapon"],
@@ -1043,90 +1068,114 @@ export default function ServerChat() {
                       ].map(([slot, item, label]) => {
                         const enhLevel = (item as any)?.enhancementLevel || 0;
                         const getAnimation = () => {
-                          if (enhLevel >= 1 && enhLevel <= 2) return "shimmer 2s ease-in-out infinite";
-                          if (enhLevel >= 3 && enhLevel <= 4) return "glow-pulse 1.5s ease-in-out infinite";
-                          if (enhLevel === 5) return "sparkle-shine 1.2s ease-in-out infinite";
+                          if (enhLevel >= 1 && enhLevel <= 2)
+                            return "shimmer 2s ease-in-out infinite";
+                          if (enhLevel >= 3 && enhLevel <= 4)
+                            return "glow-pulse 1.5s ease-in-out infinite";
+                          if (enhLevel === 5)
+                            return "sparkle-shine 1.2s ease-in-out infinite";
                           return "";
                         };
                         return (
-                        <div
-                          key={slot as string}
-                          className={`relative aspect-square bg-stone-900 border-2 ${
-                            item
-                              ? enhLevel >= 9
-                                ? "border-purple-500"
-                                : enhLevel >= 8
-                                ? "border-pink-500"
-                                : enhLevel >= 7
-                                ? "border-indigo-500"
-                                : enhLevel >= 6
-                                ? "border-cyan-400"
-                                : getRarityBorder((item as any).rarity)
-                              : "border-stone-700"
-                          }`}
-                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)", animation: getAnimation() }}
-                        >
-                          {item ? (
-                            <>
-                              {(item as any).enhancementLevel >= 9 && (
-                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                                  <Lightning hue={270} xOffset={0} speed={1.5} intensity={0.8} size={2} />
-                                </div>
-                              )}
-                              {(item as any).enhancementLevel === 8 && (
-                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                                  <ColorBends colors={["#ff5c7a", "#8a5cff", "#00ffd1"]} rotation={30} speed={0.3} scale={1.2} frequency={1.4} warpStrength={1.2} mouseInfluence={0} parallax={0} noise={0.08} transparent />
-                                </div>
-                              )}
-                              <div className="absolute inset-0 flex items-center justify-center p-1">
-                                {getItemImage(
-                                  (item as any).spriteId,
-                                  (item as any).type
-                                ) && (
-                                  <img
-                                    src={
-                                      getItemImage(
-                                        (item as any).spriteId,
-                                        (item as any).type
-                                      )!
-                                    }
-                                    alt={(item as any).name}
-                                    className="w-full h-full object-contain"
-                                    style={{ imageRendering: "pixelated" }}
-                                  />
+                          <div
+                            key={slot as string}
+                            className={`relative aspect-square bg-stone-900 border-2 ${
+                              item
+                                ? enhLevel >= 9
+                                  ? "border-purple-500"
+                                  : enhLevel >= 8
+                                  ? "border-pink-500"
+                                  : enhLevel >= 7
+                                  ? "border-indigo-500"
+                                  : enhLevel >= 6
+                                  ? "border-cyan-400"
+                                  : getRarityBorder((item as any).rarity)
+                                : "border-stone-700"
+                            }`}
+                            style={{
+                              boxShadow: "0 2px 0 rgba(0,0,0,0.3)",
+                              animation: getAnimation(),
+                            }}
+                          >
+                            {item ? (
+                              <>
+                                {(item as any).enhancementLevel >= 9 && (
+                                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                    <Lightning
+                                      hue={270}
+                                      xOffset={0}
+                                      speed={1.5}
+                                      intensity={0.8}
+                                      size={2}
+                                    />
+                                  </div>
                                 )}
-                              </div>
-                              {(item as any).enhancementLevel > 0 && (
-                                <div
-                                  className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
-                                    (item as any).enhancementLevel >= 9
-                                      ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
-                                      : (item as any).enhancementLevel >= 8
-                                      ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
-                                      : (item as any).enhancementLevel >= 7
-                                      ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
-                                      : (item as any).enhancementLevel >= 6
-                                      ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
-                                      : "bg-amber-600 border-amber-800"
-                                  }`}
+                                {(item as any).enhancementLevel === 8 && (
+                                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                    <ColorBends
+                                      colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+                                      rotation={30}
+                                      speed={0.3}
+                                      scale={1.2}
+                                      frequency={1.4}
+                                      warpStrength={1.2}
+                                      mouseInfluence={0}
+                                      parallax={0}
+                                      noise={0.08}
+                                      transparent
+                                    />
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 flex items-center justify-center p-1">
+                                  {getItemImage(
+                                    (item as any).spriteId,
+                                    (item as any).type
+                                  ) && (
+                                    <img
+                                      src={
+                                        getItemImage(
+                                          (item as any).spriteId,
+                                          (item as any).type
+                                        )!
+                                      }
+                                      alt={(item as any).name}
+                                      className="w-full h-full object-contain"
+                                      style={{ imageRendering: "pixelated" }}
+                                    />
+                                  )}
+                                </div>
+                                {(item as any).enhancementLevel > 0 && (
+                                  <div
+                                    className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
+                                      (item as any).enhancementLevel >= 9
+                                        ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                                        : (item as any).enhancementLevel >= 8
+                                        ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
+                                        : (item as any).enhancementLevel >= 7
+                                        ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                                        : (item as any).enhancementLevel >= 6
+                                        ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+                                        : "bg-amber-600 border-amber-800"
+                                    }`}
+                                    style={{ fontFamily: "monospace" }}
+                                  >
+                                    +{(item as any).enhancementLevel}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
+                                <p
+                                  className="text-[9px] font-bold"
                                   style={{ fontFamily: "monospace" }}
                                 >
-                                  +{(item as any).enhancementLevel}
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
-                              <p
-                                className="text-[9px] font-bold"
-                                style={{ fontFamily: "monospace" }}
-                              >
-                                {label as string}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      );})}
+                                  {label as string}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                       {/* Row 3 */}
                       {[
                         ["ring", playerCharacter.ring, "Ring"],
@@ -1135,90 +1184,114 @@ export default function ServerChat() {
                       ].map(([slot, item, label]) => {
                         const enhLevel = (item as any)?.enhancementLevel || 0;
                         const getAnimation = () => {
-                          if (enhLevel >= 1 && enhLevel <= 2) return "shimmer 2s ease-in-out infinite";
-                          if (enhLevel >= 3 && enhLevel <= 4) return "glow-pulse 1.5s ease-in-out infinite";
-                          if (enhLevel === 5) return "sparkle-shine 1.2s ease-in-out infinite";
+                          if (enhLevel >= 1 && enhLevel <= 2)
+                            return "shimmer 2s ease-in-out infinite";
+                          if (enhLevel >= 3 && enhLevel <= 4)
+                            return "glow-pulse 1.5s ease-in-out infinite";
+                          if (enhLevel === 5)
+                            return "sparkle-shine 1.2s ease-in-out infinite";
                           return "";
                         };
                         return (
-                        <div
-                          key={slot as string}
-                          className={`relative aspect-square bg-stone-900 border-2 ${
-                            item
-                              ? enhLevel >= 9
-                                ? "border-purple-500"
-                                : enhLevel >= 8
-                                ? "border-pink-500"
-                                : enhLevel >= 7
-                                ? "border-indigo-500"
-                                : enhLevel >= 6
-                                ? "border-cyan-400"
-                                : getRarityBorder((item as any).rarity)
-                              : "border-stone-700"
-                          }`}
-                          style={{ boxShadow: "0 2px 0 rgba(0,0,0,0.3)", animation: getAnimation() }}
-                        >
-                          {item ? (
-                            <>
-                              {(item as any).enhancementLevel >= 9 && (
-                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                                  <Lightning hue={270} xOffset={0} speed={1.5} intensity={0.8} size={2} />
-                                </div>
-                              )}
-                              {(item as any).enhancementLevel === 8 && (
-                                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                                  <ColorBends colors={["#ff5c7a", "#8a5cff", "#00ffd1"]} rotation={30} speed={0.3} scale={1.2} frequency={1.4} warpStrength={1.2} mouseInfluence={0} parallax={0} noise={0.08} transparent />
-                                </div>
-                              )}
-                              <div className="absolute inset-0 flex items-center justify-center p-1">
-                                {getItemImage(
-                                  (item as any).spriteId,
-                                  (item as any).type
-                                ) && (
-                                  <img
-                                    src={
-                                      getItemImage(
-                                        (item as any).spriteId,
-                                        (item as any).type
-                                      )!
-                                    }
-                                    alt={(item as any).name}
-                                    className="w-full h-full object-contain"
-                                    style={{ imageRendering: "pixelated" }}
-                                  />
+                          <div
+                            key={slot as string}
+                            className={`relative aspect-square bg-stone-900 border-2 ${
+                              item
+                                ? enhLevel >= 9
+                                  ? "border-purple-500"
+                                  : enhLevel >= 8
+                                  ? "border-pink-500"
+                                  : enhLevel >= 7
+                                  ? "border-indigo-500"
+                                  : enhLevel >= 6
+                                  ? "border-cyan-400"
+                                  : getRarityBorder((item as any).rarity)
+                                : "border-stone-700"
+                            }`}
+                            style={{
+                              boxShadow: "0 2px 0 rgba(0,0,0,0.3)",
+                              animation: getAnimation(),
+                            }}
+                          >
+                            {item ? (
+                              <>
+                                {(item as any).enhancementLevel >= 9 && (
+                                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                    <Lightning
+                                      hue={270}
+                                      xOffset={0}
+                                      speed={1.5}
+                                      intensity={0.8}
+                                      size={2}
+                                    />
+                                  </div>
                                 )}
-                              </div>
-                              {(item as any).enhancementLevel > 0 && (
-                                <div
-                                  className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
-                                    (item as any).enhancementLevel >= 9
-                                      ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
-                                      : (item as any).enhancementLevel >= 8
-                                      ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
-                                      : (item as any).enhancementLevel >= 7
-                                      ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
-                                      : (item as any).enhancementLevel >= 6
-                                      ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
-                                      : "bg-amber-600 border-amber-800"
-                                  }`}
+                                {(item as any).enhancementLevel === 8 && (
+                                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                    <ColorBends
+                                      colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
+                                      rotation={30}
+                                      speed={0.3}
+                                      scale={1.2}
+                                      frequency={1.4}
+                                      warpStrength={1.2}
+                                      mouseInfluence={0}
+                                      parallax={0}
+                                      noise={0.08}
+                                      transparent
+                                    />
+                                  </div>
+                                )}
+                                <div className="absolute inset-0 flex items-center justify-center p-1">
+                                  {getItemImage(
+                                    (item as any).spriteId,
+                                    (item as any).type
+                                  ) && (
+                                    <img
+                                      src={
+                                        getItemImage(
+                                          (item as any).spriteId,
+                                          (item as any).type
+                                        )!
+                                      }
+                                      alt={(item as any).name}
+                                      className="w-full h-full object-contain"
+                                      style={{ imageRendering: "pixelated" }}
+                                    />
+                                  )}
+                                </div>
+                                {(item as any).enhancementLevel > 0 && (
+                                  <div
+                                    className={`absolute top-0 right-0 text-white text-xs font-bold px-1.5 py-0.5 border-2 ${
+                                      (item as any).enhancementLevel >= 9
+                                        ? "bg-purple-500 border-purple-700 shadow-[0_0_10px_rgba(168,85,247,0.8)]"
+                                        : (item as any).enhancementLevel >= 8
+                                        ? "bg-pink-500 border-pink-700 shadow-[0_0_10px_rgba(236,72,153,0.8)]"
+                                        : (item as any).enhancementLevel >= 7
+                                        ? "bg-indigo-500 border-indigo-700 shadow-[0_0_8px_rgba(99,102,241,0.6)]"
+                                        : (item as any).enhancementLevel >= 6
+                                        ? "bg-cyan-500 border-cyan-700 shadow-[0_0_8px_rgba(34,211,238,0.6)]"
+                                        : "bg-amber-600 border-amber-800"
+                                    }`}
+                                    style={{ fontFamily: "monospace" }}
+                                  >
+                                    +{(item as any).enhancementLevel}
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
+                                <p
+                                  className="text-[9px] font-bold"
                                   style={{ fontFamily: "monospace" }}
                                 >
-                                  +{(item as any).enhancementLevel}
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
-                              <p
-                                className="text-[9px] font-bold"
-                                style={{ fontFamily: "monospace" }}
-                              >
-                                {label as string}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      );})}
+                                  {label as string}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1340,56 +1413,113 @@ export default function ServerChat() {
 
                 {/* Action Buttons */}
                 {playerCharacter && (
-                  <div className={`flex flex-col sm:flex-row gap-2 sm:gap-3 mt-6 pt-6 border-t-2 border-amber-700 ${!(player as any)?.guildId || ((player as any)?.guildRank !== 'Leader' && (player as any)?.guildRank !== 'Officer') ? 'justify-center' : ''}`}>
+                  <div
+                    className={`flex flex-col sm:flex-row gap-2 sm:gap-3 mt-6 pt-6 border-t-2 border-amber-700 ${
+                      !(player as any)?.guildId ||
+                      ((player as any)?.guildRank !== "Leader" &&
+                        (player as any)?.guildRank !== "Officer")
+                        ? "justify-center"
+                        : ""
+                    }`}
+                  >
                     <button
                       onClick={() => {
                         if (isAlreadyFriend) {
                           removeFriendMutation.mutate(playerCharacter.playerId);
                         } else if (friendRequestSent) {
-                          cancelFriendRequestMutation.mutate(selectedPlayerUsername!);
+                          cancelFriendRequestMutation.mutate(
+                            selectedPlayerUsername!
+                          );
                         } else {
-                          sendFriendRequestMutation.mutate(selectedPlayerUsername!);
+                          sendFriendRequestMutation.mutate(
+                            selectedPlayerUsername!
+                          );
                         }
                       }}
-                      disabled={sendFriendRequestMutation.isPending || cancelFriendRequestMutation.isPending || removeFriendMutation.isPending}
-                      className={`${(player as any)?.guildId && ((player as any)?.guildRank === 'Leader' || (player as any)?.guildRank === 'Officer') ? 'flex-1' : 'w-full'} bg-gradient-to-b ${isAlreadyFriend || friendRequestSent ? 'from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border-red-400' : 'from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 border-blue-400'} text-white font-bold py-2 sm:py-3 px-4 border-2 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                      disabled={
+                        sendFriendRequestMutation.isPending ||
+                        cancelFriendRequestMutation.isPending ||
+                        removeFriendMutation.isPending
+                      }
+                      className={`${
+                        (player as any)?.guildId &&
+                        ((player as any)?.guildRank === "Leader" ||
+                          (player as any)?.guildRank === "Officer")
+                          ? "flex-1"
+                          : "w-full"
+                      } bg-gradient-to-b ${
+                        isAlreadyFriend || friendRequestSent
+                          ? "from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 border-red-400"
+                          : "from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 border-blue-400"
+                      } text-white font-bold py-2 sm:py-3 px-4 border-2 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
                       style={{
                         borderRadius: "0",
-                        boxShadow: isAlreadyFriend || friendRequestSent ? "0 4px 0 #991b1b, inset 0 2px 0 rgba(255,255,255,0.3)" : "0 4px 0 #1e40af, inset 0 2px 0 rgba(255,255,255,0.3)",
+                        boxShadow:
+                          isAlreadyFriend || friendRequestSent
+                            ? "0 4px 0 #991b1b, inset 0 2px 0 rgba(255,255,255,0.3)"
+                            : "0 4px 0 #1e40af, inset 0 2px 0 rgba(255,255,255,0.3)",
                         fontFamily: "monospace",
                         textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
                       }}
                     >
-                      <img 
-                        src={isAlreadyFriend || friendRequestSent ? removeFriendIcon : addFriendIcon} 
-                        alt={isAlreadyFriend ? "Remove Friend" : friendRequestSent ? "Cancel Request" : "Add Friend"} 
+                      <img
+                        src={
+                          isAlreadyFriend || friendRequestSent
+                            ? removeFriendIcon
+                            : addFriendIcon
+                        }
+                        alt={
+                          isAlreadyFriend
+                            ? "Remove Friend"
+                            : friendRequestSent
+                            ? "Cancel Request"
+                            : "Add Friend"
+                        }
                         className="w-5 h-5 sm:w-6 sm:h-6"
                         style={{ imageRendering: "pixelated" }}
                       />
-                      <span className="text-sm sm:text-base">{isAlreadyFriend ? 'Remove Friend' : friendRequestSent ? 'Cancel Request' : 'Add Friend'}</span>
+                      <span className="text-sm sm:text-base">
+                        {isAlreadyFriend
+                          ? "Remove Friend"
+                          : friendRequestSent
+                          ? "Cancel Request"
+                          : "Add Friend"}
+                      </span>
                     </button>
                     {/* Only show guild invite if player is guild leader or officer */}
-                    {(player as any)?.guildId && ((player as any)?.guildRank === 'Leader' || (player as any)?.guildRank === 'Officer') && (
-                      <button
-                        onClick={() => sendGuildInviteMutation.mutate(playerCharacter.playerId)}
-                        disabled={sendGuildInviteMutation.isPending || !playerCharacter?.playerId}
-                        className="flex-1 bg-gradient-to-b from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-2 sm:py-3 px-4 border-2 border-purple-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{
-                          borderRadius: "0",
-                          boxShadow: "0 4px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.3)",
-                          fontFamily: "monospace",
-                          textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                        }}
-                      >
-                        <img 
-                          src={guildInviteIcon} 
-                          alt="Guild Invite" 
-                          className="w-5 h-5 sm:w-6 sm:h-6"
-                          style={{ imageRendering: "pixelated" }}
-                        />
-                        <span className="text-sm sm:text-base">Invite to Guild</span>
-                      </button>
-                    )}
+                    {(player as any)?.guildId &&
+                      ((player as any)?.guildRank === "Leader" ||
+                        (player as any)?.guildRank === "Officer") && (
+                        <button
+                          onClick={() =>
+                            sendGuildInviteMutation.mutate(
+                              playerCharacter.playerId
+                            )
+                          }
+                          disabled={
+                            sendGuildInviteMutation.isPending ||
+                            !playerCharacter?.playerId
+                          }
+                          className="flex-1 bg-gradient-to-b from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-bold py-2 sm:py-3 px-4 border-2 border-purple-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{
+                            borderRadius: "0",
+                            boxShadow:
+                              "0 4px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.3)",
+                            fontFamily: "monospace",
+                            textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                          }}
+                        >
+                          <img
+                            src={guildInviteIcon}
+                            alt="Guild Invite"
+                            className="w-5 h-5 sm:w-6 sm:h-6"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                          <span className="text-sm sm:text-base">
+                            Invite to Guild
+                          </span>
+                        </button>
+                      )}
                   </div>
                 )}
               </>
