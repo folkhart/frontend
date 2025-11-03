@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain, Notification, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
+const { initializeAntiCheat, cleanupAntiCheat } = require('./antiCheat.cjs');
 const isDev = process.env.NODE_ENV === 'development';
 
 // Set app name and user model ID for proper Windows notifications
@@ -40,6 +41,9 @@ async function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
+
+  // Initialize anti-cheat system
+  initializeAntiCheat(mainWindow);
 
   // Load the app
   if (isDev) {
@@ -463,6 +467,7 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   app.isQuitting = true;
+  cleanupAntiCheat();
 });
 
 // Prevent multiple instances
