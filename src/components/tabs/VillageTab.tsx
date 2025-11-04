@@ -29,6 +29,20 @@ import CraftingTab from "./CraftingTab";
 import InventoryTab from "./InventoryTab";
 import BlacksmithTab from "./BlacksmithTab";
 
+// Enhancement bonus table (must match backend)
+const ENHANCEMENT_BONUS: Record<number, number> = {
+  0: 0,
+  1: 5,
+  2: 10,
+  3: 15,
+  4: 20,
+  5: 30,
+  6: 40,
+  7: 55,
+  8: 75,
+  9: 100,
+};
+
 export default function VillageTab() {
   const queryClient = useQueryClient();
   const { character, setCharacter } = useGameStore();
@@ -710,7 +724,7 @@ export default function VillageTab() {
                   <div className="flex justify-between">
                     <span className="text-gray-300">All Stats:</span>
                     <span className="text-amber-300">
-                      +{selectedItemDetails.enhancementLevel * 2}%
+                      +{ENHANCEMENT_BONUS[selectedItemDetails.enhancementLevel] || 0}%
                     </span>
                   </div>
                 </div>
