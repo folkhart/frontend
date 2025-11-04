@@ -28,7 +28,7 @@ export default function InventoryTab() {
   const [sellQuantity, setSellQuantity] = useState(1);
   const [selectedItemDetail, setSelectedItemDetail] = useState<any>(null);
 
-  const getGuildItemPath = (spriteId: string, itemType?: string) => {
+  const getGuildItemPath = (spriteId: string) => {
     // FIRST: Convert tier names to numbers (bronze→1, silver→2, gold→3, diamond→4)
     let fileName = spriteId;
     const tierMap: { [key: string]: string } = {
@@ -130,6 +130,11 @@ export default function InventoryTab() {
         as: "url",
       });
 
+      // Check if it's a companion (from public/assets/ui/companions folder)
+      if (itemType === "Companion" || spriteId.startsWith("companions/")) {
+        return `/assets/ui/${spriteId}.png`;
+      }
+
       // Check if it's a potion (numeric sprite ID)
       if (/^\d+$/.test(spriteId)) {
         const num = parseInt(spriteId);
@@ -155,10 +160,7 @@ export default function InventoryTab() {
         spriteId.startsWith("key")
       ) {
         // Guild items need special path handling
-        return `/assets/items/guildshop_items/${getGuildItemPath(
-          spriteId,
-          itemType
-        )}`;
+        return `/assets/items/guildshop_items/${getGuildItemPath(spriteId)}`;
       }
 
       // Check if spriteId contains a path (for gems, materials, weapons/steelSet, armors/steelSet, accessories with woodenSet/, ironSet/, steelSet/, etc.)
@@ -344,6 +346,9 @@ export default function InventoryTab() {
   });
 
   const getSlotForItem = (item: any): string => {
+    // For companions
+    if (item.type === "Companion") return "companion";
+
     // For accessories, use the accessoryType field
     if (item.type === "Accessory" && item.accessoryType) {
       // Convert "Ring" -> "ring", "Necklace" -> "necklace", etc.
@@ -542,8 +547,6 @@ export default function InventoryTab() {
       <div className="grid grid-cols-3 gap-2">
         {filteredInventory.map((slot: any) => {
           const equipped = isEquipped(slot.item?.id);
-          const isConsumable =
-            slot.item?.type === "Consumable" || slot.item?.type === "Potion";
 
           return (
             <div

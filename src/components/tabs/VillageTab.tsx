@@ -10,6 +10,7 @@ import anvilIcon from "@/assets/ui/craft/anvil.png";
 import hammerIcon from "@/assets/ui/craft/hammer.png";
 import refiningBonusIcon from "@/assets/ui/character_panel/refining_bonus.png";
 import socketDrillIcon from "@/assets/items/craft/gems/socket_drill.png";
+import petIcon from "@/assets/ui/pet.png";
 import Lightning from "@/components/effects/Lightning";
 import ColorBends from "@/components/effects/ColorBends";
 import CraftingTab from "./CraftingTab";
@@ -198,6 +199,11 @@ export default function VillageTab() {
         eager: true,
         as: "url",
       });
+
+      // Check if it's a companion (from public/assets/ui/companions folder)
+      if (itemType === "Companion" || spriteId.startsWith("companions/")) {
+        return `/assets/ui/${spriteId}.png`;
+      }
 
       // Check if it's a potion (numeric sprite ID)
       if (/^\d+$/.test(spriteId)) {
@@ -412,9 +418,9 @@ export default function VillageTab() {
         className={`relative aspect-square bg-stone-900 border-2 cursor-pointer transition ${getBorderClass()} ${
           equippedItem ? "hover:border-amber-500" : "hover:border-amber-600"
         } ${getGlowEffect()}`}
-        style={{ 
+        style={{
           boxShadow: "0 2px 0 rgba(0,0,0,0.3)",
-          ...getAnimationStyle()
+          ...getAnimationStyle(),
         }}
       >
         {equippedItem ? (
@@ -459,7 +465,9 @@ export default function VillageTab() {
                     style={{
                       top: `${Math.random() * 100}%`,
                       left: `${Math.random() * 100}%`,
-                      animation: `twinkle 3s ease-in-out infinite ${Math.random() * 3}s`,
+                      animation: `twinkle 3s ease-in-out infinite ${
+                        Math.random() * 3
+                      }s`,
                       opacity: 0.8,
                     }}
                   />
@@ -469,10 +477,14 @@ export default function VillageTab() {
             {/* +6 Electric Border Effect */}
             {enhancementLevel === 6 && (
               <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute inset-0" style={{
-                  background: 'linear-gradient(90deg, transparent, rgba(34,211,238,0.3), transparent)',
-                  animation: 'electricSweep 2s linear infinite',
-                }} />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(34,211,238,0.3), transparent)",
+                    animation: "electricSweep 2s linear infinite",
+                  }}
+                />
               </div>
             )}
             <div className="relative w-full h-full">
@@ -481,10 +493,15 @@ export default function VillageTab() {
                   src={getItemImage(equippedItem.spriteId, equippedItem.type)!}
                   alt={equippedItem.name}
                   className={`w-full h-full object-contain ${
-                    enhancementLevel >= 9 ? "filter drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" : 
-                    enhancementLevel >= 8 ? "filter drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]" : 
-                    enhancementLevel >= 7 ? "filter drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]" : 
-                    enhancementLevel >= 6 ? "filter drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]" : ""
+                    enhancementLevel >= 9
+                      ? "filter drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]"
+                      : enhancementLevel >= 8
+                      ? "filter drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]"
+                      : enhancementLevel >= 7
+                      ? "filter drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]"
+                      : enhancementLevel >= 6
+                      ? "filter drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]"
+                      : ""
                   }`}
                   style={{ imageRendering: "pixelated" }}
                 />
@@ -526,11 +543,18 @@ export default function VillageTab() {
               </div>
             )}
             {/* Refining Indicator */}
-            {itemSlot?.refineStats && Object.keys(itemSlot.refineStats).length > 0 && (
-              <div className="absolute bottom-0 left-0 bg-purple-600 border border-purple-400 text-white text-xs font-bold px-1 py-0.5" style={{ fontFamily: "monospace", textShadow: '0 0 4px rgba(168,85,247,0.8)' }}>
-                ✨
-              </div>
-            )}
+            {itemSlot?.refineStats &&
+              Object.keys(itemSlot.refineStats).length > 0 && (
+                <div
+                  className="absolute bottom-0 left-0 bg-purple-600 border border-purple-400 text-white text-xs font-bold px-1 py-0.5"
+                  style={{
+                    fontFamily: "monospace",
+                    textShadow: "0 0 4px rgba(168,85,247,0.8)",
+                  }}
+                >
+                  ✨
+                </div>
+              )}
           </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-600">
@@ -670,54 +694,74 @@ export default function VillageTab() {
             )}
 
             {/* Refining Stats */}
-            {selectedItemDetails.refineStats && typeof selectedItemDetails.refineStats === 'object' && Object.keys(selectedItemDetails.refineStats).length > 0 && (
-              <div className="bg-gradient-to-r from-purple-900/50 to-indigo-900/50 p-3 rounded mb-3 border border-purple-600">
-                <h4 className="text-sm font-bold text-purple-400 mb-2 flex items-center gap-1">
-                  <img src={refiningBonusIcon} alt="Refining" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
-                  Refining Bonuses
-                </h4>
-                <div className="space-y-1 text-sm">
-                  {Object.entries(selectedItemDetails.refineStats).map(([stat, value]) => {
-                    const statIcons: Record<string, string> = {
-                      fireAttack: '🔥',
-                      iceAttack: '❄️',
-                      lightningAttack: '⚡',
-                      poisonAttack: '☠️',
-                      critChance: '💥',
-                      critDamage: '💢',
-                      lifeSteal: '💖',
-                      dodgeChance: '🌀',
-                    };
-                    const statNames: Record<string, string> = {
-                      fireAttack: 'Fire Attack',
-                      iceAttack: 'Ice Attack',
-                      lightningAttack: 'Lightning Attack',
-                      poisonAttack: 'Poison Attack',
-                      critChance: 'Critical Chance',
-                      critDamage: 'Critical Damage',
-                      lifeSteal: 'Life Steal',
-                      dodgeChance: 'Dodge Chance',
-                    };
-                    return (
-                      <div key={stat} className="flex justify-between">
-                        <span className="text-purple-200">
-                          {statIcons[stat] || '⭐'} {statNames[stat] || stat}:
-                        </span>
-                        <span className="text-purple-300 font-bold">
-                          +{value as number}{stat.includes('Chance') || stat.includes('Damage') || stat.includes('Steal') ? '%' : ''}
-                        </span>
-                      </div>
-                    );
-                  })}
+            {selectedItemDetails.refineStats &&
+              typeof selectedItemDetails.refineStats === "object" &&
+              Object.keys(selectedItemDetails.refineStats).length > 0 && (
+                <div className="bg-gradient-to-r from-purple-900/50 to-indigo-900/50 p-3 rounded mb-3 border border-purple-600">
+                  <h4 className="text-sm font-bold text-purple-400 mb-2 flex items-center gap-1">
+                    <img
+                      src={refiningBonusIcon}
+                      alt="Refining"
+                      className="w-4 h-4"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                    Refining Bonuses
+                  </h4>
+                  <div className="space-y-1 text-sm">
+                    {Object.entries(selectedItemDetails.refineStats).map(
+                      ([stat, value]) => {
+                        const statIcons: Record<string, string> = {
+                          fireAttack: "🔥",
+                          iceAttack: "❄️",
+                          lightningAttack: "⚡",
+                          poisonAttack: "☠️",
+                          critChance: "💥",
+                          critDamage: "💢",
+                          lifeSteal: "💖",
+                          dodgeChance: "🌀",
+                        };
+                        const statNames: Record<string, string> = {
+                          fireAttack: "Fire Attack",
+                          iceAttack: "Ice Attack",
+                          lightningAttack: "Lightning Attack",
+                          poisonAttack: "Poison Attack",
+                          critChance: "Critical Chance",
+                          critDamage: "Critical Damage",
+                          lifeSteal: "Life Steal",
+                          dodgeChance: "Dodge Chance",
+                        };
+                        return (
+                          <div key={stat} className="flex justify-between">
+                            <span className="text-purple-200">
+                              {statIcons[stat] || "⭐"}{" "}
+                              {statNames[stat] || stat}:
+                            </span>
+                            <span className="text-purple-300 font-bold">
+                              +{value as number}
+                              {stat.includes("Chance") ||
+                              stat.includes("Damage") ||
+                              stat.includes("Steal")
+                                ? "%"
+                                : ""}
+                            </span>
+                          </div>
+                        );
+                      }
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
             {/* Socketed Gems */}
             {selectedItemDetails.socketSlots > 0 && (
               <div className="bg-stone-800 p-3 rounded mb-3">
                 <h4 className="text-sm font-bold text-green-400 mb-2 flex items-center gap-1">
-                  <img src={socketDrillIcon} alt="Socket" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                  <img
+                    src={socketDrillIcon}
+                    alt="Socket"
+                    className="w-4 h-4"
+                    style={{ imageRendering: "pixelated" }}
+                  />
                   Sockets ({selectedItemDetails.socketedGems?.length || 0}/
                   {selectedItemDetails.socketSlots})
                 </h4>
@@ -804,21 +848,33 @@ export default function VillageTab() {
                     | null = null;
                   if (getSlotItem("weapon")?.id === selectedItemDetails.item.id)
                     slotType = "weapon";
-                  else if (getSlotItem("armor")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("armor")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "armor";
-                  else if (getSlotItem("helmet")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("helmet")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "helmet";
-                  else if (getSlotItem("gloves")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("gloves")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "gloves";
-                  else if (getSlotItem("shoes")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("shoes")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "shoes";
-                  else if (getSlotItem("ring")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("ring")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "ring";
                   else if (
                     getSlotItem("necklace")?.id === selectedItemDetails.item.id
                   )
                     slotType = "necklace";
-                  else if (getSlotItem("belt")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("belt")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "belt";
                   else if (
                     getSlotItem("earring")?.id === selectedItemDetails.item.id
@@ -865,21 +921,33 @@ export default function VillageTab() {
                     | null = null;
                   if (getSlotItem("weapon")?.id === selectedItemDetails.item.id)
                     slotType = "weapon";
-                  else if (getSlotItem("armor")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("armor")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "armor";
-                  else if (getSlotItem("helmet")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("helmet")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "helmet";
-                  else if (getSlotItem("gloves")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("gloves")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "gloves";
-                  else if (getSlotItem("shoes")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("shoes")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "shoes";
-                  else if (getSlotItem("ring")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("ring")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "ring";
                   else if (
                     getSlotItem("necklace")?.id === selectedItemDetails.item.id
                   )
                     slotType = "necklace";
-                  else if (getSlotItem("belt")?.id === selectedItemDetails.item.id)
+                  else if (
+                    getSlotItem("belt")?.id === selectedItemDetails.item.id
+                  )
                     slotType = "belt";
                   else if (
                     getSlotItem("earring")?.id === selectedItemDetails.item.id
@@ -1123,32 +1191,97 @@ export default function VillageTab() {
             </div>
           </div>
 
-          {/* Pet/Companion Slot */}
-          <div className="bg-gradient-to-b from-stone-900 to-stone-800 rounded-lg border-2 border-pink-600 p-4 mb-4">
-            <h3 className="text-pink-400 font-bold text-lg mb-3 text-center" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
-              🐾 PET COMPANION 🐾
-            </h3>
-            
-            <div className="flex items-center gap-4">
-              {/* Pet Display */}
-              <div 
-                className="w-24 h-24 bg-black/40 rounded-lg border-2 border-pink-500 flex items-center justify-center cursor-pointer hover:bg-black/60 transition relative"
-                onClick={() => setSelectedSlot("companion")}
-                style={{ imageRendering: 'pixelated' }}
+          {/* Pet/Companion Slot - Premium Retro Design */}
+          <div
+            className="relative bg-gradient-to-b from-pink-950 via-stone-900 to-stone-950 border-4 border-pink-500 p-5 mb-4"
+            style={{
+              boxShadow:
+                "0 8px 0 #831843, 0 12px 0 rgba(0,0,0,0.8), inset 0 -4px 0 rgba(0,0,0,0.5), inset 0 4px 0 rgba(255,105,180,0.3)",
+              borderRadius: "0",
+            }}
+          >
+            {/* Decorative corners */}
+            <div
+              className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-yellow-400"
+              style={{ margin: "-2px" }}
+            />
+            <div
+              className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-yellow-400"
+              style={{ margin: "-2px" }}
+            />
+            <div
+              className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-yellow-400"
+              style={{ margin: "-2px" }}
+            />
+            <div
+              className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-yellow-400"
+              style={{ margin: "-2px" }}
+            />
+
+            {/* Title with pet icon */}
+            <div className="flex items-center justify-center gap-3 mb-4 pb-3 border-b-2 border-pink-700">
+              <h3
+                className="text-pink-300 font-bold text-xl tracking-wider"
+                style={{
+                  fontFamily: "monospace",
+                  textShadow:
+                    "3px 3px 0 #000, 0 0 20px rgba(236, 72, 153, 0.8), 0 0 40px rgba(236, 72, 153, 0.4)",
+                  letterSpacing: "0.15em",
+                }}
               >
+                PET COMPANION
+              </h3>
+            </div>
+
+            <div className="flex items-center gap-4">
+              {/* Pet Display - Enhanced */}
+              <div
+                className="w-28 h-28 bg-gradient-to-br from-black via-stone-950 to-pink-950 border-4 border-pink-400 flex items-center justify-center cursor-pointer hover:border-pink-300 transition relative group"
+                onClick={() => setSelectedSlot("companion")}
+                style={{
+                  imageRendering: "pixelated",
+                  boxShadow:
+                    "0 6px 0 #be185d, inset 0 4px 0 rgba(236, 72, 153, 0.3), inset 0 -4px 0 rgba(0,0,0,0.5), 0 0 20px rgba(236, 72, 153, 0.4)",
+                  borderRadius: "0",
+                }}
+              >
+                {/* Animated glow effect */}
+                <div className="absolute inset-0 bg-pink-500 opacity-0 group-hover:opacity-20 transition pointer-events-none" />
+
                 {getSlotItem("companion") ? (
                   <>
                     <img
-                      src={`/assets/ui/${getSlotItem("companion")?.item?.spriteId}.png`}
-                      alt={getSlotItem("companion")?.item?.name}
-                      className="w-full h-full object-contain p-2"
-                      style={{ imageRendering: 'pixelated' }}
+                      src={`/assets/ui/${
+                        getSlotItem("companion")?.spriteId
+                      }.png`}
+                      alt={getSlotItem("companion")?.name}
+                      className="w-full h-full object-contain p-3 relative z-10"
+                      style={{
+                        imageRendering: "pixelated",
+                        filter: "drop-shadow(0 0 10px rgba(236, 72, 153, 0.6))",
+                      }}
                     />
-                    {/* Rarity glow */}
-                    <div className={`absolute inset-0 ${getRarityBorder(getSlotItem("companion")?.item?.rarity)} opacity-50 rounded-lg`} />
+                    {/* Rarity glow with enhanced effect */}
+                    <div
+                      className={`absolute inset-0 ${getRarityBorder(
+                        getSlotItem("companion")?.rarity
+                      )} opacity-60 pointer-events-none`}
+                      style={{
+                        boxShadow: `inset 0 0 20px currentColor`,
+                        animation: "pulse 2s ease-in-out infinite",
+                      }}
+                    />
                   </>
                 ) : (
-                  <div className="text-gray-500 text-2xl">🐾</div>
+                  <img
+                    src={petIcon}
+                    alt="No Pet Equipped"
+                    className="w-20 h-20 object-contain opacity-40 grayscale group-hover:opacity-60 group-hover:grayscale-0 transition"
+                    style={{
+                      imageRendering: "pixelated",
+                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.8))",
+                    }}
+                  />
                 )}
               </div>
 
@@ -1156,70 +1289,152 @@ export default function VillageTab() {
               <div className="flex-1">
                 {getSlotItem("companion") ? (
                   <>
-                    <h4 className={`font-bold text-lg ${getRarityColor(getSlotItem("companion")?.item?.rarity)}`} style={{ fontFamily: 'monospace' }}>
-                      {getSlotItem("companion")?.item?.name}
+                    <h4
+                      className={`font-bold text-xl ${getRarityColor(
+                        getSlotItem("companion")?.rarity
+                      )}`}
+                      style={{
+                        fontFamily: "monospace",
+                        textShadow: "2px 2px 0 #000, 0 0 10px currentColor",
+                      }}
+                    >
+                      {getSlotItem("companion")?.name}
                     </h4>
-                    <p className="text-sm text-gray-400" style={{ fontFamily: 'monospace' }}>
-                      {getSlotItem("companion")?.item?.companionType} • {getSlotItem("companion")?.item?.rarity}
+                    <p
+                      className="text-sm text-pink-200 mb-2"
+                      style={{
+                        fontFamily: "monospace",
+                        textShadow: "1px 1px 0 #000",
+                      }}
+                    >
+                      {getSlotItem("companion")?.companionType} •{" "}
+                      {getSlotItem("companion")?.rarity}
                     </p>
-                    
-                    {/* Stats */}
-                    <div className="flex gap-2 mt-2 text-xs" style={{ fontFamily: 'monospace' }}>
-                      {getSlotItem("companion")?.item?.attackBonus > 0 && (
-                        <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-700/50">
-                          +{getSlotItem("companion")?.item?.attackBonus} ATK
+
+                    {/* Stats - Premium badges */}
+                    <div
+                      className="flex gap-2 mt-2 text-xs"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      {getSlotItem("companion")?.attackBonus > 0 && (
+                        <span
+                          className="bg-gradient-to-b from-red-600 to-red-800 text-white px-2 py-1 border-2 border-red-400 font-bold"
+                          style={{
+                            boxShadow:
+                              "0 2px 0 #7f1d1d, inset 0 1px 0 rgba(255,255,255,0.3)",
+                            textShadow: "1px 1px 0 #000",
+                          }}
+                        >
+                          +{getSlotItem("companion")?.attackBonus} ATK
                         </span>
                       )}
-                      {getSlotItem("companion")?.item?.defenseBonus > 0 && (
-                        <span className="bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-700/50">
-                          +{getSlotItem("companion")?.item?.defenseBonus} DEF
+                      {getSlotItem("companion")?.defenseBonus > 0 && (
+                        <span
+                          className="bg-gradient-to-b from-blue-600 to-blue-800 text-white px-2 py-1 border-2 border-blue-400 font-bold"
+                          style={{
+                            boxShadow:
+                              "0 2px 0 #1e3a8a, inset 0 1px 0 rgba(255,255,255,0.3)",
+                            textShadow: "1px 1px 0 #000",
+                          }}
+                        >
+                          +{getSlotItem("companion")?.defenseBonus} DEF
                         </span>
                       )}
-                      {getSlotItem("companion")?.item?.healthBonus > 0 && (
-                        <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded border border-green-700/50">
-                          +{getSlotItem("companion")?.item?.healthBonus} HP
+                      {getSlotItem("companion")?.healthBonus > 0 && (
+                        <span
+                          className="bg-gradient-to-b from-green-600 to-green-800 text-white px-2 py-1 border-2 border-green-400 font-bold"
+                          style={{
+                            boxShadow:
+                              "0 2px 0 #14532d, inset 0 1px 0 rgba(255,255,255,0.3)",
+                            textShadow: "1px 1px 0 #000",
+                          }}
+                        >
+                          +{getSlotItem("companion")?.healthBonus} HP
                         </span>
                       )}
                     </div>
 
-                    {/* Ability */}
-                    {getSlotItem("companion")?.item?.abilityName && (
-                      <div className="mt-2 bg-purple-900/30 px-3 py-2 rounded border border-purple-700/50">
-                        <p className="text-purple-300 text-xs font-bold" style={{ fontFamily: 'monospace' }}>
-                          ⚡ {getSlotItem("companion")?.item?.abilityName}
+                    {/* Ability - Premium display */}
+                    {getSlotItem("companion")?.abilityName && (
+                      <div
+                        className="mt-3 bg-gradient-to-br from-purple-900 to-purple-950 px-3 py-2 border-2 border-purple-500"
+                        style={{
+                          boxShadow:
+                            "0 4px 0 #581c87, inset 0 2px 0 rgba(168,85,247,0.3)",
+                          borderRadius: "0",
+                        }}
+                      >
+                        <p
+                          className="text-purple-200 text-xs font-bold"
+                          style={{
+                            fontFamily: "monospace",
+                            textShadow: "1px 1px 0 #000",
+                          }}
+                        >
+                          ⚡ {getSlotItem("companion")?.abilityName}
                         </p>
-                        <p className="text-purple-400 text-xs" style={{ fontFamily: 'monospace' }}>
-                          Power: {getSlotItem("companion")?.item?.abilityPower}
+                        <p
+                          className="text-purple-300 text-xs"
+                          style={{
+                            fontFamily: "monospace",
+                            textShadow: "1px 1px 0 #000",
+                          }}
+                        >
+                          Power: {getSlotItem("companion")?.abilityPower}
                         </p>
                       </div>
                     )}
 
-                    {/* Unequip Button */}
+                    {/* Unequip Button - Premium design */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        unequipMutation.mutate({ slot: "companion" });
+                        unequipMutation.mutate("companion");
                       }}
-                      className="mt-2 px-3 py-1 bg-red-800 hover:bg-red-700 text-white text-xs rounded border-2 border-red-600 transition"
-                      style={{ fontFamily: 'monospace' }}
+                      className="mt-3 px-4 py-2 bg-gradient-to-b from-red-700 to-red-900 hover:from-red-600 hover:to-red-800 text-white text-sm font-bold border-2 border-red-500 transition-all"
+                      style={{
+                        fontFamily: "monospace",
+                        boxShadow:
+                          "0 4px 0 #7f1d1d, inset 0 2px 0 rgba(255,255,255,0.2)",
+                        textShadow: "2px 2px 0 #000",
+                        borderRadius: "0",
+                      }}
                     >
-                      Unequip Pet
+                      UNEQUIP PET
                     </button>
                   </>
                 ) : (
                   <>
-                    <h4 className="font-bold text-gray-400" style={{ fontFamily: 'monospace' }}>
+                    <h4
+                      className="font-bold text-pink-200 text-lg"
+                      style={{
+                        fontFamily: "monospace",
+                        textShadow: "2px 2px 0 #000",
+                      }}
+                    >
                       No Pet Equipped
                     </h4>
-                    <p className="text-xs text-gray-500 mt-1" style={{ fontFamily: 'monospace' }}>
-                      Click to equip a companion!
+                    <p
+                      className="text-sm text-pink-300/60 mt-1 mb-3"
+                      style={{
+                        fontFamily: "monospace",
+                        textShadow: "1px 1px 0 #000",
+                      }}
+                    >
+                      Click the slot to equip a companion!
                     </p>
                     <button
                       onClick={() => setSelectedSlot("companion")}
-                      className="mt-2 px-3 py-1 bg-pink-800 hover:bg-pink-700 text-white text-xs rounded border-2 border-pink-600 transition"
-                      style={{ fontFamily: 'monospace' }}
+                      className="px-4 py-2 bg-gradient-to-b from-pink-600 to-pink-800 hover:from-pink-500 hover:to-pink-700 text-white text-sm font-bold border-2 border-pink-400 transition-all"
+                      style={{
+                        fontFamily: "monospace",
+                        boxShadow:
+                          "0 4px 0 #be185d, inset 0 2px 0 rgba(255,255,255,0.2)",
+                        textShadow: "2px 2px 0 #000",
+                        borderRadius: "0",
+                      }}
                     >
-                      Equip Pet
+                      EQUIP PET
                     </button>
                   </>
                 )}
@@ -1229,103 +1444,142 @@ export default function VillageTab() {
 
           {/* Character Stats - Retro RPG Style */}
           <div className="bg-gradient-to-b from-stone-900 to-stone-800 rounded-lg border-2 border-amber-600 p-4 mb-4">
-            <h3 className="text-amber-400 font-bold text-lg mb-3 text-center" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+            <h3
+              className="text-amber-400 font-bold text-lg mb-3 text-center"
+              style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
+            >
               ═══ CHARACTER STATS ═══
             </h3>
-            
+
             {/* Core Stats */}
             <div className="bg-black/40 rounded p-3 mb-3 border border-amber-800">
-              <h4 className="text-amber-300 font-bold text-sm mb-2" style={{ fontFamily: 'monospace' }}>
+              <h4
+                className="text-amber-300 font-bold text-sm mb-2"
+                style={{ fontFamily: "monospace" }}
+              >
                 ▸ CORE ATTRIBUTES
               </h4>
-              <div className="grid grid-cols-2 gap-2 text-sm" style={{ fontFamily: 'monospace' }}>
+              <div
+                className="grid grid-cols-2 gap-2 text-sm"
+                style={{ fontFamily: "monospace" }}
+              >
                 <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-red-900/50">
                   <span className="text-red-400 flex items-center gap-1">
                     <Heart size={14} /> HP
                   </span>
-                  <span className="text-white font-bold">{character.maxHealth}</span>
+                  <span className="text-white font-bold">
+                    {character.maxHealth}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-orange-900/50">
                   <span className="text-orange-400 flex items-center gap-1">
                     <Sword size={14} /> ATK
                   </span>
-                  <span className="text-white font-bold">{character.attack}</span>
+                  <span className="text-white font-bold">
+                    {character.attack}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-blue-900/50">
                   <span className="text-blue-400 flex items-center gap-1">
                     <Shield size={14} /> DEF
                   </span>
-                  <span className="text-white font-bold">{character.defense}</span>
+                  <span className="text-white font-bold">
+                    {character.defense}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-green-900/50">
                   <span className="text-green-400 flex items-center gap-1">
                     <Zap size={14} /> SPD
                   </span>
-                  <span className="text-white font-bold">{character.speed}</span>
+                  <span className="text-white font-bold">
+                    {character.speed}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Special Stats - Only show if character has any */}
-            {((character as any).fireAttack > 0 || 
-              (character as any).iceAttack > 0 || 
-              (character as any).lightningAttack > 0 || 
-              (character as any).poisonAttack > 0 || 
-              (character as any).critChance > 0 || 
-              (character as any).critDamage > 0 || 
-              (character as any).lifeSteal > 0 || 
+            {((character as any).fireAttack > 0 ||
+              (character as any).iceAttack > 0 ||
+              (character as any).lightningAttack > 0 ||
+              (character as any).poisonAttack > 0 ||
+              (character as any).critChance > 0 ||
+              (character as any).critDamage > 0 ||
+              (character as any).lifeSteal > 0 ||
               (character as any).dodgeChance > 0) && (
               <div className="bg-black/40 rounded p-3 border border-purple-800">
-                <h4 className="text-purple-300 font-bold text-sm mb-2" style={{ fontFamily: 'monospace' }}>
+                <h4
+                  className="text-purple-300 font-bold text-sm mb-2"
+                  style={{ fontFamily: "monospace" }}
+                >
                   ▸ SPECIAL ATTRIBUTES
                 </h4>
-                <div className="grid grid-cols-2 gap-2 text-xs" style={{ fontFamily: 'monospace' }}>
+                <div
+                  className="grid grid-cols-2 gap-2 text-xs"
+                  style={{ fontFamily: "monospace" }}
+                >
                   {(character as any).fireAttack > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-red-700/30">
                       <span className="text-red-300">🔥 Fire</span>
-                      <span className="text-red-400 font-bold">+{(character as any).fireAttack}</span>
+                      <span className="text-red-400 font-bold">
+                        +{(character as any).fireAttack}
+                      </span>
                     </div>
                   )}
                   {(character as any).iceAttack > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-cyan-700/30">
                       <span className="text-cyan-300">❄️ Ice</span>
-                      <span className="text-cyan-400 font-bold">+{(character as any).iceAttack}</span>
+                      <span className="text-cyan-400 font-bold">
+                        +{(character as any).iceAttack}
+                      </span>
                     </div>
                   )}
                   {(character as any).lightningAttack > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-yellow-700/30">
                       <span className="text-yellow-300">⚡ Lightning</span>
-                      <span className="text-yellow-400 font-bold">+{(character as any).lightningAttack}</span>
+                      <span className="text-yellow-400 font-bold">
+                        +{(character as any).lightningAttack}
+                      </span>
                     </div>
                   )}
                   {(character as any).poisonAttack > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-green-700/30">
                       <span className="text-green-300">☠️ Poison</span>
-                      <span className="text-green-400 font-bold">+{(character as any).poisonAttack}</span>
+                      <span className="text-green-400 font-bold">
+                        +{(character as any).poisonAttack}
+                      </span>
                     </div>
                   )}
                   {(character as any).critChance > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-amber-700/30">
                       <span className="text-amber-300">💥 Crit %</span>
-                      <span className="text-amber-400 font-bold">{(character as any).critChance}%</span>
+                      <span className="text-amber-400 font-bold">
+                        {(character as any).critChance}%
+                      </span>
                     </div>
                   )}
                   {(character as any).critDamage > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-orange-700/30">
                       <span className="text-orange-300">💢 Crit DMG</span>
-                      <span className="text-orange-400 font-bold">+{(character as any).critDamage}%</span>
+                      <span className="text-orange-400 font-bold">
+                        +{(character as any).critDamage}%
+                      </span>
                     </div>
                   )}
                   {(character as any).lifeSteal > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-pink-700/30">
                       <span className="text-pink-300">💖 Lifesteal</span>
-                      <span className="text-pink-400 font-bold">{(character as any).lifeSteal}%</span>
+                      <span className="text-pink-400 font-bold">
+                        {(character as any).lifeSteal}%
+                      </span>
                     </div>
                   )}
                   {(character as any).dodgeChance > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-indigo-700/30">
                       <span className="text-indigo-300">🌀 Dodge</span>
-                      <span className="text-indigo-400 font-bold">{(character as any).dodgeChance}%</span>
+                      <span className="text-indigo-400 font-bold">
+                        {(character as any).dodgeChance}%
+                      </span>
                     </div>
                   )}
                 </div>

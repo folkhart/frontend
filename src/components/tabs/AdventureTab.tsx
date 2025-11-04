@@ -20,6 +20,7 @@ import serverchatIcon from "@/assets/ui/serverchat.png";
 import searchIcon from "@/assets/ui/search.png";
 import expandedIcon from "@/assets/ui/expanded.png";
 import compactIcon from "@/assets/ui/compact.png";
+import petIcon from "@/assets/ui/pet.png";
 import ServerChat from "@/components/ServerChat";
 import BossFight from "@/components/BossFight";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
@@ -34,6 +35,74 @@ import clockworkNecropolisIcon from "@/assets/ui/dungeonIcons/clockworkNecropoli
 import paleCitadelIcon from "@/assets/ui/dungeonIcons/paleCitadel.png";
 import theAbyssalSpireIcon from "@/assets/ui/dungeonIcons/theAbyssalSpire.png";
 import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
+
+// Helper function to get companions that can drop from a dungeon based on level
+const getCompanionDrops = (dungeonLevel: number) => {
+  const companions: Array<{ name: string; rarity: string; spriteId: string }> =
+    [];
+
+  // All dungeons drop common companions
+  companions.push(
+    {
+      name: "Buddy",
+      rarity: "Common",
+      spriteId: "/assets/ui/companions/buddy.png",
+    },
+    {
+      name: "Fluffy",
+      rarity: "Common",
+      spriteId: "/assets/ui/companions/fluffy.png",
+    },
+    {
+      name: "Shelly",
+      rarity: "Common",
+      spriteId: "/assets/ui/companions/shelly.png",
+    }
+  );
+
+  // Lv10+ dungeons drop rare companions
+  if (dungeonLevel >= 10) {
+    companions.push(
+      {
+        name: "Sparkle",
+        rarity: "Rare",
+        spriteId: "/assets/ui/companions/sparkle.png",
+      },
+      {
+        name: "Bolt",
+        rarity: "Rare",
+        spriteId: "/assets/ui/companions/bolt.png",
+      }
+    );
+  }
+
+  // Lv16+ dungeons drop epic companions
+  if (dungeonLevel >= 16) {
+    companions.push(
+      {
+        name: "Whisper",
+        rarity: "Epic",
+        spriteId: "/assets/ui/companions/whisper.png",
+      },
+      {
+        name: "Ember",
+        rarity: "Epic",
+        spriteId: "/assets/ui/companions/ember.png",
+      }
+    );
+  }
+
+  // Lv20+ dungeons drop legendary companion
+  if (dungeonLevel >= 20) {
+    companions.push({
+      name: "Orion",
+      rarity: "Legendary",
+      spriteId: "/assets/ui/companions/orion.png",
+    });
+  }
+
+  return companions;
+};
 
 // Helper function to get dungeon icon based on name
 const getDungeonIcon = (dungeonName: string) => {
@@ -221,6 +290,7 @@ export default function AdventureTab() {
   >("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showRewards, setShowRewards] = useState(false);
+  const [showCompanionDrops, setShowCompanionDrops] = useState(true);
   const [collapsedView, setCollapsedView] = useState(() => {
     // Restore view preference from localStorage
     const saved = localStorage.getItem("dungeonViewCollapsed");
@@ -825,30 +895,76 @@ export default function AdventureTab() {
             {unclaimedReward.result?.success ? (
               <>
                 {/* Retro Pixel Star */}
-                <div className="w-16 h-16 mx-auto mb-4 bg-amber-500 relative" style={{ clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)", boxShadow: "0 4px 0 #92400e, 0 0 20px rgba(251, 191, 36, 0.6)" }}>
-                  <div className="absolute inset-2 bg-amber-300" style={{ clipPath: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)" }}></div>
+                <div
+                  className="w-16 h-16 mx-auto mb-4 bg-amber-500 relative"
+                  style={{
+                    clipPath:
+                      "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+                    boxShadow:
+                      "0 4px 0 #92400e, 0 0 20px rgba(251, 191, 36, 0.6)",
+                  }}
+                >
+                  <div
+                    className="absolute inset-2 bg-amber-300"
+                    style={{
+                      clipPath:
+                        "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+                    }}
+                  ></div>
                 </div>
-                
-                <div className="bg-amber-600 border-4 border-amber-500 mb-3 sm:mb-4 py-2" style={{ borderRadius: "0", boxShadow: "0 4px 0 #92400e" }}>
+
+                <div
+                  className="bg-amber-600 border-4 border-amber-500 mb-3 sm:mb-4 py-2"
+                  style={{ borderRadius: "0", boxShadow: "0 4px 0 #92400e" }}
+                >
                   <h2
                     className="text-2xl sm:text-3xl font-bold text-amber-200"
-                    style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
+                    style={{
+                      fontFamily: "monospace",
+                      textShadow: "2px 2px 0 #000",
+                    }}
                   >
                     ★ VICTORY! ★
                   </h2>
                 </div>
-                
-                <div className="bg-stone-900 border-4 border-amber-700 p-3 sm:p-4 mb-3 sm:mb-4" style={{ borderRadius: "0", boxShadow: "0 3px 0 #78350f, inset 0 2px 0 rgba(255,255,255,0.1)" }}>
-                  <div className="space-y-2 text-base sm:text-lg" style={{ fontFamily: "monospace" }}>
+
+                <div
+                  className="bg-stone-900 border-4 border-amber-700 p-3 sm:p-4 mb-3 sm:mb-4"
+                  style={{
+                    borderRadius: "0",
+                    boxShadow:
+                      "0 3px 0 #78350f, inset 0 2px 0 rgba(255,255,255,0.1)",
+                  }}
+                >
+                  <div
+                    className="space-y-2 text-base sm:text-lg"
+                    style={{ fontFamily: "monospace" }}
+                  >
                     <div className="flex justify-between items-center py-2 border-b-2 border-stone-700">
-                      <span className="text-amber-400 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>💰 GOLD:</span>
-                      <span className="text-yellow-300 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
+                      <span
+                        className="text-amber-400 font-bold"
+                        style={{ textShadow: "1px 1px 0 #000" }}
+                      >
+                        💰 GOLD:
+                      </span>
+                      <span
+                        className="text-yellow-300 font-bold"
+                        style={{ textShadow: "1px 1px 0 #000" }}
+                      >
                         +{unclaimedReward.result.goldEarned}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-2">
-                      <span className="text-amber-400 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>⭐ EXP:</span>
-                      <span className="text-purple-300 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
+                      <span
+                        className="text-amber-400 font-bold"
+                        style={{ textShadow: "1px 1px 0 #000" }}
+                      >
+                        ⭐ EXP:
+                      </span>
+                      <span
+                        className="text-purple-300 font-bold"
+                        style={{ textShadow: "1px 1px 0 #000" }}
+                      >
                         +{unclaimedReward.result.expEarned}
                       </span>
                     </div>
@@ -858,7 +974,14 @@ export default function AdventureTab() {
                 {/* Item Drops with Images */}
                 {unclaimedReward.result.itemsDropped &&
                   unclaimedReward.result.itemsDropped.length > 0 && (
-                    <div className="bg-stone-900 border-4 border-purple-700 p-3 sm:p-4 mb-3 sm:mb-4" style={{ borderRadius: "0", boxShadow: "0 3px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.1)" }}>
+                    <div
+                      className="bg-stone-900 border-4 border-purple-700 p-3 sm:p-4 mb-3 sm:mb-4"
+                      style={{
+                        borderRadius: "0",
+                        boxShadow:
+                          "0 3px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.1)",
+                      }}
+                    >
                       <h3
                         className="text-xs sm:text-sm font-bold text-amber-400 mb-2 sm:mb-3"
                         style={{
@@ -959,38 +1082,79 @@ export default function AdventureTab() {
         >
           <div
             className="bg-stone-800 border-4 border-green-600 p-6 sm:p-8 max-w-md w-full text-center"
-            style={{ borderRadius: "0", boxShadow: "0 6px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.1)" }}
+            style={{
+              borderRadius: "0",
+              boxShadow: "0 6px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.1)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Retro Pixel Wheat */}
-            <div className="w-16 h-16 mx-auto mb-4 bg-green-600 border-4 border-green-500 flex items-center justify-center" style={{ borderRadius: "0", boxShadow: "0 4px 0 #15803d" }}>
+            <div
+              className="w-16 h-16 mx-auto mb-4 bg-green-600 border-4 border-green-500 flex items-center justify-center"
+              style={{ borderRadius: "0", boxShadow: "0 4px 0 #15803d" }}
+            >
               <span className="text-4xl">🌾</span>
             </div>
-            
-            <div className="bg-green-600 border-4 border-green-500 mb-3 sm:mb-4 py-2" style={{ borderRadius: "0", boxShadow: "0 4px 0 #15803d" }}>
+
+            <div
+              className="bg-green-600 border-4 border-green-500 mb-3 sm:mb-4 py-2"
+              style={{ borderRadius: "0", boxShadow: "0 4px 0 #15803d" }}
+            >
               <h3
                 className="text-xl sm:text-2xl font-bold text-green-200"
-                style={{ fontFamily: "monospace", textShadow: "2px 2px 0 #000" }}
+                style={{
+                  fontFamily: "monospace",
+                  textShadow: "2px 2px 0 #000",
+                }}
               >
                 ★ IDLE COMPLETE! ★
               </h3>
             </div>
-            
-            <p className="text-xs sm:text-sm text-amber-300 mb-4 font-bold" style={{ fontFamily: "monospace", textShadow: "1px 1px 0 #000" }}>
+
+            <p
+              className="text-xs sm:text-sm text-amber-300 mb-4 font-bold"
+              style={{ fontFamily: "monospace", textShadow: "1px 1px 0 #000" }}
+            >
               You've been busy while away!
             </p>
 
-            <div className="bg-stone-900 border-4 border-green-700 p-4 mb-4" style={{ borderRadius: "0", boxShadow: "0 3px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.1)" }}>
-              <div className="space-y-2 text-base sm:text-lg" style={{ fontFamily: "monospace" }}>
+            <div
+              className="bg-stone-900 border-4 border-green-700 p-4 mb-4"
+              style={{
+                borderRadius: "0",
+                boxShadow:
+                  "0 3px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.1)",
+              }}
+            >
+              <div
+                className="space-y-2 text-base sm:text-lg"
+                style={{ fontFamily: "monospace" }}
+              >
                 <div className="flex justify-between items-center py-2 border-b-2 border-stone-700">
-                  <span className="text-green-400 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>💰 GOLD:</span>
-                  <span className="text-yellow-300 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
+                  <span
+                    className="text-green-400 font-bold"
+                    style={{ textShadow: "1px 1px 0 #000" }}
+                  >
+                    💰 GOLD:
+                  </span>
+                  <span
+                    className="text-yellow-300 font-bold"
+                    style={{ textShadow: "1px 1px 0 #000" }}
+                  >
                     +{unclaimedIdleReward.goldEarned}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2">
-                  <span className="text-green-400 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>⭐ EXP:</span>
-                  <span className="text-purple-300 font-bold" style={{ textShadow: "1px 1px 0 #000" }}>
+                  <span
+                    className="text-green-400 font-bold"
+                    style={{ textShadow: "1px 1px 0 #000" }}
+                  >
+                    ⭐ EXP:
+                  </span>
+                  <span
+                    className="text-purple-300 font-bold"
+                    style={{ textShadow: "1px 1px 0 #000" }}
+                  >
                     +{unclaimedIdleReward.expEarned}
                   </span>
                 </div>
@@ -1000,7 +1164,14 @@ export default function AdventureTab() {
             {/* Item Drops with Images */}
             {unclaimedIdleReward.itemsDropped &&
               unclaimedIdleReward.itemsDropped.length > 0 && (
-                <div className="bg-stone-900 border-4 border-purple-700 p-4 mb-4" style={{ borderRadius: "0", boxShadow: "0 3px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.1)" }}>
+                <div
+                  className="bg-stone-900 border-4 border-purple-700 p-4 mb-4"
+                  style={{
+                    borderRadius: "0",
+                    boxShadow:
+                      "0 3px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.1)",
+                  }}
+                >
                   <h3
                     className="text-xs sm:text-sm font-bold text-amber-400 mb-3"
                     style={{
@@ -1056,7 +1227,13 @@ export default function AdventureTab() {
                 localStorage.removeItem("unclaimedIdleReward");
               }}
               className="w-full py-3 bg-green-700 hover:bg-green-600 text-white font-bold border-4 border-green-500 transition"
-              style={{ borderRadius: "0", fontFamily: "monospace", boxShadow: "0 4px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.2)", textShadow: "2px 2px 0 #000" }}
+              style={{
+                borderRadius: "0",
+                fontFamily: "monospace",
+                boxShadow:
+                  "0 4px 0 #15803d, inset 0 2px 0 rgba(255,255,255,0.2)",
+                textShadow: "2px 2px 0 #000",
+              }}
             >
               ✓ CONTINUE
             </button>
@@ -1665,6 +1842,125 @@ export default function AdventureTab() {
                         </div>
                       </div>
 
+                      {/* Companion Drops Section */}
+                      {(() => {
+                        const companionDrops = getCompanionDrops(
+                          dungeon.recommendedLevel
+                        );
+                        if (companionDrops.length === 0) return null;
+
+                        return (
+                          <div className="mt-3 pt-3 border-t-2 border-pink-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <img
+                                src={petIcon}
+                                alt="Pet"
+                                className="w-5 h-5"
+                                style={{
+                                  imageRendering: "pixelated",
+                                  filter:
+                                    "drop-shadow(0 0 4px rgba(236, 72, 153, 0.8))",
+                                }}
+                              />
+                              <p
+                                className="text-xs font-bold text-pink-300"
+                                style={{
+                                  fontFamily: "monospace",
+                                  textShadow: "1px 1px 0 #000",
+                                }}
+                              >
+                                PET COMPANION DROPS
+                              </p>
+                              <span
+                                className="text-[10px] font-bold px-2 py-0.5 bg-pink-900 border-2 border-pink-600 text-pink-300"
+                                style={{
+                                  fontFamily: "monospace",
+                                  borderRadius: "4px",
+                                }}
+                              >
+                                10% CHANCE
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {companionDrops.map((comp) => (
+                                <div
+                                  key={comp.name}
+                                  className="relative group"
+                                  title={`${comp.name} (${comp.rarity})`}
+                                >
+                                  <div
+                                    className={`w-10 h-10 border-2 ${
+                                      comp.rarity === "Legendary"
+                                        ? "border-yellow-500 bg-gradient-to-br from-yellow-900/50 to-orange-900/50"
+                                        : comp.rarity === "Epic"
+                                        ? "border-purple-500 bg-gradient-to-br from-purple-900/50 to-pink-900/50"
+                                        : comp.rarity === "Rare"
+                                        ? "border-blue-500 bg-gradient-to-br from-blue-900/50 to-cyan-900/50"
+                                        : "border-gray-500 bg-gradient-to-br from-gray-900/50 to-stone-900/50"
+                                    } flex items-center justify-center relative overflow-hidden`}
+                                    style={{
+                                      borderRadius: "4px",
+                                      boxShadow:
+                                        comp.rarity === "Legendary"
+                                          ? "0 0 10px rgba(234, 179, 8, 0.6), inset 0 0 10px rgba(234, 179, 8, 0.3)"
+                                          : comp.rarity === "Epic"
+                                          ? "0 0 8px rgba(168, 85, 247, 0.6), inset 0 0 8px rgba(168, 85, 247, 0.3)"
+                                          : comp.rarity === "Rare"
+                                          ? "0 0 6px rgba(59, 130, 246, 0.6), inset 0 0 6px rgba(59, 130, 246, 0.3)"
+                                          : "0 0 4px rgba(107, 114, 128, 0.4), inset 0 0 4px rgba(107, 114, 128, 0.2)",
+                                    }}
+                                  >
+                                    <img
+                                      src={comp.spriteId}
+                                      alt={comp.name}
+                                      className="w-8 h-8 object-contain"
+                                      style={{
+                                        imageRendering: "pixelated",
+                                        filter:
+                                          comp.rarity === "Legendary"
+                                            ? "drop-shadow(0 0 4px rgba(234, 179, 8, 0.8))"
+                                            : comp.rarity === "Epic"
+                                            ? "drop-shadow(0 0 3px rgba(168, 85, 247, 0.8))"
+                                            : comp.rarity === "Rare"
+                                            ? "drop-shadow(0 0 2px rgba(59, 130, 246, 0.8))"
+                                            : "none",
+                                      }}
+                                    />
+                                    {/* Animated glow */}
+                                    <div
+                                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      style={{
+                                        background:
+                                          comp.rarity === "Legendary"
+                                            ? "radial-gradient(circle, rgba(234, 179, 8, 0.3) 0%, transparent 70%)"
+                                            : comp.rarity === "Epic"
+                                            ? "radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 70%)"
+                                            : comp.rarity === "Rare"
+                                            ? "radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%)"
+                                            : "none",
+                                        animation:
+                                          "pulse 2s ease-in-out infinite",
+                                      }}
+                                    />
+                                  </div>
+                                  {/* Tooltip */}
+                                  <div
+                                    className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 px-2 py-1 bg-black border-2 border-pink-500 text-white text-[10px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10"
+                                    style={{
+                                      fontFamily: "monospace",
+                                      borderRadius: "4px",
+                                      boxShadow: "0 2px 8px rgba(0,0,0,0.8)",
+                                    }}
+                                  >
+                                    {comp.name}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       {character &&
                         character.combatPower < dungeon.recommendedCP * 0.8 && (
                           <div className="text-xs text-red-400 font-bold mt-2">
@@ -1782,7 +2078,7 @@ export default function AdventureTab() {
 
       {/* Dungeon Modal */}
       {selectedDungeon && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
           onClick={() => setSelectedDungeon(null)}
         >
@@ -2077,6 +2373,148 @@ export default function AdventureTab() {
                 </div>
               )}
 
+            {/* Companion Drops Section in Modal */}
+            {(() => {
+              const companionDrops = getCompanionDrops(
+                selectedDungeon.recommendedLevel
+              );
+              if (companionDrops.length === 0) return null;
+
+              return (
+                <div className="mt-3">
+                  <button
+                    onClick={() => setShowCompanionDrops(!showCompanionDrops)}
+                    className="w-full bg-gradient-to-b from-pink-950/50 to-stone-900 border-2 border-pink-600 p-3 flex items-center justify-between hover:from-pink-900/50 hover:to-stone-800 transition"
+                    style={{
+                      borderRadius: "6px",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <img
+                        src={petIcon}
+                        alt="Pet"
+                        className="w-5 h-5"
+                        style={{
+                          imageRendering: "pixelated",
+                          filter: "drop-shadow(0 0 6px rgba(236, 72, 153, 0.8))",
+                        }}
+                      />
+                      <span
+                        className="text-sm font-bold text-pink-300"
+                        style={{
+                          textShadow: "2px 2px 0 #000",
+                        }}
+                      >
+                        🐾 PET COMPANION DROPS ({companionDrops.length})
+                      </span>
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-xs font-bold px-2 py-1 bg-pink-900 border-2 border-pink-500 text-pink-200"
+                        style={{
+                          borderRadius: "4px",
+                          boxShadow: "0 2px 0 #831843",
+                        }}
+                      >
+                        10% CHANCE
+                      </span>
+                      {showCompanionDrops ? (
+                        <ChevronUp size={20} className="text-pink-300" />
+                      ) : (
+                        <ChevronDown size={20} className="text-pink-300" />
+                      )}
+                    </div>
+                  </button>
+
+                  {showCompanionDrops && (
+                    <div
+                      className="mt-2 bg-stone-950 border-2 border-pink-700 p-3"
+                      style={{ borderRadius: "6px" }}
+                    >
+                      <div className="grid grid-cols-4 gap-2">
+                    {companionDrops.map((comp) => (
+                      <div key={comp.name} className="relative group">
+                        <div
+                          className={`w-full aspect-square border-2 ${
+                            comp.rarity === "Legendary"
+                              ? "border-yellow-500 bg-gradient-to-br from-yellow-900/70 to-orange-900/70"
+                              : comp.rarity === "Epic"
+                              ? "border-purple-500 bg-gradient-to-br from-purple-900/70 to-pink-900/70"
+                              : comp.rarity === "Rare"
+                              ? "border-blue-500 bg-gradient-to-br from-blue-900/70 to-cyan-900/70"
+                              : "border-gray-500 bg-gradient-to-br from-gray-900/70 to-stone-900/70"
+                          } flex items-center justify-center relative overflow-hidden`}
+                          style={{
+                            borderRadius: "6px",
+                            boxShadow:
+                              comp.rarity === "Legendary"
+                                ? "0 0 12px rgba(234, 179, 8, 0.8), inset 0 0 12px rgba(234, 179, 8, 0.4), 0 4px 0 #854d0e"
+                                : comp.rarity === "Epic"
+                                ? "0 0 10px rgba(168, 85, 247, 0.8), inset 0 0 10px rgba(168, 85, 247, 0.4), 0 4px 0 #581c87"
+                                : comp.rarity === "Rare"
+                                ? "0 0 8px rgba(59, 130, 246, 0.8), inset 0 0 8px rgba(59, 130, 246, 0.4), 0 4px 0 #1e3a8a"
+                                : "0 0 4px rgba(107, 114, 128, 0.6), inset 0 0 4px rgba(107, 114, 128, 0.3), 0 4px 0 #1f2937",
+                          }}
+                        >
+                          <img
+                            src={comp.spriteId}
+                            alt={comp.name}
+                            className="w-full h-full object-contain p-2"
+                            style={{
+                              imageRendering: "pixelated",
+                              filter:
+                                comp.rarity === "Legendary"
+                                  ? "drop-shadow(0 0 6px rgba(234, 179, 8, 1))"
+                                  : comp.rarity === "Epic"
+                                  ? "drop-shadow(0 0 5px rgba(168, 85, 247, 1))"
+                                  : comp.rarity === "Rare"
+                                  ? "drop-shadow(0 0 4px rgba(59, 130, 246, 1))"
+                                  : "drop-shadow(0 2px 2px rgba(0,0,0,0.8))",
+                            }}
+                          />
+                          {/* Animated glow */}
+                          <div
+                            className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none"
+                            style={{
+                              background:
+                                comp.rarity === "Legendary"
+                                  ? "radial-gradient(circle at center, rgba(234, 179, 8, 0.4) 0%, transparent 70%)"
+                                  : comp.rarity === "Epic"
+                                  ? "radial-gradient(circle at center, rgba(168, 85, 247, 0.4) 0%, transparent 70%)"
+                                  : comp.rarity === "Rare"
+                                  ? "radial-gradient(circle at center, rgba(59, 130, 246, 0.4) 0%, transparent 70%)"
+                                  : "none",
+                              animation: "pulse 2s ease-in-out infinite",
+                            }}
+                          />
+                        </div>
+                        <p
+                          className={`text-[10px] font-bold text-center mt-1 truncate ${
+                            comp.rarity === "Legendary"
+                              ? "text-yellow-300"
+                              : comp.rarity === "Epic"
+                              ? "text-purple-300"
+                              : comp.rarity === "Rare"
+                              ? "text-blue-300"
+                              : "text-gray-300"
+                          }`}
+                          style={{
+                            fontFamily: "monospace",
+                            textShadow: "1px 1px 0 #000",
+                          }}
+                        >
+                          {comp.name}
+                        </p>
+                      </div>
+                    ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -2141,8 +2579,14 @@ export default function AdventureTab() {
               {/* BOSS FIGHT - Epic PixiJS Battle! */}
               <button
                 onClick={async () => {
-                  if (!selectedDungeon.description || !selectedDungeon.description.includes("Boss:")) {
-                    (window as any).showToast?.("This dungeon has no boss!", "warning");
+                  if (
+                    !selectedDungeon.description ||
+                    !selectedDungeon.description.includes("Boss:")
+                  ) {
+                    (window as any).showToast?.(
+                      "This dungeon has no boss!",
+                      "warning"
+                    );
                     return;
                   }
 
@@ -2159,32 +2603,37 @@ export default function AdventureTab() {
                     await dungeonApi.startBoss(selectedDungeon.id);
                     setShowBossFight(true);
                     // Refetch cooldown
-                    queryClient.invalidateQueries({ queryKey: ["bossCooldown"] });
+                    queryClient.invalidateQueries({
+                      queryKey: ["bossCooldown"],
+                    });
                   } catch (error: any) {
-                    (window as any).showToast?.(error.response?.data?.message || "Failed to start boss fight", "error");
+                    (window as any).showToast?.(
+                      error.response?.data?.message ||
+                        "Failed to start boss fight",
+                      "error"
+                    );
                   }
                 }}
                 disabled={bossCooldown ? !bossCooldown.canFight : false}
                 className={`w-full py-4 font-bold transition relative overflow-hidden group ${
                   bossCooldown && !bossCooldown.canFight
-                    ? 'bg-gray-700 cursor-not-allowed opacity-50'
-                    : 'bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800'
+                    ? "bg-gray-700 cursor-not-allowed opacity-50"
+                    : "bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800"
                 } text-white`}
                 style={{
-                  border: '4px solid #991b1b',
-                  borderRadius: '0',
-                  boxShadow: '0 4px 0 #7f1d1d, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.2)',
-                  textShadow: '2px 2px 0 #000',
-                  imageRendering: 'pixelated',
-                  fontFamily: 'monospace',
-                  letterSpacing: '2px'
+                  border: "4px solid #991b1b",
+                  borderRadius: "0",
+                  boxShadow:
+                    "0 4px 0 #7f1d1d, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.2)",
+                  textShadow: "2px 2px 0 #000",
+                  imageRendering: "pixelated",
+                  fontFamily: "monospace",
+                  letterSpacing: "2px",
                 }}
               >
                 <span className="relative z-10 text-xl tracking-wider flex items-center justify-center gap-2">
                   {bossCooldown && !bossCooldown.canFight ? (
-                    <>
-                      ⏰ COOLDOWN: {bossCooldown.remainingMinutes}m
-                    </>
+                    <>⏰ COOLDOWN: {bossCooldown.remainingMinutes}m</>
                   ) : (
                     <>
                       <span className="animate-pulse">👹</span>
@@ -2223,8 +2672,15 @@ export default function AdventureTab() {
       {showBossFight && character && selectedDungeon && (
         <BossFight
           dungeonName={selectedDungeon.name}
-          bossName={selectedDungeon.description.split("Boss: ")[1]?.split(".")[0] || `${selectedDungeon.name} Boss`}
-          bossLevel={selectedDungeon.recommendedLevel || selectedDungeon.requiredLevel || 1}
+          bossName={
+            selectedDungeon.description.split("Boss: ")[1]?.split(".")[0] ||
+            `${selectedDungeon.name} Boss`
+          }
+          bossLevel={
+            selectedDungeon.recommendedLevel ||
+            selectedDungeon.requiredLevel ||
+            1
+          }
           bossHealth={(selectedDungeon as any).bossHealth || 1000}
           bossAttack={(selectedDungeon as any).bossAttack || 50}
           bossDefense={(selectedDungeon as any).bossDefense || 30}
@@ -2248,24 +2704,34 @@ export default function AdventureTab() {
             // Complete boss fight on backend first
             try {
               await dungeonApi.completeBoss(success, finalHP, rewards);
-              
+
               // Refetch all data
               await queryClient.invalidateQueries({ queryKey: ["character"] });
               await queryClient.invalidateQueries({ queryKey: ["player"] });
               await queryClient.invalidateQueries({ queryKey: ["inventory"] });
-              await queryClient.invalidateQueries({ queryKey: ["bossCooldown"] });
-              
+              await queryClient.invalidateQueries({
+                queryKey: ["bossCooldown"],
+              });
+
               if (success && rewards) {
                 (window as any).showToast?.(
-                  `🎉 Boss defeated! +${rewards?.xp || 0} XP, +${rewards?.gold || 0}g`,
+                  `🎉 Boss defeated! +${rewards?.xp || 0} XP, +${
+                    rewards?.gold || 0
+                  }g`,
                   "success"
                 );
               } else {
-                (window as any).showToast?.("💀 Defeated by the boss...", "error");
+                (window as any).showToast?.(
+                  "💀 Defeated by the boss...",
+                  "error"
+                );
               }
             } catch (error) {
               console.error("Failed to complete boss fight:", error);
-              (window as any).showToast?.("Failed to save boss fight results", "error");
+              (window as any).showToast?.(
+                "Failed to save boss fight results",
+                "error"
+              );
             }
 
             setShowBossFight(false);

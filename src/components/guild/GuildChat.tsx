@@ -962,6 +962,113 @@ export default function GuildChat({
               </div>
             </div>
 
+            {/* Pet Companion Section */}
+            {playerCharacter.companionSlot?.item && (
+              <div className="mt-6">
+                <h3
+                  className="text-lg font-bold text-pink-400 mb-3"
+                  style={{
+                    fontFamily: "monospace",
+                    textShadow: "1px 1px 0 #000",
+                  }}
+                >
+                  🐾 Pet Companion
+                </h3>
+                <div
+                  className="bg-gradient-to-b from-stone-900 to-stone-800 border-2 border-pink-600 p-3 sm:p-4"
+                  style={{
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 0 #831843, inset 0 2px 0 rgba(255,255,255,0.1)",
+                  }}
+                >
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                    {/* Companion Image */}
+                    <div
+                      className="w-20 h-20 sm:w-24 sm:h-24 bg-black/40 rounded-lg border-2 border-pink-500 flex items-center justify-center flex-shrink-0 relative"
+                      style={{ imageRendering: "pixelated" }}
+                    >
+                      <img
+                        src={`/assets/ui/${playerCharacter.companionSlot.item.spriteId}.png`}
+                        alt={playerCharacter.companionSlot.item.name}
+                        className="w-full h-full object-contain p-2 relative z-10"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                      <div
+                        className={`absolute inset-0 ${
+                          playerCharacter.companionSlot.item.rarity === "Legendary"
+                            ? "border-yellow-500"
+                            : playerCharacter.companionSlot.item.rarity === "Epic"
+                            ? "border-purple-500"
+                            : playerCharacter.companionSlot.item.rarity === "Rare"
+                            ? "border-blue-500"
+                            : "border-gray-500"
+                        } opacity-50 rounded-lg pointer-events-none`}
+                      />
+                    </div>
+
+                    {/* Companion Info */}
+                    <div className="flex-1 w-full sm:w-auto">
+                      <h4
+                        className={`font-bold text-base sm:text-lg ${getRarityColor(
+                          playerCharacter.companionSlot.item.rarity
+                        )}`}
+                        style={{ fontFamily: "monospace" }}
+                      >
+                        {playerCharacter.companionSlot.item.name}
+                      </h4>
+                      <p
+                        className="text-xs sm:text-sm text-gray-400"
+                        style={{ fontFamily: "monospace" }}
+                      >
+                        {playerCharacter.companionSlot.item.companionType} •{" "}
+                        {playerCharacter.companionSlot.item.rarity}
+                      </p>
+
+                      {/* Stats */}
+                      <div
+                        className="flex flex-wrap gap-1 sm:gap-2 mt-2 text-xs"
+                        style={{ fontFamily: "monospace" }}
+                      >
+                        {playerCharacter.companionSlot.item.attackBonus > 0 && (
+                          <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-700/50">
+                            +{playerCharacter.companionSlot.item.attackBonus} ATK
+                          </span>
+                        )}
+                        {playerCharacter.companionSlot.item.defenseBonus > 0 && (
+                          <span className="bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-700/50">
+                            +{playerCharacter.companionSlot.item.defenseBonus} DEF
+                          </span>
+                        )}
+                        {playerCharacter.companionSlot.item.healthBonus > 0 && (
+                          <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded border border-green-700/50">
+                            +{playerCharacter.companionSlot.item.healthBonus} HP
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Ability */}
+                      {playerCharacter.companionSlot.item.abilityName && (
+                        <div className="mt-2 bg-purple-900/30 px-2 sm:px-3 py-2 rounded border border-purple-700/50">
+                          <p
+                            className="text-purple-300 text-xs font-bold"
+                            style={{ fontFamily: "monospace" }}
+                          >
+                            ⚡ {playerCharacter.companionSlot.item.abilityName}
+                          </p>
+                          <p
+                            className="text-purple-400 text-xs"
+                            style={{ fontFamily: "monospace" }}
+                          >
+                            Power: {playerCharacter.companionSlot.item.abilityPower}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="mt-6 pt-6 border-t-2 border-amber-700">
               <button

@@ -214,6 +214,7 @@ export default function ServerChat() {
         }/api/players/${selectedPlayerUsername}/character`
       );
       console.log("Character data received:", data);
+      console.log("Companion slot data:", data.companionSlot);
       return data;
     },
     enabled: !!selectedPlayerUsername,
@@ -1301,6 +1302,50 @@ export default function ServerChat() {
                           </div>
                         );
                       })}
+                      {/* Row 4 - Companion */}
+                      {playerCharacter.companionSlot && (
+                        <div className="col-span-3 flex justify-center">
+                          <div
+                            className="relative w-20 h-20 bg-stone-900 border-2 border-pink-600"
+                            style={{
+                              boxShadow: "0 2px 0 rgba(0,0,0,0.3)",
+                            }}
+                          >
+                            <div className="absolute inset-0 flex items-center justify-center p-1">
+                              <img
+                                src={`/assets/ui/${playerCharacter.companionSlot.spriteId}.png`}
+                                alt={playerCharacter.companionSlot.name}
+                                className="max-w-full max-h-full object-contain"
+                                style={{ imageRendering: "pixelated" }}
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            </div>
+                            {/* Tier Badge */}
+                            {playerCharacter.companionSlot.tier > 0 && (
+                              <div
+                                className="absolute top-0 right-0 px-1.5 py-0.5 text-[10px] font-bold border-2 bg-gradient-to-b from-pink-500 to-pink-700 border-pink-300 text-white"
+                                style={{
+                                  fontFamily: "monospace",
+                                  textShadow: "1px 1px 0 #000",
+                                  boxShadow: "0 2px 0 rgba(0,0,0,0.5)",
+                                }}
+                              >
+                                T{playerCharacter.companionSlot.tier}
+                              </div>
+                            )}
+                            <div className="absolute bottom-0 left-0 right-0 bg-pink-800 py-0.5">
+                              <p
+                                className="text-[8px] font-bold text-center text-white"
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                PET
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 

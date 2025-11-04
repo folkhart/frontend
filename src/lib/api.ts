@@ -242,3 +242,10 @@ export const dailyLoginRewardApi = {
   getRewards: () => api.get('/daily-login/rewards'),
   claimReward: (day: number) => api.post(`/daily-login/claim/${day}`),
 };
+
+// Companion API
+export const companionApi = {
+  getFusable: () => api.get('/companions/fusable'),
+  fuse: (companionName: string, tier: number) => 
+    api.post('/companions/fuse', { companionName, tier }),
+};
