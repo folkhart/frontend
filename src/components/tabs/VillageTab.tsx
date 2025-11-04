@@ -29,6 +29,7 @@ export default function VillageTab() {
     | "necklace"
     | "belt"
     | "earring"
+    | "companion"
     | null
   >(null);
   const [activeView, setActiveView] = useState<
@@ -106,6 +107,7 @@ export default function VillageTab() {
       armor: character.armorSlot,
       helmet: character.helmetSlot,
       gloves: character.glovesSlot,
+      companion: (character as any).companionSlot,
       shoes: character.shoesSlot,
       ring: character.ringSlot,
       necklace: character.necklaceSlot,
@@ -271,11 +273,14 @@ export default function VillageTab() {
       | "necklace"
       | "belt"
       | "earring"
+      | "companion"
   ) => {
     if (!inventory) return [];
 
     if (slotType === "weapon") {
       return inventory.filter((slot: any) => slot.item.type === "Weapon");
+    } else if (slotType === "companion") {
+      return inventory.filter((slot: any) => slot.item.type === "Companion");
     } else if (
       slotType === "armor" ||
       slotType === "helmet" ||
@@ -323,6 +328,7 @@ export default function VillageTab() {
       necklace: character.necklaceSlot,
       belt: character.beltSlot,
       earring: character.earringSlot,
+      companion: (character as any).companionSlot,
     };
     return slotMap[slotName] || null;
   };
@@ -1113,6 +1119,110 @@ export default function VillageTab() {
                   equippedItem={getSlotItem("belt")}
                   label="Belt"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Pet/Companion Slot */}
+          <div className="bg-gradient-to-b from-stone-900 to-stone-800 rounded-lg border-2 border-pink-600 p-4 mb-4">
+            <h3 className="text-pink-400 font-bold text-lg mb-3 text-center" style={{ fontFamily: 'monospace', textShadow: '2px 2px 0 #000' }}>
+              🐾 PET COMPANION 🐾
+            </h3>
+            
+            <div className="flex items-center gap-4">
+              {/* Pet Display */}
+              <div 
+                className="w-24 h-24 bg-black/40 rounded-lg border-2 border-pink-500 flex items-center justify-center cursor-pointer hover:bg-black/60 transition relative"
+                onClick={() => setSelectedSlot("companion")}
+                style={{ imageRendering: 'pixelated' }}
+              >
+                {getSlotItem("companion") ? (
+                  <>
+                    <img
+                      src={`/assets/ui/${getSlotItem("companion")?.item?.spriteId}.png`}
+                      alt={getSlotItem("companion")?.item?.name}
+                      className="w-full h-full object-contain p-2"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                    {/* Rarity glow */}
+                    <div className={`absolute inset-0 ${getRarityBorder(getSlotItem("companion")?.item?.rarity)} opacity-50 rounded-lg`} />
+                  </>
+                ) : (
+                  <div className="text-gray-500 text-2xl">🐾</div>
+                )}
+              </div>
+
+              {/* Pet Info */}
+              <div className="flex-1">
+                {getSlotItem("companion") ? (
+                  <>
+                    <h4 className={`font-bold text-lg ${getRarityColor(getSlotItem("companion")?.item?.rarity)}`} style={{ fontFamily: 'monospace' }}>
+                      {getSlotItem("companion")?.item?.name}
+                    </h4>
+                    <p className="text-sm text-gray-400" style={{ fontFamily: 'monospace' }}>
+                      {getSlotItem("companion")?.item?.companionType} • {getSlotItem("companion")?.item?.rarity}
+                    </p>
+                    
+                    {/* Stats */}
+                    <div className="flex gap-2 mt-2 text-xs" style={{ fontFamily: 'monospace' }}>
+                      {getSlotItem("companion")?.item?.attackBonus > 0 && (
+                        <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-700/50">
+                          +{getSlotItem("companion")?.item?.attackBonus} ATK
+                        </span>
+                      )}
+                      {getSlotItem("companion")?.item?.defenseBonus > 0 && (
+                        <span className="bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-700/50">
+                          +{getSlotItem("companion")?.item?.defenseBonus} DEF
+                        </span>
+                      )}
+                      {getSlotItem("companion")?.item?.healthBonus > 0 && (
+                        <span className="bg-green-900/30 text-green-400 px-2 py-1 rounded border border-green-700/50">
+                          +{getSlotItem("companion")?.item?.healthBonus} HP
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Ability */}
+                    {getSlotItem("companion")?.item?.abilityName && (
+                      <div className="mt-2 bg-purple-900/30 px-3 py-2 rounded border border-purple-700/50">
+                        <p className="text-purple-300 text-xs font-bold" style={{ fontFamily: 'monospace' }}>
+                          ⚡ {getSlotItem("companion")?.item?.abilityName}
+                        </p>
+                        <p className="text-purple-400 text-xs" style={{ fontFamily: 'monospace' }}>
+                          Power: {getSlotItem("companion")?.item?.abilityPower}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Unequip Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        unequipMutation.mutate({ slot: "companion" });
+                      }}
+                      className="mt-2 px-3 py-1 bg-red-800 hover:bg-red-700 text-white text-xs rounded border-2 border-red-600 transition"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      Unequip Pet
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h4 className="font-bold text-gray-400" style={{ fontFamily: 'monospace' }}>
+                      No Pet Equipped
+                    </h4>
+                    <p className="text-xs text-gray-500 mt-1" style={{ fontFamily: 'monospace' }}>
+                      Click to equip a companion!
+                    </p>
+                    <button
+                      onClick={() => setSelectedSlot("companion")}
+                      className="mt-2 px-3 py-1 bg-pink-800 hover:bg-pink-700 text-white text-xs rounded border-2 border-pink-600 transition"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      Equip Pet
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

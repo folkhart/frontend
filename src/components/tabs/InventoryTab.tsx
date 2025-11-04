@@ -13,6 +13,7 @@ type CategoryFilter =
   | "Weapons"
   | "Armor"
   | "Accessories"
+  | "Companions"
   | "Consumables"
   | "Materials";
 
@@ -443,6 +444,7 @@ export default function InventoryTab() {
     "Weapons",
     "Armor",
     "Accessories",
+    "Companions",
     "Consumables",
     "Materials",
   ];
@@ -454,6 +456,8 @@ export default function InventoryTab() {
       if (selectedCategory === "Weapons" && itemType !== "Weapon") return false;
       if (selectedCategory === "Armor" && itemType !== "Armor") return false;
       if (selectedCategory === "Accessories" && itemType !== "Accessory")
+        return false;
+      if (selectedCategory === "Companions" && itemType !== "Companion")
         return false;
       if (
         selectedCategory === "Consumables" &&
@@ -571,6 +575,7 @@ export default function InventoryTab() {
                     {slot.item.type === "Armor" && "🛡️"}
                     {slot.item.type === "Accessory" && "💍"}
                     {slot.item.type === "Consumable" && "🧪"}
+                    {slot.item.type === "Companion" && "🐾"}
                   </span>
                 )}
               </div>

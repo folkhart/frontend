@@ -400,7 +400,7 @@ export default function BossFight({
       setCurrentAction('🎉 VICTORY!');
       addLog('🎉 Victory! Boss defeated!');
       
-      // Generate rewards (3x XP, 3x Gold, items, gems)
+      // Generate rewards (3x XP, 3x Gold, items, gems, companions)
       const baseXP = bossLevel * 150;
       const baseGold = bossLevel * 100;
       const rewards = {
@@ -418,6 +418,34 @@ export default function BossFight({
       // Random chance for extra item
       if (Math.random() < 0.3) {
         rewards.items.push({ name: 'Socket Drill', quantity: 1 });
+      }
+
+      // Companion drops (10% base chance, scales with boss level)
+      const companionRoll = Math.random();
+      if (companionRoll < 0.1) { // 10% chance for a companion
+        const companionOptions: string[] = [];
+        
+        // Common companions (always available)
+        companionOptions.push('Buddy', 'Fluffy', 'Shelly');
+        
+        // Rare companions (Lv10+)
+        if (bossLevel >= 10) {
+          companionOptions.push('Sparkle', 'Bolt');
+        }
+        
+        // Epic companions (Lv16+)
+        if (bossLevel >= 16) {
+          companionOptions.push('Whisper', 'Ember');
+        }
+        
+        // Legendary companion (Lv20+)
+        if (bossLevel >= 20) {
+          companionOptions.push('Orion');
+        }
+        
+        // Select random companion from available pool
+        const selectedCompanion = companionOptions[Math.floor(Math.random() * companionOptions.length)];
+        rewards.items.push({ name: selectedCompanion, quantity: 1 });
       }
       
       console.log('Boss Fight Victory Rewards:', rewards); // Debug log
