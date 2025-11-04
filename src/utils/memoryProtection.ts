@@ -184,6 +184,12 @@ export class AntiDebug {
   private static onDebugDetected: (() => void) | null = null;
 
   static start(onDetected: () => void) {
+    // Skip anti-debug in development mode
+    if (import.meta.env.DEV) {
+      console.log('[Dev] Anti-debug disabled in development mode');
+      return;
+    }
+
     this.onDebugDetected = onDetected;
 
     // Check for debugger periodically
@@ -233,6 +239,11 @@ export class TamperingDetector {
       suspiciousGlobals: false,
     };
 
+    // Skip tampering detection in development mode
+    if (import.meta.env.DEV) {
+      return { isTampered: false, checks };
+    }
+
     // Check if DevTools is open
     const threshold = 160;
     checks.devTools =
@@ -248,9 +259,8 @@ export class TamperingDetector {
       checks.modifiedPrototypes = true;
     }
 
-    // Check for suspicious global variables
+    // Check for suspicious global variables (but allow React DevTools in dev)
     const suspiciousVars = [
-      '__REACT_DEVTOOLS_GLOBAL_HOOK__',
       '__REDUX_DEVTOOLS_EXTENSION__',
     ];
     checks.suspiciousGlobals = suspiciousVars.some((v) => v in window);

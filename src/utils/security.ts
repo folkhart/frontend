@@ -8,13 +8,24 @@ export const reportSecurityEvent = async (
   event: string,
   metadata?: any
 ): Promise<void> => {
+  // Skip in development mode if server is not available
+  if (import.meta.env.DEV) {
+    console.log(`[Dev] Security event: ${event}`, metadata);
+    return;
+  }
+
   try {
     await axios.post('/api/security/log-event', {
       event,
       metadata,
     });
-  } catch (error) {
-    console.error('Failed to report security event:', error);
+  } catch (error: any) {
+    // Silently fail in dev mode
+    if (error?.response?.status === 404) {
+      console.log('[Dev] Security endpoint not available');
+    } else {
+      console.error('Failed to report security event:', error);
+    }
   }
 };
 
@@ -98,6 +109,12 @@ export const sha256 = async (text: string): Promise<string> => {
  * Initialize security measures
  */
 export const initializeSecurity = async () => {
+  // Only enable full security in production
+  if (import.meta.env.DEV) {
+    console.log('🔐 Security: Development mode - protections relaxed');
+    return;
+  }
+
   console.log('🔐 Initializing security measures...');
 
   // Setup request interceptors for nonce/timestamp

@@ -118,6 +118,26 @@ SectionEnd
 
 ; Custom header for installer window
 !macro customHeader
-  ; You can add custom controls to the installer window here
-  ; Example: Add a banner image or custom text
+  ; Set custom installer images
+  !define MUI_HEADERIMAGE
+  !define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\folkhart-header.bmp"
+  !define MUI_HEADERIMAGE_RIGHT
+  
+  ; Set custom wizard images
+  !define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\folkhart-wizard.bmp"
+  !define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\folkhart-uninstall-wizard.bmp"
+  
+  ; Custom installer text colors
+  !define MUI_TEXTCOLOR "0x000000"
+  !define MUI_BGCOLOR "FFFFFF"
+  
+  ; Custom welcome page
+  !define MUI_WELCOMEPAGE_TITLE "Welcome to Folkhart!"
+  !define MUI_WELCOMEPAGE_TEXT "Embark on a cozy fantasy adventure! This wizard will guide you through the installation.$\r$\n$\r$\nFolkhart is a charming RPG where you explore dungeons, craft legendary items, and join guilds with friends.$\r$\n$\r$\nClick Next to continue."
+  
+  ; Custom finish page
+  !define MUI_FINISHPAGE_TITLE "Installation Complete!"
+  !define MUI_FINISHPAGE_TEXT "Folkhart has been successfully installed.$\r$\n$\r$\nYour adventure awaits! Click Finish to close this wizard.$\r$\n$\r$\nMay your quests be legendary!"
+  !define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_FILENAME}"
+  !define MUI_FINISHPAGE_RUN_TEXT "Launch Folkhart now"
 !macroend
