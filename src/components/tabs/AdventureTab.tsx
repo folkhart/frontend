@@ -2247,7 +2247,7 @@ export default function AdventureTab() {
           onComplete={async (success, finalHP, rewards) => {
             // Complete boss fight on backend first
             try {
-              await dungeonApi.completeBoss(selectedDungeon.id, success, finalHP, rewards);
+              await dungeonApi.completeBoss(success, finalHP, rewards);
               
               // Refetch all data
               await queryClient.invalidateQueries({ queryKey: ["character"] });
