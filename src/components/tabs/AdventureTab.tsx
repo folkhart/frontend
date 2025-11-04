@@ -290,7 +290,7 @@ export default function AdventureTab() {
   >("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showRewards, setShowRewards] = useState(false);
-  const [showCompanionDrops, setShowCompanionDrops] = useState(true);
+  const [showCompanionDrops, setShowCompanionDrops] = useState(false);
   const [collapsedView, setCollapsedView] = useState(() => {
     // Restore view preference from localStorage
     const saved = localStorage.getItem("dungeonViewCollapsed");
@@ -2397,7 +2397,8 @@ export default function AdventureTab() {
                         className="w-5 h-5"
                         style={{
                           imageRendering: "pixelated",
-                          filter: "drop-shadow(0 0 6px rgba(236, 72, 153, 0.8))",
+                          filter:
+                            "drop-shadow(0 0 6px rgba(236, 72, 153, 0.8))",
                         }}
                       />
                       <span
@@ -2406,7 +2407,7 @@ export default function AdventureTab() {
                           textShadow: "2px 2px 0 #000",
                         }}
                       >
-                        🐾 PET COMPANION DROPS ({companionDrops.length})
+                        PET COMPANION DROPS ({companionDrops.length})
                       </span>
                     </span>
                     <div className="flex items-center gap-2">
@@ -2433,81 +2434,81 @@ export default function AdventureTab() {
                       style={{ borderRadius: "6px" }}
                     >
                       <div className="grid grid-cols-4 gap-2">
-                    {companionDrops.map((comp) => (
-                      <div key={comp.name} className="relative group">
-                        <div
-                          className={`w-full aspect-square border-2 ${
-                            comp.rarity === "Legendary"
-                              ? "border-yellow-500 bg-gradient-to-br from-yellow-900/70 to-orange-900/70"
-                              : comp.rarity === "Epic"
-                              ? "border-purple-500 bg-gradient-to-br from-purple-900/70 to-pink-900/70"
-                              : comp.rarity === "Rare"
-                              ? "border-blue-500 bg-gradient-to-br from-blue-900/70 to-cyan-900/70"
-                              : "border-gray-500 bg-gradient-to-br from-gray-900/70 to-stone-900/70"
-                          } flex items-center justify-center relative overflow-hidden`}
-                          style={{
-                            borderRadius: "6px",
-                            boxShadow:
-                              comp.rarity === "Legendary"
-                                ? "0 0 12px rgba(234, 179, 8, 0.8), inset 0 0 12px rgba(234, 179, 8, 0.4), 0 4px 0 #854d0e"
-                                : comp.rarity === "Epic"
-                                ? "0 0 10px rgba(168, 85, 247, 0.8), inset 0 0 10px rgba(168, 85, 247, 0.4), 0 4px 0 #581c87"
-                                : comp.rarity === "Rare"
-                                ? "0 0 8px rgba(59, 130, 246, 0.8), inset 0 0 8px rgba(59, 130, 246, 0.4), 0 4px 0 #1e3a8a"
-                                : "0 0 4px rgba(107, 114, 128, 0.6), inset 0 0 4px rgba(107, 114, 128, 0.3), 0 4px 0 #1f2937",
-                          }}
-                        >
-                          <img
-                            src={comp.spriteId}
-                            alt={comp.name}
-                            className="w-full h-full object-contain p-2"
-                            style={{
-                              imageRendering: "pixelated",
-                              filter:
+                        {companionDrops.map((comp) => (
+                          <div key={comp.name} className="relative group">
+                            <div
+                              className={`w-full aspect-square border-2 ${
                                 comp.rarity === "Legendary"
-                                  ? "drop-shadow(0 0 6px rgba(234, 179, 8, 1))"
+                                  ? "border-yellow-500 bg-gradient-to-br from-yellow-900/70 to-orange-900/70"
                                   : comp.rarity === "Epic"
-                                  ? "drop-shadow(0 0 5px rgba(168, 85, 247, 1))"
+                                  ? "border-purple-500 bg-gradient-to-br from-purple-900/70 to-pink-900/70"
                                   : comp.rarity === "Rare"
-                                  ? "drop-shadow(0 0 4px rgba(59, 130, 246, 1))"
-                                  : "drop-shadow(0 2px 2px rgba(0,0,0,0.8))",
-                            }}
-                          />
-                          {/* Animated glow */}
-                          <div
-                            className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none"
-                            style={{
-                              background:
+                                  ? "border-blue-500 bg-gradient-to-br from-blue-900/70 to-cyan-900/70"
+                                  : "border-gray-500 bg-gradient-to-br from-gray-900/70 to-stone-900/70"
+                              } flex items-center justify-center relative overflow-hidden`}
+                              style={{
+                                borderRadius: "6px",
+                                boxShadow:
+                                  comp.rarity === "Legendary"
+                                    ? "0 0 12px rgba(234, 179, 8, 0.8), inset 0 0 12px rgba(234, 179, 8, 0.4), 0 4px 0 #854d0e"
+                                    : comp.rarity === "Epic"
+                                    ? "0 0 10px rgba(168, 85, 247, 0.8), inset 0 0 10px rgba(168, 85, 247, 0.4), 0 4px 0 #581c87"
+                                    : comp.rarity === "Rare"
+                                    ? "0 0 8px rgba(59, 130, 246, 0.8), inset 0 0 8px rgba(59, 130, 246, 0.4), 0 4px 0 #1e3a8a"
+                                    : "0 0 4px rgba(107, 114, 128, 0.6), inset 0 0 4px rgba(107, 114, 128, 0.3), 0 4px 0 #1f2937",
+                              }}
+                            >
+                              <img
+                                src={comp.spriteId}
+                                alt={comp.name}
+                                className="w-full h-full object-contain p-2"
+                                style={{
+                                  imageRendering: "pixelated",
+                                  filter:
+                                    comp.rarity === "Legendary"
+                                      ? "drop-shadow(0 0 6px rgba(234, 179, 8, 1))"
+                                      : comp.rarity === "Epic"
+                                      ? "drop-shadow(0 0 5px rgba(168, 85, 247, 1))"
+                                      : comp.rarity === "Rare"
+                                      ? "drop-shadow(0 0 4px rgba(59, 130, 246, 1))"
+                                      : "drop-shadow(0 2px 2px rgba(0,0,0,0.8))",
+                                }}
+                              />
+                              {/* Animated glow */}
+                              <div
+                                className="absolute inset-0 opacity-50 group-hover:opacity-100 transition-opacity pointer-events-none"
+                                style={{
+                                  background:
+                                    comp.rarity === "Legendary"
+                                      ? "radial-gradient(circle at center, rgba(234, 179, 8, 0.4) 0%, transparent 70%)"
+                                      : comp.rarity === "Epic"
+                                      ? "radial-gradient(circle at center, rgba(168, 85, 247, 0.4) 0%, transparent 70%)"
+                                      : comp.rarity === "Rare"
+                                      ? "radial-gradient(circle at center, rgba(59, 130, 246, 0.4) 0%, transparent 70%)"
+                                      : "none",
+                                  animation: "pulse 2s ease-in-out infinite",
+                                }}
+                              />
+                            </div>
+                            <p
+                              className={`text-[10px] font-bold text-center mt-1 truncate ${
                                 comp.rarity === "Legendary"
-                                  ? "radial-gradient(circle at center, rgba(234, 179, 8, 0.4) 0%, transparent 70%)"
+                                  ? "text-yellow-300"
                                   : comp.rarity === "Epic"
-                                  ? "radial-gradient(circle at center, rgba(168, 85, 247, 0.4) 0%, transparent 70%)"
+                                  ? "text-purple-300"
                                   : comp.rarity === "Rare"
-                                  ? "radial-gradient(circle at center, rgba(59, 130, 246, 0.4) 0%, transparent 70%)"
-                                  : "none",
-                              animation: "pulse 2s ease-in-out infinite",
-                            }}
-                          />
-                        </div>
-                        <p
-                          className={`text-[10px] font-bold text-center mt-1 truncate ${
-                            comp.rarity === "Legendary"
-                              ? "text-yellow-300"
-                              : comp.rarity === "Epic"
-                              ? "text-purple-300"
-                              : comp.rarity === "Rare"
-                              ? "text-blue-300"
-                              : "text-gray-300"
-                          }`}
-                          style={{
-                            fontFamily: "monospace",
-                            textShadow: "1px 1px 0 #000",
-                          }}
-                        >
-                          {comp.name}
-                        </p>
-                      </div>
-                    ))}
+                                  ? "text-blue-300"
+                                  : "text-gray-300"
+                              }`}
+                              style={{
+                                fontFamily: "monospace",
+                                textShadow: "1px 1px 0 #000",
+                              }}
+                            >
+                              {comp.name}
+                            </p>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
