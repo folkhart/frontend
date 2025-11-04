@@ -428,18 +428,18 @@ export default function InventoryTab() {
     );
   }
 
-  const isEquipped = (itemId: string) => {
+  const isEquipped = (slotId: string) => {
     if (!character) return false;
     return (
-      character.weaponSlot?.item?.id === itemId ||
-      character.armorSlot?.item?.id === itemId ||
-      character.helmetSlot?.item?.id === itemId ||
-      character.glovesSlot?.item?.id === itemId ||
-      character.shoesSlot?.item?.id === itemId ||
-      character.ringSlot?.item?.id === itemId ||
-      character.necklaceSlot?.item?.id === itemId ||
-      character.beltSlot?.item?.id === itemId ||
-      character.earringSlot?.item?.id === itemId
+      character.weaponSlotId === slotId ||
+      character.armorSlotId === slotId ||
+      character.helmetSlotId === slotId ||
+      character.glovesSlotId === slotId ||
+      character.shoesSlotId === slotId ||
+      character.ringSlotId === slotId ||
+      character.necklaceSlotId === slotId ||
+      character.beltSlotId === slotId ||
+      character.earringSlotId === slotId
     );
   };
 
@@ -546,7 +546,7 @@ export default function InventoryTab() {
 
       <div className="grid grid-cols-3 gap-2">
         {filteredInventory.map((slot: any) => {
-          const equipped = isEquipped(slot.item?.id);
+          const equipped = isEquipped(slot.id);
 
           return (
             <div
@@ -1041,7 +1041,7 @@ export default function InventoryTab() {
                     Quantity: {selectedItemDetail.quantity}
                   </p>
                 )}
-                {isEquipped(selectedItemDetail.item.id) && (
+                {isEquipped(selectedItemDetail.id) && (
                   <div className="flex items-center gap-1 mt-1">
                     <Check size={14} className="text-green-400" />
                     <span className="text-xs text-green-400 font-bold">
@@ -1237,7 +1237,7 @@ export default function InventoryTab() {
                     SELL
                   </button>
                 </>
-              ) : isEquipped(selectedItemDetail.item.id) ? (
+              ) : isEquipped(selectedItemDetail.id) ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

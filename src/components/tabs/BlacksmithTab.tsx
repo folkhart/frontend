@@ -279,44 +279,88 @@ export default function BlacksmithTab() {
 
       {!selectedItem ? (
         <div>
+          {/* Equipped Items Section */}
+          {equipmentItems.filter((slot: any) => isItemEquipped(slot.id)).length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-green-400 font-bold mb-2 flex items-center gap-2">
+                <span className="text-lg">⚡</span> EQUIPPED ITEMS
+              </h4>
+              <div className="grid grid-cols-2 gap-2 bg-green-950/20 border border-green-900/50 p-2 rounded">
+                {equipmentItems
+                  .filter((slot: any) => isItemEquipped(slot.id))
+                  .map((slot: any) => (
+                    <button
+                      key={slot.id}
+                      onClick={() => setSelectedItem(slot)}
+                      className="bg-stone-800 border-2 border-green-600 hover:border-amber-600 p-3 text-left transition"
+                    >
+                      <div className="flex items-center gap-2">
+                        {getItemImage(slot.item.spriteId, slot.item.type) && (
+                          <img
+                            src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                            alt={slot.item.name}
+                            className="w-8 h-8"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div
+                            className={`font-bold text-sm ${getRarityColor(
+                              slot.item.rarity
+                            )}`}
+                          >
+                            {slot.item.name}{" "}
+                            {slot.enhancementLevel > 0 && `+${slot.enhancementLevel}`}
+                          </div>
+                          <div className="text-gray-400 text-xs">
+                            {slot.item.rarity}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Other Items Section */}
           <h4 className="text-white font-bold mb-2">
-            Select Equipment to Enhance:
+            Other Equipment:
           </h4>
           <div className="grid grid-cols-2 gap-2">
-            {equipmentItems.map((slot: any) => (
-              <button
-                key={slot.id}
-                onClick={() => setSelectedItem(slot)}
-                className="bg-stone-800 border-2 border-stone-700 hover:border-amber-600 p-3 text-left transition"
-              >
-                <div className="flex items-center gap-2">
-                  {getItemImage(slot.item.spriteId, slot.item.type) && (
-                    <img
-                      src={getItemImage(slot.item.spriteId, slot.item.type)!}
-                      alt={slot.item.name}
-                      className="w-8 h-8"
-                      style={{ imageRendering: "pixelated" }}
-                    />
-                  )}
-                  <div className="flex-1">
-                    <div
-                      className={`font-bold text-sm ${getRarityColor(
-                        slot.item.rarity
-                      )}`}
-                    >
-                      {slot.item.name}{" "}
-                      {slot.enhancementLevel > 0 && `+${slot.enhancementLevel}`}
-                      {isItemEquipped(slot.id) && (
-                        <span className="text-green-400 ml-1 text-xs">[EQUIPPED]</span>
-                      )}
-                    </div>
-                    <div className="text-gray-400 text-xs">
-                      {slot.item.rarity}
+            {equipmentItems
+              .filter((slot: any) => !isItemEquipped(slot.id))
+              .map((slot: any) => (
+                <button
+                  key={slot.id}
+                  onClick={() => setSelectedItem(slot)}
+                  className="bg-stone-800 border-2 border-stone-700 hover:border-amber-600 p-3 text-left transition"
+                >
+                  <div className="flex items-center gap-2">
+                    {getItemImage(slot.item.spriteId, slot.item.type) && (
+                      <img
+                        src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                        alt={slot.item.name}
+                        className="w-8 h-8"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                    )}
+                    <div className="flex-1">
+                      <div
+                        className={`font-bold text-sm ${getRarityColor(
+                          slot.item.rarity
+                        )}`}
+                      >
+                        {slot.item.name}{" "}
+                        {slot.enhancementLevel > 0 && `+${slot.enhancementLevel}`}
+                      </div>
+                      <div className="text-gray-400 text-xs">
+                        {slot.item.rarity}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
           </div>
         </div>
       ) : (
@@ -463,46 +507,98 @@ export default function BlacksmithTab() {
 
       {!selectedItem ? (
         <div>
+          {/* Equipped Items Section */}
+          {equipmentItems.filter((slot: any) => isItemEquipped(slot.id)).length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-green-400 font-bold mb-2 flex items-center gap-2">
+                <span className="text-lg">⚡</span> EQUIPPED ITEMS
+              </h4>
+              <div className="grid grid-cols-2 gap-2 bg-green-950/20 border border-green-900/50 p-2 rounded">
+                {equipmentItems
+                  .filter((slot: any) => isItemEquipped(slot.id))
+                  .map((slot: any) => (
+                    <button
+                      key={slot.id}
+                      onClick={() => setSelectedItem(slot)}
+                      className="bg-stone-800 border-2 border-green-600 hover:border-purple-600 p-3 text-left transition"
+                    >
+                      <div className="flex items-center gap-2">
+                        {getItemImage(slot.item.spriteId, slot.item.type) && (
+                          <img
+                            src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                            alt={slot.item.name}
+                            className="w-8 h-8"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div
+                            className={`font-bold text-sm ${getRarityColor(
+                              slot.item.rarity
+                            )}`}
+                          >
+                            {slot.item.name}
+                            {slot.enhancementLevel > 0 && (
+                              <span className="text-amber-400 ml-1">+{slot.enhancementLevel}</span>
+                            )}
+                            {slot.refineStats && (
+                              <span className="text-purple-400 ml-1">★</span>
+                            )}
+                          </div>
+                          <div className="text-gray-400 text-xs">
+                            {slot.item.rarity}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Other Items Section */}
           <h4 className="text-white font-bold mb-2">
-            Select Equipment to Refine:
+            Other Equipment:
           </h4>
           <div className="grid grid-cols-2 gap-2">
-            {equipmentItems.map((slot: any) => (
-              <button
-                key={slot.id}
-                onClick={() => setSelectedItem(slot)}
-                className="bg-stone-800 border-2 border-stone-700 hover:border-purple-600 p-3 text-left transition"
-              >
-                <div className="flex items-center gap-2">
-                  {getItemImage(slot.item.spriteId, slot.item.type) && (
-                    <img
-                      src={getItemImage(slot.item.spriteId, slot.item.type)!}
-                      alt={slot.item.name}
-                      className="w-8 h-8"
-                      style={{ imageRendering: "pixelated" }}
-                    />
-                  )}
-                  <div className="flex-1">
-                    <div
-                      className={`font-bold text-sm ${getRarityColor(
-                        slot.item.rarity
-                      )}`}
-                    >
-                      {slot.item.name}
-                      {slot.refineStats && (
-                        <span className="text-purple-400 ml-1">★</span>
-                      )}
-                      {isItemEquipped(slot.id) && (
-                        <span className="text-green-400 ml-1 text-xs">[EQUIPPED]</span>
-                      )}
-                    </div>
-                    <div className="text-gray-400 text-xs">
-                      {slot.item.rarity}
+            {equipmentItems
+              .filter((slot: any) => !isItemEquipped(slot.id))
+              .map((slot: any) => (
+                <button
+                  key={slot.id}
+                  onClick={() => setSelectedItem(slot)}
+                  className="bg-stone-800 border-2 border-stone-700 hover:border-purple-600 p-3 text-left transition"
+                >
+                  <div className="flex items-center gap-2">
+                    {getItemImage(slot.item.spriteId, slot.item.type) && (
+                      <img
+                        src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                        alt={slot.item.name}
+                        className="w-8 h-8"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                    )}
+                    <div className="flex-1">
+                      <div
+                        className={`font-bold text-sm ${getRarityColor(
+                          slot.item.rarity
+                        )}`}
+                      >
+                        {slot.item.name}
+                        {slot.enhancementLevel > 0 && (
+                          <span className="text-amber-400 ml-1">+{slot.enhancementLevel}</span>
+                        )}
+                        {slot.refineStats && (
+                          <span className="text-purple-400 ml-1">★</span>
+                        )}
+                      </div>
+                      <div className="text-gray-400 text-xs">
+                        {slot.item.rarity}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
           </div>
         </div>
       ) : (
@@ -579,42 +675,86 @@ export default function BlacksmithTab() {
 
       {!selectedItem ? (
         <div>
-          <h4 className="text-white font-bold mb-2">Select Equipment:</h4>
-          <div className="grid grid-cols-2 gap-2">
-            {equipmentItems.map((slot: any) => (
-              <button
-                key={slot.id}
-                onClick={() => setSelectedItem(slot)}
-                className="bg-stone-800 border-2 border-stone-700 hover:border-blue-600 p-3 text-left transition"
-              >
-                <div className="flex items-center gap-2">
-                  {getItemImage(slot.item.spriteId, slot.item.type) && (
-                    <img
-                      src={getItemImage(slot.item.spriteId, slot.item.type)!}
-                      alt={slot.item.name}
-                      className="w-8 h-8"
-                      style={{ imageRendering: "pixelated" }}
-                    />
-                  )}
-                  <div className="flex-1">
-                    <div
-                      className={`font-bold text-sm ${getRarityColor(
-                        slot.item.rarity
-                      )}`}
+          {/* Equipped Items Section */}
+          {equipmentItems.filter((slot: any) => isItemEquipped(slot.id)).length > 0 && (
+            <div className="mb-4">
+              <h4 className="text-green-400 font-bold mb-2 flex items-center gap-2">
+                <span className="text-lg">⚡</span> EQUIPPED ITEMS
+              </h4>
+              <div className="grid grid-cols-2 gap-2 bg-green-950/20 border border-green-900/50 p-2 rounded">
+                {equipmentItems
+                  .filter((slot: any) => isItemEquipped(slot.id))
+                  .map((slot: any) => (
+                    <button
+                      key={slot.id}
+                      onClick={() => setSelectedItem(slot)}
+                      className="bg-stone-800 border-2 border-green-600 hover:border-blue-600 p-3 text-left transition"
                     >
-                      {slot.item.name}
-                      {isItemEquipped(slot.id) && (
-                        <span className="text-green-400 ml-1 text-xs">[EQUIPPED]</span>
-                      )}
-                    </div>
-                    <div className="text-blue-400 text-xs">
-                      Sockets: {slot.socketedGems?.length || 0}/
-                      {slot.socketSlots || 0}
+                      <div className="flex items-center gap-2">
+                        {getItemImage(slot.item.spriteId, slot.item.type) && (
+                          <img
+                            src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                            alt={slot.item.name}
+                            className="w-8 h-8"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <div
+                            className={`font-bold text-sm ${getRarityColor(
+                              slot.item.rarity
+                            )}`}
+                          >
+                            {slot.item.name}
+                          </div>
+                          <div className="text-blue-400 text-xs">
+                            Sockets: {slot.socketedGems?.length || 0}/
+                            {slot.socketSlots || 0}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Other Items Section */}
+          <h4 className="text-white font-bold mb-2">Other Equipment:</h4>
+          <div className="grid grid-cols-2 gap-2">
+            {equipmentItems
+              .filter((slot: any) => !isItemEquipped(slot.id))
+              .map((slot: any) => (
+                <button
+                  key={slot.id}
+                  onClick={() => setSelectedItem(slot)}
+                  className="bg-stone-800 border-2 border-stone-700 hover:border-blue-600 p-3 text-left transition"
+                >
+                  <div className="flex items-center gap-2">
+                    {getItemImage(slot.item.spriteId, slot.item.type) && (
+                      <img
+                        src={getItemImage(slot.item.spriteId, slot.item.type)!}
+                        alt={slot.item.name}
+                        className="w-8 h-8"
+                        style={{ imageRendering: "pixelated" }}
+                      />
+                    )}
+                    <div className="flex-1">
+                      <div
+                        className={`font-bold text-sm ${getRarityColor(
+                          slot.item.rarity
+                        )}`}
+                      >
+                        {slot.item.name}
+                      </div>
+                      <div className="text-blue-400 text-xs">
+                        Sockets: {slot.socketedGems?.length || 0}/
+                        {slot.socketSlots || 0}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))}
           </div>
         </div>
       ) : (
