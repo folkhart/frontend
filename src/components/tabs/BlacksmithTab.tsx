@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { blacksmithApi, inventoryApi } from "@/lib/api";
 import { Hammer, Shield, AlertCircle } from "lucide-react";
 import { getRarityColor } from "@/utils/format";
+import { useGameStore } from "@/store/gameStore";
 
 const socketDrillIcon = new URL(
   "../../assets/items/craft/gems/socket_drill.png",
@@ -21,6 +22,7 @@ type BlacksmithMode = "enhance" | "refine" | "socket";
 
 export default function BlacksmithTab() {
   const queryClient = useQueryClient();
+  const { character } = useGameStore();
   const [mode, setMode] = useState<BlacksmithMode>("enhance");
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [useProtection, setUseProtection] = useState(false);
@@ -33,6 +35,22 @@ export default function BlacksmithTab() {
       return data;
     },
   });
+
+  // Helper to check if item is equipped
+  const isItemEquipped = (slotId: string) => {
+    if (!character) return false;
+    return [
+      character.weaponSlotId,
+      character.armorSlotId,
+      character.helmetSlotId,
+      character.glovesSlotId,
+      character.shoesSlotId,
+      character.ringSlotId,
+      character.necklaceSlotId,
+      character.beltSlotId,
+      character.earringSlotId,
+    ].includes(slotId);
+  };
 
   const enhanceMutation = useMutation({
     mutationFn: ({
@@ -61,11 +79,17 @@ export default function BlacksmithTab() {
 
   const refineMutation = useMutation({
     mutationFn: (slotId: string) => blacksmithApi.refine(slotId),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
+      // Invalidate and refetch all related queries
       queryClient.invalidateQueries({ queryKey: ["inventory"] });
       queryClient.invalidateQueries({ queryKey: ["character"] });
       queryClient.invalidateQueries({ queryKey: ["player"] });
-      queryClient.refetchQueries({ queryKey: ["inventory"] }); // Force immediate refetch
+      
+      // Force immediate refetch
+      await queryClient.refetchQueries({ queryKey: ["inventory"] });
+      await queryClient.refetchQueries({ queryKey: ["character"] });
+      await queryClient.refetchQueries({ queryKey: ["player"] });
+      
       setResult(response.data);
       setSelectedItem(null);
     },
@@ -282,6 +306,9 @@ export default function BlacksmithTab() {
                     >
                       {slot.item.name}{" "}
                       {slot.enhancementLevel > 0 && `+${slot.enhancementLevel}`}
+                      {isItemEquipped(slot.id) && (
+                        <span className="text-green-400 ml-1 text-xs">[EQUIPPED]</span>
+                      )}
                     </div>
                     <div className="text-gray-400 text-xs">
                       {slot.item.rarity}
@@ -465,6 +492,9 @@ export default function BlacksmithTab() {
                       {slot.refineStats && (
                         <span className="text-purple-400 ml-1">★</span>
                       )}
+                      {isItemEquipped(slot.id) && (
+                        <span className="text-green-400 ml-1 text-xs">[EQUIPPED]</span>
+                      )}
                     </div>
                     <div className="text-gray-400 text-xs">
                       {slot.item.rarity}
@@ -573,6 +603,9 @@ export default function BlacksmithTab() {
                       )}`}
                     >
                       {slot.item.name}
+                      {isItemEquipped(slot.id) && (
+                        <span className="text-green-400 ml-1 text-xs">[EQUIPPED]</span>
+                      )}
                     </div>
                     <div className="text-blue-400 text-xs">
                       Sockets: {slot.socketedGems?.length || 0}/

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useGameStore } from "@/store/gameStore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { characterApi, inventoryApi } from "@/lib/api";
-import { Sword, Shield, Heart, Zap, X, Circle } from "lucide-react";
+import { X, Circle } from "lucide-react";
 import { getRarityColor, getRarityBorder, getClassIcon } from "@/utils/format";
 import inventoryIcon from "@/assets/ui/inventory.png";
 import equipmentIcon from "@/assets/ui/equipment.png";
@@ -11,6 +11,18 @@ import hammerIcon from "@/assets/ui/craft/hammer.png";
 import refiningBonusIcon from "@/assets/ui/character_panel/refining_bonus.png";
 import socketDrillIcon from "@/assets/items/craft/gems/socket_drill.png";
 import petIcon from "@/assets/ui/pet.png";
+import fireIcon from "@/assets/ui/specialAttributes/fire_damage.png";
+import iceIcon from "@/assets/ui/specialAttributes/ice_damage.png";
+import lightningIcon from "@/assets/ui/specialAttributes/lightning_damage.png";
+import poisonIcon from "@/assets/ui/specialAttributes/poison_damage.png";
+import critChanceIcon from "@/assets/ui/specialAttributes/attack.png";
+import critDamageIcon from "@/assets/ui/specialAttributes/critical_damage.png";
+import lifestealIcon from "@/assets/ui/specialAttributes/lifesteal.png";
+import dodgeIcon from "@/assets/ui/specialAttributes/dodge.png";
+import hpIconCP from "@/assets/ui/character_panel/hp.png";
+import attackIconCP from "@/assets/ui/character_panel/attack.png";
+import defenseIconCP from "@/assets/ui/character_panel/defense.png";
+import speedIconCP from "@/assets/ui/character_panel/speed.png";
 import Lightning from "@/components/effects/Lightning";
 import ColorBends from "@/components/effects/ColorBends";
 import CraftingTab from "./CraftingTab";
@@ -44,6 +56,18 @@ export default function VillageTab() {
       const { data } = await inventoryApi.get();
       return data;
     },
+  });
+
+  // Query for character data to keep it in sync
+  useQuery({
+    queryKey: ["character"],
+    queryFn: async () => {
+      const { data } = await characterApi.get();
+      setCharacter(data); // Update store whenever fresh data comes in
+      return data;
+    },
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
   const equipMutation = useMutation({
@@ -1465,7 +1489,8 @@ export default function VillageTab() {
               >
                 <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-red-900/50">
                   <span className="text-red-400 flex items-center gap-1">
-                    <Heart size={14} /> HP
+                    <img src={hpIconCP} alt="HP" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                    HP
                   </span>
                   <span className="text-white font-bold">
                     {character.maxHealth}
@@ -1473,7 +1498,8 @@ export default function VillageTab() {
                 </div>
                 <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-orange-900/50">
                   <span className="text-orange-400 flex items-center gap-1">
-                    <Sword size={14} /> ATK
+                    <img src={attackIconCP} alt="ATK" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                    ATK
                   </span>
                   <span className="text-white font-bold">
                     {character.attack}
@@ -1481,7 +1507,8 @@ export default function VillageTab() {
                 </div>
                 <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-blue-900/50">
                   <span className="text-blue-400 flex items-center gap-1">
-                    <Shield size={14} /> DEF
+                    <img src={defenseIconCP} alt="DEF" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                    DEF
                   </span>
                   <span className="text-white font-bold">
                     {character.defense}
@@ -1489,7 +1516,8 @@ export default function VillageTab() {
                 </div>
                 <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-green-900/50">
                   <span className="text-green-400 flex items-center gap-1">
-                    <Zap size={14} /> SPD
+                    <img src={speedIconCP} alt="SPD" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                    SPD
                   </span>
                   <span className="text-white font-bold">
                     {character.speed}
@@ -1520,7 +1548,10 @@ export default function VillageTab() {
                 >
                   {(character as any).fireAttack > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-red-700/30">
-                      <span className="text-red-300">🔥 Fire</span>
+                      <span className="text-red-300 flex items-center gap-1">
+                        <img src={fireIcon} alt="Fire" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        Fire
+                      </span>
                       <span className="text-red-400 font-bold">
                         +{(character as any).fireAttack}
                       </span>
@@ -1528,7 +1559,10 @@ export default function VillageTab() {
                   )}
                   {(character as any).iceAttack > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-cyan-700/30">
-                      <span className="text-cyan-300">❄️ Ice</span>
+                      <span className="text-cyan-300 flex items-center gap-1">
+                        <img src={iceIcon} alt="Ice" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        Ice
+                      </span>
                       <span className="text-cyan-400 font-bold">
                         +{(character as any).iceAttack}
                       </span>
@@ -1536,7 +1570,10 @@ export default function VillageTab() {
                   )}
                   {(character as any).lightningAttack > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-yellow-700/30">
-                      <span className="text-yellow-300">⚡ Lightning</span>
+                      <span className="text-yellow-300 flex items-center gap-1">
+                        <img src={lightningIcon} alt="Lightning" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        Lightning
+                      </span>
                       <span className="text-yellow-400 font-bold">
                         +{(character as any).lightningAttack}
                       </span>
@@ -1544,7 +1581,10 @@ export default function VillageTab() {
                   )}
                   {(character as any).poisonAttack > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-green-700/30">
-                      <span className="text-green-300">☠️ Poison</span>
+                      <span className="text-green-300 flex items-center gap-1">
+                        <img src={poisonIcon} alt="Poison" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        Poison
+                      </span>
                       <span className="text-green-400 font-bold">
                         +{(character as any).poisonAttack}
                       </span>
@@ -1552,7 +1592,10 @@ export default function VillageTab() {
                   )}
                   {(character as any).critChance > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-amber-700/30">
-                      <span className="text-amber-300">💥 Crit %</span>
+                      <span className="text-amber-300 flex items-center gap-1">
+                        <img src={critChanceIcon} alt="Crit Chance" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        Crit %
+                      </span>
                       <span className="text-amber-400 font-bold">
                         {(character as any).critChance}%
                       </span>
@@ -1560,7 +1603,10 @@ export default function VillageTab() {
                   )}
                   {(character as any).critDamage > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-orange-700/30">
-                      <span className="text-orange-300">💢 Crit DMG</span>
+                      <span className="text-orange-300 flex items-center gap-1">
+                        <img src={critDamageIcon} alt="Crit Damage" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        Crit DMG
+                      </span>
                       <span className="text-orange-400 font-bold">
                         +{(character as any).critDamage}%
                       </span>
@@ -1568,7 +1614,10 @@ export default function VillageTab() {
                   )}
                   {(character as any).lifeSteal > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-pink-700/30">
-                      <span className="text-pink-300">💖 Lifesteal</span>
+                      <span className="text-pink-300 flex items-center gap-1">
+                        <img src={lifestealIcon} alt="Lifesteal" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        Lifesteal
+                      </span>
                       <span className="text-pink-400 font-bold">
                         {(character as any).lifeSteal}%
                       </span>
@@ -1576,7 +1625,10 @@ export default function VillageTab() {
                   )}
                   {(character as any).dodgeChance > 0 && (
                     <div className="flex items-center justify-between bg-stone-900/50 p-2 rounded border border-indigo-700/30">
-                      <span className="text-indigo-300">🌀 Dodge</span>
+                      <span className="text-indigo-300 flex items-center gap-1">
+                        <img src={dodgeIcon} alt="Dodge" className="w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                        Dodge
+                      </span>
                       <span className="text-indigo-400 font-bold">
                         {(character as any).dodgeChance}%
                       </span>

@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
-import { Sword, Shield, Flame, Droplet, Zap, X, Skull } from 'lucide-react';
+import { Sword, Shield, X } from 'lucide-react';
+import fireIcon from '@/assets/ui/specialAttributes/fire_damage.png';
+import iceIcon from '@/assets/ui/specialAttributes/ice_damage.png';
+import lightningIcon from '@/assets/ui/specialAttributes/lightning_damage.png';
+import poisonIcon from '@/assets/ui/specialAttributes/poison_damage.png';
 
 interface BossFightProps {
   dungeonName: string;
@@ -460,16 +464,49 @@ export default function BossFight({
     
     setActionInProgress(true);
     playCharacterAnimation('attack');
-    setCurrentAction('⚔️ ATTACK!');
+    
+    // Check if an elemental attack triggers (25% chance if player has that element)
+    const elementalRoll = Math.random() * 100;
+    let bonusDamage = 0;
+    let attackType = '⚔️ ATTACK!';
+    let attackColor = '#FF6B6B';
+    
+    if (fireAttack > 0 && elementalRoll < 25) {
+      bonusDamage = Math.floor(fireAttack * 1.5);
+      attackType = '🔥 FIRE ATTACK!';
+      attackColor = '#FF4500';
+    } else if (iceAttack > 0 && elementalRoll < 25) {
+      bonusDamage = Math.floor(iceAttack * 1.3);
+      attackType = '❄️ ICE ATTACK!';
+      attackColor = '#00BFFF';
+    } else if (lightningAttack > 0 && elementalRoll < 25) {
+      bonusDamage = Math.floor(lightningAttack * 2);
+      attackType = '⚡ LIGHTNING ATTACK!';
+      attackColor = '#FFD700';
+    } else if (poisonAttack > 0 && elementalRoll < 25) {
+      bonusDamage = Math.floor(poisonAttack);
+      attackType = '☠️ POISON ATTACK!';
+      attackColor = '#32CD32';
+    }
+    
+    setCurrentAction(attackType);
     setBossShake(true);
-    const result = calculateDamage(playerAttack, bossStats.defense, critChance, critDamage, 0);
+    const result = calculateDamage(playerAttack, bossStats.defense, critChance, critDamage, bonusDamage);
     
     setBossHP(prev => {
       const newHP = Math.max(0, prev - result.damage);
       // Boss position for damage text
       const containerWidth = pixiContainer.current?.clientWidth || 300;
-      addFloatingText(`-${result.damage}`, containerWidth * 0.75, 80, result.isCrit ? '#FFD700' : '#FF6B6B', result.isCrit);
-      addLog(`⚔️ You dealt ${result.damage} damage!${result.isCrit ? ' CRITICAL HIT!' : ''}`);
+      addFloatingText(`-${result.damage}`, containerWidth * 0.75, 80, result.isCrit ? '#FFD700' : attackColor, result.isCrit);
+      
+      // Show CRITICAL! text if it's a crit
+      if (result.isCrit) {
+        setTimeout(() => {
+          addFloatingText('💥 CRITICAL!', containerWidth * 0.75, 50, '#FFD700', true);
+        }, 100);
+      }
+      
+      addLog(`${attackType} You dealt ${result.damage} damage!${result.isCrit ? ' CRITICAL HIT!' : ''}`);
       
       // Lifesteal
       if (lifeSteal > 0) {
@@ -863,8 +900,7 @@ export default function BossFight({
                 className="py-2 sm:py-3 md:py-4 bg-orange-700 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-orange-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #c2410c', textShadow: '1px 1px 0 #000' }}
               >
-                <Flame className="inline mr-1" size={16} />
-                🔥
+                <img src={fireIcon} alt="Fire" className="inline w-4 h-4" style={{ imageRendering: 'pixelated' }} />
               </button>
             )}
 
@@ -875,8 +911,7 @@ export default function BossFight({
                 className="py-2 sm:py-3 md:py-4 bg-cyan-700 hover:bg-cyan-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-cyan-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #0e7490', textShadow: '1px 1px 0 #000' }}
               >
-                <Droplet className="inline mr-1" size={16} />
-                ❄️
+                <img src={iceIcon} alt="Ice" className="inline w-4 h-4" style={{ imageRendering: 'pixelated' }} />
               </button>
             )}
 
@@ -887,8 +922,7 @@ export default function BossFight({
                 className="py-2 sm:py-3 md:py-4 bg-yellow-700 hover:bg-yellow-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #a16207', textShadow: '1px 1px 0 #000' }}
               >
-                <Zap className="inline mr-1" size={16} />
-                ⚡
+                <img src={lightningIcon} alt="Lightning" className="inline w-4 h-4" style={{ imageRendering: 'pixelated' }} />
               </button>
             )}
 
@@ -899,8 +933,7 @@ export default function BossFight({
                 className="py-2 sm:py-3 md:py-4 bg-purple-700 hover:bg-purple-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #6b21a8', textShadow: '1px 1px 0 #000' }}
               >
-                <Skull className="inline mr-1" size={16} />
-                ☠️
+                <img src={poisonIcon} alt="Poison" className="inline w-4 h-4" style={{ imageRendering: 'pixelated' }} />
               </button>
             )}
           </div>
