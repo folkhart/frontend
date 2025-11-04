@@ -67,7 +67,16 @@ export default function GamePage() {
     try {
       console.log('🔍 Starting version check...');
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/api/version/check`);
+      
+      // Add 10-second timeout to version check
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
+      const response = await fetch(`${API_URL}/api/version/check`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       const data = await response.json();
       console.log('📦 Version data:', data);
       

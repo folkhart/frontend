@@ -33,7 +33,12 @@ export function connectSocket(token: string) {
 
   socket = io(WS_URL, {
     auth: { token },
-    transports: ['websocket'],
+    transports: ['websocket', 'polling'], // Fallback to polling if websocket fails
+    timeout: 5000, // 5 second connection timeout
+    reconnection: true,
+    reconnectionAttempts: 3,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
   });
 
   socket.on('connect', () => {
@@ -45,7 +50,13 @@ export function connectSocket(token: string) {
   });
 
   socket.on('connect_error', (error) => {
-    console.error('Socket connection error:', error);
+    console.warn('⚠️ Socket connection error (non-blocking):', error.message);
+    // Don't throw - allow app to continue without socket
+  });
+
+  socket.on('connect_timeout', () => {
+    console.warn('⚠️ Socket connection timeout (non-blocking)');
+    // Don't throw - allow app to continue without socket
   });
 
   // Expose socket on window for easy access in components
