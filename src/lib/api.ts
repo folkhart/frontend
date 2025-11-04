@@ -91,6 +91,11 @@ export const dungeonApi = {
   getActive: () => api.get('/dungeon/active'),
   complete: (runId: string) => api.post(`/dungeon/complete/${runId}`),
   fastFinish: (runId: string) => api.post(`/dungeon/fast-finish/${runId}`),
+  // Boss Fight API
+  checkBossCooldown: () => api.get('/dungeon/boss/cooldown'),
+  startBoss: (dungeonId: string) => api.post('/dungeon/boss/start', { dungeonId }),
+  completeBoss: (dungeonId: string, victory: boolean, finalHP: number, rewards?: any) =>
+    api.post('/dungeon/boss/complete', { dungeonId, victory, finalHP, rewards }),
 };
 
 // Inventory API

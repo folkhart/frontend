@@ -247,6 +247,11 @@ export default function AdventureTab() {
 
   // Boss fight state
   const [showBossFight, setShowBossFight] = useState(false);
+  const [bossCooldown, setBossCooldown] = useState<{
+    canFight: boolean;
+    remainingMinutes: number;
+    nextAvailableAt: Date | null;
+  } | null>(null);
 
   const [timeRemaining, setTimeRemaining] = useState<number>(() => {
     const saved = localStorage.getItem("activeDungeonRun");
@@ -284,6 +289,23 @@ export default function AdventureTab() {
       return data;
     },
   });
+
+  // Check boss fight cooldown
+  const { data: bossCooldownData } = useQuery({
+    queryKey: ["bossCooldown"],
+    queryFn: async () => {
+      const { data } = await dungeonApi.checkBossCooldown();
+      return data;
+    },
+    refetchInterval: 60000, // Refetch every minute
+  });
+
+  // Update cooldown state when data changes
+  useEffect(() => {
+    if (bossCooldownData) {
+      setBossCooldown(bossCooldownData);
+    }
+  }, [bossCooldownData]);
 
   const { data: dungeonHistory } = useQuery({
     queryKey: ["dungeonHistory"],
@@ -2118,14 +2140,36 @@ export default function AdventureTab() {
               </div>
               {/* BOSS FIGHT - Epic PixiJS Battle! */}
               <button
-                onClick={() => {
-                  if (selectedDungeon.description && selectedDungeon.description.includes("Boss:")) {
-                    setShowBossFight(true);
-                  } else {
+                onClick={async () => {
+                  if (!selectedDungeon.description || !selectedDungeon.description.includes("Boss:")) {
                     (window as any).showToast?.("This dungeon has no boss!", "warning");
+                    return;
+                  }
+
+                  if (bossCooldown && !bossCooldown.canFight) {
+                    (window as any).showToast?.(
+                      `Boss fight on cooldown! Wait ${bossCooldown.remainingMinutes} more minutes.`,
+                      "warning"
+                    );
+                    return;
+                  }
+
+                  try {
+                    // Start boss fight and update cooldown
+                    await dungeonApi.startBoss(selectedDungeon.id);
+                    setShowBossFight(true);
+                    // Refetch cooldown
+                    queryClient.invalidateQueries({ queryKey: ["bossCooldown"] });
+                  } catch (error: any) {
+                    (window as any).showToast?.(error.response?.data?.message || "Failed to start boss fight", "error");
                   }
                 }}
-                className="w-full py-4 bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800 text-white font-bold transition relative overflow-hidden group"
+                disabled={bossCooldown ? !bossCooldown.canFight : false}
+                className={`w-full py-4 font-bold transition relative overflow-hidden group ${
+                  bossCooldown && !bossCooldown.canFight
+                    ? 'bg-gray-700 cursor-not-allowed opacity-50'
+                    : 'bg-gradient-to-r from-red-800 to-red-900 hover:from-red-700 hover:to-red-800'
+                } text-white`}
                 style={{
                   border: '4px solid #991b1b',
                   borderRadius: '0',
@@ -2137,12 +2181,24 @@ export default function AdventureTab() {
                 }}
               >
                 <span className="relative z-10 text-xl tracking-wider flex items-center justify-center gap-2">
-                  <span className="animate-pulse">👹</span>
-                  BOSS FIGHT
-                  <span className="animate-pulse">👹</span>
+                  {bossCooldown && !bossCooldown.canFight ? (
+                    <>
+                      ⏰ COOLDOWN: {bossCooldown.remainingMinutes}m
+                    </>
+                  ) : (
+                    <>
+                      <span className="animate-pulse">👹</span>
+                      BOSS FIGHT
+                      <span className="animate-pulse">👹</span>
+                    </>
+                  )}
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-b from-red-500/30 to-transparent group-hover:from-red-400/40"></div>
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400 animate-pulse"></div>
+                {bossCooldown && bossCooldown.canFight && (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-b from-red-500/30 to-transparent group-hover:from-red-400/40"></div>
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-400 animate-pulse"></div>
+                  </>
+                )}
               </button>
             </div>
 
@@ -2189,57 +2245,17 @@ export default function AdventureTab() {
           lifeSteal={(character as any).lifeSteal || 0}
           dodgeChance={(character as any).dodgeChance || 0}
           onComplete={async (success, finalHP, rewards) => {
-            // Immediate optimistic update for instant UI feedback
-            if (character && success && rewards) {
-              // Optimistically update character with rewards
-              setCharacter({
-                ...character,
-                health: finalHP,
-                experience: character.experience + rewards.xp,
-              });
-              setPlayer({
-                ...player!,
-                gold: (player?.gold || 0) + rewards.gold,
-              });
-            } else if (character) {
-              setCharacter({
-                ...character,
-                health: finalHP,
-              });
-            }
-            
-            // Update backend with rewards
+            // Complete boss fight on backend first
             try {
-              await characterApi.updateHP(finalHP);
+              await dungeonApi.completeBoss(selectedDungeon.id, success, finalHP, rewards);
+              
+              // Refetch all data
+              await queryClient.invalidateQueries({ queryKey: ["character"] });
+              await queryClient.invalidateQueries({ queryKey: ["player"] });
+              await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+              await queryClient.invalidateQueries({ queryKey: ["bossCooldown"] });
               
               if (success && rewards) {
-                // Grant rewards via API
-                await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/boss-fight/claim-rewards`, {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    xp: rewards.xp,
-                    gold: rewards.gold,
-                    items: rewards.items,
-                    gems: rewards.gems,
-                  }),
-                });
-              }
-              
-              // Force refresh character and player data
-              await queryClient.invalidateQueries({ queryKey: ["character"] });
-              await queryClient.refetchQueries({ queryKey: ["character"] });
-              await queryClient.invalidateQueries({ queryKey: ["inventory"] });
-              
-              // Also update player data
-              const { data: profile } = await authApi.getProfile();
-              setPlayer(profile);
-              setCharacter(profile.character);
-
-              if (success) {
                 (window as any).showToast?.(
                   `🎉 Boss defeated! +${rewards?.xp || 0} XP, +${rewards?.gold || 0}g`,
                   "success"
@@ -2248,8 +2264,10 @@ export default function AdventureTab() {
                 (window as any).showToast?.("💀 Defeated by the boss...", "error");
               }
             } catch (error) {
-              console.error("Failed to update HP or grant rewards:", error);
+              console.error("Failed to complete boss fight:", error);
+              (window as any).showToast?.("Failed to save boss fight results", "error");
             }
+
             setShowBossFight(false);
           }}
           onClose={() => setShowBossFight(false)}

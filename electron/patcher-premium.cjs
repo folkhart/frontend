@@ -3,12 +3,12 @@
  * Professional launcher with real news integration
  */
 
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
-const { autoUpdater } = require('electron-updater');
-const path = require('path');
-const https = require('https');
-const { getLogger } = require('./logger.cjs');
-const { initializeAntiCheat } = require('./antiCheat.cjs');
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { autoUpdater } = require("electron-updater");
+const path = require("path");
+const https = require("https");
+const { getLogger } = require("./logger.cjs");
+const { initializeAntiCheat } = require("./antiCheat.cjs");
 
 const logger = getLogger();
 let patcherWindow = null;
@@ -23,7 +23,11 @@ function getGameWindow() {
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
 
-const API_URL = process.env.VITE_API_URL || 'https://folkhart.com';
+// Use localhost in dev, production URL otherwise
+const isDev = process.env.NODE_ENV === "development";
+const API_URL =
+  process.env.VITE_API_URL ||
+  (isDev ? "http://localhost:3000" : "https://backend-glre.onrender.com");
 
 class PremiumPatcher {
   constructor() {
@@ -42,24 +46,26 @@ class PremiumPatcher {
         nodeIntegration: true,
         contextIsolation: false,
       },
-      icon: path.join(__dirname, '../favicon.ico'),
+      icon: path.join(__dirname, "../favicon.ico"),
       transparent: false,
-      backgroundColor: '#000000',
+      backgroundColor: "#000000",
     });
 
-    patcherWindow.loadFile(path.join(__dirname, 'patcher-premium.html'));
+    patcherWindow.loadFile(path.join(__dirname, "patcher-premium.html"));
 
-    logger.info('PATCHER', 'Premium launcher window opened', { version: this.currentVersion });
+    logger.info("PATCHER", "Premium launcher window opened", {
+      version: this.currentVersion,
+    });
 
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       patcherWindow.webContents.openDevTools();
     }
 
-    patcherWindow.on('closed', () => {
+    patcherWindow.on("closed", () => {
       patcherWindow = null;
     });
 
-    patcherWindow.webContents.on('did-finish-load', () => {
+    patcherWindow.webContents.on("did-finish-load", () => {
       this.sendVersion();
       this.fetchAndSendNews();
     });
@@ -67,25 +73,25 @@ class PremiumPatcher {
 
   sendStatus(message) {
     if (patcherWindow && !patcherWindow.isDestroyed()) {
-      patcherWindow.webContents.send('update-status', message);
+      patcherWindow.webContents.send("update-status", message);
     }
   }
 
   sendProgress(percent, text) {
     if (patcherWindow && !patcherWindow.isDestroyed()) {
-      patcherWindow.webContents.send('update-progress', percent, text);
+      patcherWindow.webContents.send("update-progress", percent, text);
     }
   }
 
   sendVersion() {
     if (patcherWindow && !patcherWindow.isDestroyed()) {
-      patcherWindow.webContents.send('update-version', this.currentVersion);
+      patcherWindow.webContents.send("update-version", this.currentVersion);
     }
   }
 
   setPlayButton(enabled) {
     if (patcherWindow && !patcherWindow.isDestroyed()) {
-      patcherWindow.webContents.send('set-play-button', enabled);
+      patcherWindow.webContents.send("set-play-button", enabled);
     }
   }
 
@@ -94,42 +100,48 @@ class PremiumPatcher {
    */
   async fetchAndSendNews() {
     try {
-      logger.info('NEWS', 'Fetching news from API', { url: API_URL });
+      logger.info("NEWS", "Fetching news from API", { url: API_URL });
 
       const newsData = await this.fetchNewsFromAPI();
-      
-      logger.info('NEWS', 'Raw news data received', { 
-        hasData: !!newsData, 
+
+      logger.info("NEWS", "Raw news data received", {
+        hasData: !!newsData,
         isArray: Array.isArray(newsData),
-        length: newsData?.length 
+        length: newsData?.length,
       });
-      
+
       if (newsData && newsData.length > 0) {
-        const formattedNews = newsData.map(item => ({
-          category: item.category || 'News',
-          title: item.title,
-          excerpt: item.excerpt || '',
-          date: new Date(item.publishedAt || item.createdAt).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-          }),
-        })).slice(0, 5); // Show top 5 news items
+        const formattedNews = newsData
+          .map((item) => ({
+            category: item.category || "News",
+            title: item.title,
+            excerpt: item.excerpt || "",
+            date: new Date(
+              item.publishedAt || item.createdAt
+            ).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            }),
+          }))
+          .slice(0, 5); // Show top 5 news items
 
         if (patcherWindow && !patcherWindow.isDestroyed()) {
-          patcherWindow.webContents.send('update-news', formattedNews);
+          patcherWindow.webContents.send("update-news", formattedNews);
         }
 
-        logger.info('NEWS', 'News loaded successfully', { count: formattedNews.length });
+        logger.info("NEWS", "News loaded successfully", {
+          count: formattedNews.length,
+        });
       } else {
-        logger.warn('NEWS', 'No news data received, using fallback');
+        logger.warn("NEWS", "No news data received, using fallback");
         this.sendFallbackNews();
       }
     } catch (error) {
-      logger.error('NEWS', 'Failed to fetch news', { 
+      logger.error("NEWS", "Failed to fetch news", {
         error: error.message,
         stack: error.stack,
-        apiUrl: API_URL 
+        apiUrl: API_URL,
       });
       this.sendFallbackNews();
     }
@@ -143,78 +155,80 @@ class PremiumPatcher {
       try {
         // Parse the API URL
         const apiUrl = new URL(API_URL);
-        const isHttps = apiUrl.protocol === 'https:';
-        const httpModule = isHttps ? https : require('http');
+        const isHttps = apiUrl.protocol === "https:";
+        const httpModule = isHttps ? https : require("http");
 
         const options = {
           hostname: apiUrl.hostname,
           port: apiUrl.port || (isHttps ? 443 : 80),
-          path: '/api/news/published?limit=5',
-          method: 'GET',
+          path: "/api/news/published?limit=5",
+          method: "GET",
           headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
         };
 
-        logger.info('NEWS', 'Making HTTP request', { 
+        logger.info("NEWS", "Making HTTP request", {
           hostname: options.hostname,
           port: options.port,
           path: options.path,
-          isHttps 
+          isHttps,
         });
 
         const req = httpModule.request(options, (res) => {
-          logger.info('NEWS', 'Got response', { 
+          logger.info("NEWS", "Got response", {
             statusCode: res.statusCode,
-            headers: res.headers 
+            headers: res.headers,
           });
 
-          let data = '';
+          let data = "";
 
-          res.on('data', (chunk) => {
+          res.on("data", (chunk) => {
             data += chunk;
           });
 
-          res.on('end', () => {
-            logger.info('NEWS', 'Response body', { 
+          res.on("end", () => {
+            logger.info("NEWS", "Response body", {
               length: data.length,
-              preview: data.substring(0, 200)
+              preview: data.substring(0, 200),
             });
 
             try {
               const parsed = JSON.parse(data);
               // Backend returns { posts, total }
-              logger.info('NEWS', 'Parsed response', {
+              logger.info("NEWS", "Parsed response", {
                 hasPosts: !!parsed.posts,
                 postsLength: parsed.posts?.length,
-                total: parsed.total
+                total: parsed.total,
               });
               resolve(parsed.posts || []);
             } catch (e) {
-              logger.error('NEWS', 'Failed to parse JSON', { 
+              logger.error("NEWS", "Failed to parse JSON", {
                 error: e.message,
-                data: data.substring(0, 500)
+                data: data.substring(0, 500),
               });
               reject(e);
             }
           });
         });
 
-        req.on('error', (error) => {
-          logger.error('NEWS', 'HTTP request error', { error: error.message });
+        req.on("error", (error) => {
+          logger.error("NEWS", "HTTP request error", { error: error.message });
           reject(error);
         });
 
         req.setTimeout(5000, () => {
-          logger.error('NEWS', 'Request timeout after 5s');
+          logger.error("NEWS", "Request timeout after 5s");
           req.destroy();
-          reject(new Error('Request timeout'));
+          reject(new Error("Request timeout"));
         });
 
         req.end();
       } catch (error) {
-        logger.error('NEWS', 'Error setting up request', { error: error.message });
+        logger.error("NEWS", "Error setting up request", {
+          error: error.message,
+        });
         reject(error);
       }
     });
@@ -226,54 +240,56 @@ class PremiumPatcher {
   sendFallbackNews() {
     const fallbackNews = [
       {
-        category: 'Welcome',
-        title: 'Welcome to Folkhart! Embark on your cozy adventure!',
+        category: "Welcome",
+        title: "Welcome to Folkhart! Embark on your cozy adventure!",
         date: new Date().toLocaleDateString(),
       },
       {
-        category: 'Update',
-        title: 'Join our Discord community for events and updates',
+        category: "Update",
+        title: "Join our Discord community for events and updates",
         date: new Date().toLocaleDateString(),
       },
       {
-        category: 'Event',
-        title: 'Check out our Reddit for guides and discussions',
+        category: "Event",
+        title: "Check out our Reddit for guides and discussions",
         date: new Date().toLocaleDateString(),
       },
     ];
 
     if (patcherWindow && !patcherWindow.isDestroyed()) {
-      patcherWindow.webContents.send('update-news', fallbackNews);
+      patcherWindow.webContents.send("update-news", fallbackNews);
     }
   }
 
   async checkForUpdates() {
     try {
-      this.sendStatus('🔍 Checking for updates...');
-      this.sendProgress(10, 'Checking...');
-      
-      logger.info('UPDATER', 'Checking for updates', { currentVersion: this.currentVersion });
+      this.sendStatus("🔍 Checking for updates...");
+      this.sendProgress(10, "Checking...");
+
+      logger.info("UPDATER", "Checking for updates", {
+        currentVersion: this.currentVersion,
+      });
 
       const result = await autoUpdater.checkForUpdates();
-      
+
       if (result && result.updateInfo) {
         const latestVersion = result.updateInfo.version;
-        
+
         if (latestVersion !== this.currentVersion) {
           this.updateAvailable = true;
           this.updateInfo = result.updateInfo;
-          
+
           this.sendStatus(
             `📦 <span style="color: #84cc16;">Update available: v${latestVersion}</span><br>` +
-            `Current version: v${this.currentVersion}`
+              `Current version: v${this.currentVersion}`
           );
-          this.sendProgress(20, 'Update Found');
-          
-          logger.info('UPDATER', 'Update available', {
+          this.sendProgress(20, "Update Found");
+
+          logger.info("UPDATER", "Update available", {
             current: this.currentVersion,
             latest: latestVersion,
           });
-          
+
           await this.downloadUpdate();
         } else {
           this.noUpdateAvailable();
@@ -282,47 +298,66 @@ class PremiumPatcher {
         this.noUpdateAvailable();
       }
     } catch (error) {
-      logger.error('UPDATER', 'Update check failed', { error: error.message });
-      
-      this.sendStatus('⚠️ <span style="color: #fbbf24;">Could not check for updates</span><br>Playing with current version');
-      this.sendProgress(100, 'READY');
+      logger.error("UPDATER", "Update check failed", { error: error.message });
+
+      this.sendStatus(
+        '⚠️ <span style="color: #fbbf24;">Could not check for updates</span><br>Playing with current version'
+      );
+      this.sendProgress(100, "READY");
       this.setPlayButton(true);
     }
   }
 
   noUpdateAvailable() {
-    this.sendStatus('✅ <span style="color: #84cc16;">Game is up to date!</span><br>Ready to embark on your adventure');
-    this.sendProgress(100, 'READY');
+    this.sendStatus(
+      '✅ <span style="color: #84cc16;">Game is up to date!</span><br>Ready to embark on your adventure'
+    );
+    this.sendProgress(100, "READY");
     this.setPlayButton(true);
-    
-    logger.info('UPDATER', 'No update available', { version: this.currentVersion });
+
+    logger.info("UPDATER", "No update available", {
+      version: this.currentVersion,
+    });
   }
 
   async downloadUpdate() {
     try {
-      this.sendStatus('⬇️ <span style="color: #fbbf24;">Downloading update...</span>');
-      this.sendProgress(30, 'Downloading...');
-      
-      logger.info('UPDATER', 'Starting download', { version: this.updateInfo.version });
-      
+      this.sendStatus(
+        '⬇️ <span style="color: #fbbf24;">Downloading update...</span>'
+      );
+      this.sendProgress(30, "Downloading...");
+
+      logger.info("UPDATER", "Starting download", {
+        version: this.updateInfo.version,
+      });
+
       await autoUpdater.downloadUpdate();
     } catch (error) {
-      logger.error('UPDATER', 'Download failed', { error: error.message });
-      
-      this.sendStatus('⚠️ <span style="color: #ef4444;">Download failed</span><br>Playing with current version');
-      this.sendProgress(100, 'READY');
+      logger.error("UPDATER", "Download failed", { error: error.message });
+
+      this.sendStatus(
+        '⚠️ <span style="color: #ef4444;">Download failed</span><br>Playing with current version'
+      );
+      this.sendProgress(100, "READY");
       this.setPlayButton(true);
     }
   }
 
   launchGame() {
     try {
-      logger.info('GAME', 'Launching game', { version: this.currentVersion });
+      const isDev = process.env.NODE_ENV === "development";
+      logger.info("GAME", "Launching game", { 
+        version: this.currentVersion,
+        isDev: isDev,
+        env: process.env.NODE_ENV 
+      });
 
       if (patcherWindow && !patcherWindow.isDestroyed()) {
+        logger.info("GAME", "Closing patcher window");
         patcherWindow.close();
       }
 
+      logger.info("GAME", "Creating game window");
       gameWindow = new BrowserWindow({
         width: 1280,
         height: 720,
@@ -332,58 +367,132 @@ class PremiumPatcher {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
-          preload: path.join(__dirname, 'preload.cjs'),
+          preload: path.join(__dirname, "preload.cjs"),
           webSecurity: true,
-          devTools: process.env.NODE_ENV === 'development' // Only in dev
+          devTools: true, // Enabled for debugging
         },
-        icon: path.join(__dirname, '../favicon.ico'),
-        title: 'Folkhart - Cozy Fantasy RPG',
-        backgroundColor: '#1C1917', // Stone gray background
+        icon: path.join(__dirname, "../favicon.ico"),
+        title: "Folkhart - Cozy Fantasy RPG",
+        backgroundColor: "#1C1917", // Stone gray background
         show: false, // Don't show until ready
         autoHideMenuBar: true,
-        titleBarStyle: 'hidden' // macOS specific
+        titleBarStyle: "hidden", // macOS specific
       });
-
-      // Show window when ready to prevent flashing
-      gameWindow.once('ready-to-show', () => {
-        gameWindow.show();
+      
+      logger.info("GAME", "Game window created", {
+        id: gameWindow.id,
+        isDestroyed: gameWindow.isDestroyed(),
+        isVisible: gameWindow.isVisible()
       });
 
       // Initialize anti-cheat system
       initializeAntiCheat(gameWindow);
 
       // Minimize to tray instead of closing
-      gameWindow.on('close', (event) => {
+      gameWindow.on("close", (event) => {
         if (!app.isQuitting) {
           event.preventDefault();
           gameWindow.hide();
-          logger.info('GAME', 'Game window minimized to tray');
-          
+          logger.info("GAME", "Game window minimized to tray");
+
           // Notify user
-          gameWindow.webContents.send('show-tray-notification');
-          
+          gameWindow.webContents.send("show-tray-notification");
+
           return false;
         }
       });
 
-      gameWindow.on('closed', () => {
+      gameWindow.on("closed", () => {
         gameWindow = null;
-        logger.info('GAME', 'Game window closed');
+        logger.info("GAME", "Game window closed");
       });
 
-      if (process.env.NODE_ENV === 'development') {
-        gameWindow.loadURL('http://localhost:5173');
-        // Don't auto-open devtools
+      // Load content and show when ready
+      logger.info("GAME", "Starting load process", { isDev });
+      
+      if (isDev) {
+        logger.info("GAME", "Loading from Vite dev server");
+        gameWindow.loadURL("http://localhost:5173");
+        // Show after a small delay in dev
+        setTimeout(() => {
+          logger.info("GAME", "Dev timeout triggered", {
+            exists: !!gameWindow,
+            destroyed: gameWindow ? gameWindow.isDestroyed() : null
+          });
+          if (gameWindow && !gameWindow.isDestroyed()) {
+            gameWindow.show();
+            logger.info("GAME", "Game window shown (dev)", {
+              isVisible: gameWindow.isVisible()
+            });
+          }
+        }, 1000);
       } else {
-        gameWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+        // Production: load local files
+        const filePath = path.join(__dirname, "../dist/index.html");
+        const fs = require('fs');
+        const fileExists = fs.existsSync(filePath);
+        
+        logger.info("GAME", "Production mode - loading local file", { 
+          path: filePath,
+          fileExists: fileExists,
+          __dirname: __dirname
+        });
+        
+        if (!fileExists) {
+          logger.error("GAME", "ERROR: index.html not found!", { path: filePath });
+        }
+        
+        gameWindow.loadFile(filePath)
+          .then(() => {
+            logger.info("GAME", "✅ loadFile() promise resolved successfully");
+          })
+          .catch((err) => {
+            logger.error("GAME", "❌ loadFile() promise rejected", { 
+              error: err.message,
+              stack: err.stack,
+              path: filePath 
+            });
+          });
+        
+        // Force show window after 1.5 seconds regardless
+        logger.info("GAME", "Setting timeout to show window in 1.5s");
+        setTimeout(() => {
+          logger.info("GAME", "⏰ Timeout triggered - attempting to show window", {
+            windowExists: !!gameWindow,
+            isDestroyed: gameWindow ? gameWindow.isDestroyed() : null,
+            isVisible: gameWindow ? gameWindow.isVisible() : null
+          });
+          
+          if (gameWindow && !gameWindow.isDestroyed()) {
+            logger.info("GAME", "Calling gameWindow.show()...");
+            gameWindow.show();
+            
+            // Verify it actually showed
+            setTimeout(() => {
+              logger.info("GAME", "Post-show verification", {
+                isVisible: gameWindow ? gameWindow.isVisible() : null,
+                isMinimized: gameWindow ? gameWindow.isMinimized() : null,
+                isFocused: gameWindow ? gameWindow.isFocused() : null
+              });
+              
+              // Open DevTools for debugging in production
+              if (gameWindow && !gameWindow.isDestroyed()) {
+                gameWindow.webContents.openDevTools();
+                logger.info("GAME", "DevTools opened for debugging");
+              }
+            }, 100);
+          } else {
+            logger.error("GAME", "Cannot show window - window doesn't exist or is destroyed");
+          }
+        }, 1500);
       }
 
-      logger.info('GAME', 'Game launched successfully');
-      
+      logger.info("GAME", "Game launched successfully");
+
       // Return the window so we can reference it
       return gameWindow;
     } catch (error) {
-      logger.error('GAME', 'Failed to launch game', { error: error.message });
+      logger.error("GAME", "Failed to launch game", { error: error.message });
     }
   }
 
@@ -398,7 +507,7 @@ class PremiumPatcher {
         nodeIntegration: true,
         contextIsolation: false,
       },
-      backgroundColor: '#292524',
+      backgroundColor: "#292524",
     });
 
     const settingsHtml = `
@@ -489,34 +598,41 @@ class PremiumPatcher {
       </html>
     `;
 
-    settingsWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(settingsHtml)}`);
+    settingsWindow.loadURL(
+      `data:text/html;charset=utf-8,${encodeURIComponent(settingsHtml)}`
+    );
   }
 }
 
 // Auto-updater events
-autoUpdater.on('download-progress', (progressObj) => {
+autoUpdater.on("download-progress", (progressObj) => {
   const percent = Math.round(progressObj.percent);
   if (patcherWindow && !patcherWindow.isDestroyed()) {
-    patcherWindow.webContents.send('update-progress', 30 + (percent * 0.6), `Downloading... ${percent}%`);
+    patcherWindow.webContents.send(
+      "update-progress",
+      30 + percent * 0.6,
+      `Downloading... ${percent}%`
+    );
   }
 });
 
-autoUpdater.on('update-downloaded', (info) => {
-  logger.info('UPDATER', 'Update downloaded', { version: info.version });
-  
+autoUpdater.on("update-downloaded", (info) => {
+  logger.info("UPDATER", "Update downloaded", { version: info.version });
+
   if (patcherWindow && !patcherWindow.isDestroyed()) {
-    patcherWindow.webContents.send('update-status', 
+    patcherWindow.webContents.send(
+      "update-status",
       '✅ <span style="color: #84cc16;">Update downloaded!</span><br>' +
-      '<span style="color: #fbbf24;">Game will update on next launch</span>'
+        '<span style="color: #fbbf24;">Game will update on next launch</span>'
     );
-    patcherWindow.webContents.send('update-progress', 100, 'READY');
-    patcherWindow.webContents.send('set-play-button', true);
+    patcherWindow.webContents.send("update-progress", 100, "READY");
+    patcherWindow.webContents.send("set-play-button", true);
   }
 });
 
 // IPC Handlers for social links
-ipcMain.on('open-url', (event, url) => {
-  logger.info('SOCIAL', 'Opening URL', { url });
+ipcMain.on("open-url", (event, url) => {
+  logger.info("SOCIAL", "Opening URL", { url });
   shell.openExternal(url);
 });
 

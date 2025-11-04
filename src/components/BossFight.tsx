@@ -134,6 +134,9 @@ export default function BossFight({
   const [victoryRewards, setVictoryRewards] = useState<any>(null);
   const [actionInProgress, setActionInProgress] = useState(false);
   
+  // Auto-fight mode
+  const [autoFight, setAutoFight] = useState(false);
+  
   // PixiJS refs
   const pixiContainer = useRef<HTMLDivElement>(null);
   const pixiApp = useRef<PIXI.Application | null>(null);
@@ -600,6 +603,32 @@ export default function BossFight({
     }, 500);
   };
   
+  // Auto-fight mode - automatically attack when it's player's turn
+  useEffect(() => {
+    if (!autoFight || turn !== 'player' || battleEnded || actionInProgress) return;
+    
+    // Wait a bit before auto-attacking for better UX
+    const autoAttackTimer = setTimeout(() => {
+      // Choose attack based on available elemental attacks
+      const availableAttacks = [];
+      if (fireAttack > 0) availableAttacks.push(handleFireAttack);
+      if (iceAttack > 0) availableAttacks.push(handleIceAttack);
+      if (lightningAttack > 0) availableAttacks.push(handleLightningAttack);
+      if (poisonAttack > 0) availableAttacks.push(handlePoisonAttack);
+      
+      // If no elemental attacks, use normal attack
+      if (availableAttacks.length === 0) {
+        handleNormalAttack();
+      } else {
+        // Randomly choose from available attacks
+        const randomAttack = availableAttacks[Math.floor(Math.random() * availableAttacks.length)];
+        randomAttack();
+      }
+    }, 800);
+    
+    return () => clearTimeout(autoAttackTimer);
+  }, [autoFight, turn, battleEnded, actionInProgress]);
+  
   // Boss turn
   useEffect(() => {
     if (turn !== 'boss' || battleEnded) return;
@@ -756,6 +785,23 @@ export default function BossFight({
             ))}
           </div>
         </div>
+
+        {/* Auto-Fight Toggle */}
+        {!battleEnded && (
+          <div className="mb-2 flex justify-center">
+            <button
+              onClick={() => setAutoFight(!autoFight)}
+              className={`py-2 px-6 font-bold border-4 transition ${
+                autoFight 
+                  ? 'bg-green-700 hover:bg-green-600 border-green-500 text-white' 
+                  : 'bg-gray-700 hover:bg-gray-600 border-gray-500 text-gray-300'
+              }`}
+              style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #374151', textShadow: '1px 1px 0 #000' }}
+            >
+              {autoFight ? '⚡ AUTO-FIGHT: ON' : '⏸️ AUTO-FIGHT: OFF'}
+            </button>
+          </div>
+        )}
 
         {/* Action Buttons */}
         {!battleEnded ? (

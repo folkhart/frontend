@@ -39,6 +39,26 @@ export default function LandingPage() {
     }
   }, []);
 
+  // Windows detection and desktop app notification
+  const [showDesktopNotif, setShowDesktopNotif] = useState(false);
+
+  useEffect(() => {
+    // Detect Windows OS and show desktop app notification
+    const isWindows = /Windows/.test(navigator.userAgent);
+    
+    if (isWindows) {
+      const dismissed = localStorage.getItem('folkhart_desktop_dismissed');
+      if (!dismissed) {
+        setShowDesktopNotif(true);
+      }
+    }
+  }, []);
+
+  const dismissDesktopNotif = () => {
+    localStorage.setItem('folkhart_desktop_dismissed', 'true');
+    setShowDesktopNotif(false);
+  };
+
   // Domain notification state
   const [showDomainNotif, setShowDomainNotif] = useState(() => {
     const neverShow = localStorage.getItem('folkhart_domain_notif_never');
@@ -143,6 +163,50 @@ export default function LandingPage() {
           ></div>
         ))}
       </div>
+
+      {/* Desktop App Notification */}
+      {showDesktopNotif && (
+        <div className="fixed top-0 left-0 right-0 z-50 animate-slide-down">
+          <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 border-b-4 border-amber-700 shadow-xl">
+            <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-bold text-sm retro-text">
+                    🎮 NEW! Folkhart Desktop App for Windows
+                  </p>
+                  <p className="text-amber-100 text-xs">
+                    Better performance, auto-updates, and play in a dedicated window!
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="YOUR_DOWNLOAD_LINK_HERE"
+                  className="px-4 py-2 bg-white text-amber-600 font-bold rounded hover:bg-amber-50 transition-colors text-sm retro-text shadow-lg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📥 Download
+                </a>
+                <button
+                  onClick={dismissDesktopNotif}
+                  className="text-white hover:text-amber-200 transition-colors p-2"
+                  aria-label="Dismiss"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Domain Notification Popup */}
       {showDomainNotif && (

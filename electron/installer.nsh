@@ -40,19 +40,8 @@
 ; Custom directory page
 !define MUI_DIRECTORYPAGE_TEXT_TOP "Setup will install Folkhart in the following folder.$\r$\n$\r$\nTo install in a different folder, click Browse and select another folder."
 
-; Installer pages order
-!insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "${BUILD_RESOURCES_DIR}\license.txt"
-!insertmacro MUI_PAGE_DIRECTORY
-!insertmacro MUI_PAGE_INSTFILES
-!insertmacro MUI_PAGE_FINISH
-
-; Uninstaller pages
-!insertmacro MUI_UNPAGE_CONFIRM
-!insertmacro MUI_UNPAGE_INSTFILES
-
-; Language
-!insertmacro MUI_LANGUAGE "English"
+; Note: electron-builder handles page order automatically
+; We just define customizations above
 
 ; Custom function to create desktop shortcut
 Function createDesktopShortcut

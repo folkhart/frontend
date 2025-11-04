@@ -638,6 +638,22 @@
   <script>
     const { ipcRenderer } = require('electron');
 
+    // Hide images that fail to load
+    window.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('img').forEach(img => {
+        img.onerror = function() {
+          this.style.display = 'none';
+          // Add text fallback for sidebar buttons
+          const btn = this.closest('.sidebar-btn');
+          if (btn) {
+            this.parentElement.style.justifyContent = 'center';
+          }
+        };
+      });
+      
+      ipcRenderer.send('patcher-ready');
+    });
+
     // Event handlers
     ipcRenderer.on('update-status', (event, message) => {
       document.getElementById('statusText').innerHTML = message;
@@ -695,10 +711,6 @@
     function closeWindow() {
       ipcRenderer.send('close-patcher');
     }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      ipcRenderer.send('patcher-ready');
-    });
   </script>
 </body>
 </html>

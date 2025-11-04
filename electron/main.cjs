@@ -68,7 +68,8 @@ async function createWindow() {
     
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadURL('https://folkhart.com');
+    // Load the built app from local files
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
   // Minimize to tray instead of closing
