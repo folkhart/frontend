@@ -6,6 +6,7 @@ import {
 import axios from 'axios';
 import { useState, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
+import { getItemImage } from '@/utils/itemSprites';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -440,10 +441,23 @@ function GiveItemModal({ playerId, onClose }: { playerId: string; onClose: () =>
                             type="checkbox"
                             checked={!!isSelected}
                             onChange={() => {}}
-                            className="w-4 h-4 text-yellow-500"
+                            className="w-4 h-4 text-yellow-500 flex-shrink-0"
                           />
-                          <div className="flex-1">
-                            <div className="text-white font-bold">{item.name}</div>
+                          {/* Item Sprite */}
+                          <div className="w-12 h-12 bg-gray-900 rounded flex items-center justify-center flex-shrink-0">
+                            {getItemImage(item.spriteId, item.type) ? (
+                              <img
+                                src={getItemImage(item.spriteId, item.type)!}
+                                alt={item.name}
+                                className="w-10 h-10 object-contain"
+                                style={{ imageRendering: "pixelated" }}
+                              />
+                            ) : (
+                              <span className="text-gray-600 text-xs">No Img</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-white font-bold truncate">{item.name}</div>
                             <div className="text-gray-400 text-sm">{item.type}</div>
                           </div>
                         </div>
@@ -468,19 +482,36 @@ function GiveItemModal({ playerId, onClose }: { playerId: string; onClose: () =>
                   No items selected.<br />Click items on the left to add them.
                 </div>
               ) : (
-                selectedItems.map((item) => (
+                selectedItems.map((item) => {
+                  const fullItem = items?.find((i: any) => i.id === item.id);
+                  return (
                   <div
                     key={item.id}
                     className="bg-gray-900 border border-gray-700 rounded-lg p-3"
                   >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <div className="text-white font-bold text-sm">{item.name}</div>
+                    <div className="flex items-start gap-2 mb-2">
+                      {/* Item Sprite */}
+                      {fullItem && (
+                        <div className="w-10 h-10 bg-gray-800 rounded flex items-center justify-center flex-shrink-0">
+                          {getItemImage(fullItem.spriteId, fullItem.type) ? (
+                            <img
+                              src={getItemImage(fullItem.spriteId, fullItem.type)!}
+                              alt={item.name}
+                              className="w-8 h-8 object-contain"
+                              style={{ imageRendering: "pixelated" }}
+                            />
+                          ) : (
+                            <span className="text-gray-600 text-xs">?</span>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-bold text-sm truncate">{item.name}</div>
                         <div className="text-gray-400 text-xs">{item.type}</div>
                       </div>
                       <button
                         onClick={() => setSelectedItems(selectedItems.filter(i => i.id !== item.id))}
-                        className="text-red-400 hover:text-red-300 transition"
+                        className="text-red-400 hover:text-red-300 transition flex-shrink-0"
                       >
                         <X size={16} />
                       </button>
@@ -496,7 +527,8 @@ function GiveItemModal({ playerId, onClose }: { playerId: string; onClose: () =>
                       />
                     </div>
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
 
