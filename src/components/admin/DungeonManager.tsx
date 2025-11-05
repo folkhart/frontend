@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Edit, Trash2, Save, X } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Save, X, Upload, ChevronDown } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -26,9 +26,13 @@ interface DungeonFormData {
 export default function DungeonManager() {
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingDungeon, setEditingDungeon] = useState<any>(null);
   const [deletingDungeon, setDeletingDungeon] = useState<any>(null);
+  const [jsonInput, setJsonInput] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch dungeons
   const { data: dungeons, isLoading: loadingDungeons } = useQuery({
@@ -74,6 +78,62 @@ export default function DungeonManager() {
       toast.error("Failed to delete dungeon");
     },
   });
+
+  // Bulk import mutation
+  const bulkImportMutation = useMutation({
+    mutationFn: async (dungeons: any[]) => {
+      const token = localStorage.getItem("accessToken");
+      const response = await fetch(`${API_URL}/api/admin/dungeons/bulk`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ dungeons }),
+      });
+      if (!response.ok) throw new Error("Failed to import dungeons");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast.success(`Successfully imported ${data.count} dungeon(s)!`);
+      queryClient.invalidateQueries({ queryKey: ["admin", "dungeons"] });
+      setShowImportModal(false);
+      setJsonInput("");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to import dungeons");
+    },
+  });
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        setJsonInput(content);
+        toast.success("File loaded successfully!");
+      } catch (error) {
+        toast.error("Failed to read file");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleJsonImport = () => {
+    try {
+      const dungeons = JSON.parse(jsonInput);
+      if (!Array.isArray(dungeons)) {
+        toast.error("JSON must be an array of dungeons");
+        return;
+      }
+      bulkImportMutation.mutate(dungeons);
+    } catch (error) {
+      toast.error("Invalid JSON format");
+    }
+  };
 
   // Filter dungeons
   const filteredDungeons = useMemo(() => {
@@ -125,13 +185,47 @@ export default function DungeonManager() {
             className="w-full bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg border border-gray-700 focus:border-orange-500 focus:outline-none"
           />
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold rounded-lg flex items-center gap-2 transition shadow-lg"
-        >
-          <Plus size={18} />
-          Create Dungeon
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowDropdown(!showDropdown)}
+            className="px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold rounded-lg flex items-center gap-2 transition shadow-lg"
+          >
+            <Plus size={18} />
+            Add Dungeons
+            <ChevronDown size={16} />
+          </button>
+          
+          {showDropdown && (
+            <div className="absolute right-0 mt-2 w-64 bg-gray-800 border-2 border-gray-700 rounded-lg shadow-xl z-50">
+              <button
+                onClick={() => {
+                  setShowCreateModal(true);
+                  setShowDropdown(false);
+                }}
+                className="w-full px-4 py-3 text-left text-white hover:bg-gray-700 transition flex items-center gap-2 border-b border-gray-700"
+              >
+                <Plus size={18} />
+                <div>
+                  <div className="font-bold">Create Single Dungeon</div>
+                  <div className="text-xs text-gray-400">Manual dungeon creation</div>
+                </div>
+              </button>
+              <button
+                onClick={() => {
+                  setShowImportModal(true);
+                  setShowDropdown(false);
+                }}
+                className="w-full px-4 py-3 text-left text-white hover:bg-gray-700 transition flex items-center gap-2 rounded-b-lg"
+              >
+                <Upload size={18} />
+                <div>
+                  <div className="font-bold">Import from JSON</div>
+                  <div className="text-xs text-gray-400">Bulk import multiple dungeons</div>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Dungeons List */}
@@ -190,6 +284,102 @@ export default function DungeonManager() {
           }}
           calculateStats={calculateDungeonStats}
         />
+      )}
+
+      {/* JSON Import Modal */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-orange-500 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="bg-gradient-to-r from-orange-600 to-orange-700 p-4 flex items-center justify-between">
+              <h3 className="text-white font-bold text-xl flex items-center gap-2">
+                <Upload size={24} />
+                Import Dungeons from JSON
+              </h3>
+              <button onClick={() => setShowImportModal(false)} className="text-white hover:text-gray-200">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-gray-300 mb-2 font-bold">
+                    Upload JSON File or Paste JSON
+                  </label>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold transition flex items-center gap-2"
+                  >
+                    <Upload size={18} />
+                    Choose File
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-gray-300 mb-2 font-bold">
+                    JSON Content ({jsonInput ? (() => { try { return JSON.parse(jsonInput).length; } catch { return 0; } })() : 0} dungeons)
+                  </label>
+                  <textarea
+                    value={jsonInput}
+                    onChange={(e) => setJsonInput(e.target.value)}
+                    placeholder='Paste your JSON here, e.g., [{"name": "Dungeon Name", "recommendedLevel": 32, ...}]'
+                    className="w-full h-96 bg-gray-800 text-white px-4 py-3 rounded-lg border border-gray-700 focus:border-orange-500 focus:outline-none font-mono text-sm"
+                  />
+                </div>
+
+                <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+                  <h4 className="text-yellow-400 font-bold mb-2">📋 JSON Format Example:</h4>
+                  <pre className="text-xs text-gray-300 overflow-x-auto">
+{`[
+  {
+    "name": "Veiled Sanctum",
+    "description": "Hidden temple shrouded in twilight",
+    "recommendedLevel": 32,
+    "difficulty": "Hell",
+    "backgroundSprite": "dungeon_bg_32",
+    "dungeonIcon": "dungeon_icon_32",
+    "bossName": "The Oracle of Ash",
+    "lootTable": [
+      {
+        "itemName": "Champion's Blade",
+        "dropRate": 15
+      }
+    ]
+  }
+]`}
+                  </pre>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 p-4 flex justify-end gap-2 border-t border-gray-700">
+              <button
+                onClick={() => {
+                  setShowImportModal(false);
+                  setJsonInput("");
+                }}
+                className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleJsonImport}
+                disabled={!jsonInput || bulkImportMutation.isPending}
+                className="px-6 py-2 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white rounded-lg font-bold flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+              >
+                <Upload size={18} />
+                {bulkImportMutation.isPending ? "Importing..." : "Import Dungeons"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
