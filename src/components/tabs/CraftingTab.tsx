@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { craftingApi, inventoryApi, companionApi } from '@/lib/api';
 import { getRarityColor } from '@/utils/format';
-import { Hammer, Check, Sparkles, X } from 'lucide-react';
-import { useState } from 'react';
+import { Hammer, Check, Sparkles, X, Grid3x3, List } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import anvilIcon from '@/assets/ui/craft/anvil.png';
 import anvilHitIcon from '@/assets/ui/craft/anvil_hit.png';
@@ -21,6 +21,8 @@ export default function CraftingTab() {
   const [selectedCompanion, setSelectedCompanion] = useState<any>(null);
   const [selectedTier, setSelectedTier] = useState<number>(0);
   const [craftingAnimation, setCraftingAnimation] = useState<'idle' | 'crafting' | 'success' | 'fail'>('idle');
+  const [rarityFilter, setRarityFilter] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const getRecipeIcon = (rarity: string) => {
     if (rarity === 'Legendary' || rarity === 'Epic') return recipeHighGrade;
@@ -238,6 +240,25 @@ export default function CraftingTab() {
     });
   };
 
+  // Get unique rarities from recipes
+  const availableRarities = useMemo<string[]>(() => {
+    if (!recipes) return [];
+    const rarities = new Set<string>(recipes.map((r: any) => r.resultItem.rarity as string));
+    return Array.from(rarities).sort();
+  }, [recipes]);
+
+  // Filter recipes by rarity and craftability
+  const filteredRecipes = useMemo(() => {
+    if (!recipes) return [];
+    return recipes
+      .filter((recipe: any) => canCraftRecipe(recipe))
+      .filter((recipe: any) => {
+        if (rarityFilter === 'all') return true;
+        return recipe.resultItem.rarity === rarityFilter;
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipes, rarityFilter, character]);
+
   if (isLoading) {
     return (
       <div className="p-4 text-center">
@@ -292,10 +313,39 @@ export default function CraftingTab() {
 
       {/* Crafting Tab Content */}
       {activeTab === 'crafting' && (
-        <div className="space-y-3">
-        {recipes
-          .filter((recipe: any) => canCraftRecipe(recipe))
-          .map((recipe: any) => {
+        <>
+          {/* Filters and View Toggle */}
+          <div className="flex gap-2 mb-3">
+            <select
+              value={rarityFilter}
+              onChange={(e) => setRarityFilter(e.target.value)}
+              className="flex-1 bg-stone-800 text-white px-3 py-2 border-2 border-stone-700 focus:border-amber-500 focus:outline-none"
+              style={{ borderRadius: '0', fontFamily: 'monospace' }}
+            >
+              <option value="all">⭐ All Rarities</option>
+              {availableRarities.map((rarity: string) => (
+                <option key={rarity} value={rarity}>
+                  {rarity}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+              className="px-3 py-2 bg-stone-800 border-2 border-stone-700 hover:border-amber-500 transition"
+              style={{ borderRadius: '0' }}
+              title={viewMode === 'list' ? 'Switch to Grid View' : 'Switch to List View'}
+            >
+              {viewMode === 'list' ? <Grid3x3 size={20} className="text-white" /> : <List size={20} className="text-white" />}
+            </button>
+          </div>
+
+          {filteredRecipes.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <p>No recipes match your filters</p>
+            </div>
+          ) : viewMode === 'list' ? (
+            <div className="space-y-3">
+              {filteredRecipes.map((recipe: any) => {
           const canCraft = hasEnoughMaterials(recipe);
           
           return (
@@ -378,6 +428,61 @@ export default function CraftingTab() {
             </div>
           );
         })}
+            </div>
+          ) : (
+            /* Grid View */
+            <div className="grid grid-cols-2 gap-2">
+              {filteredRecipes.map((recipe: any) => {
+                const canCraft = hasEnoughMaterials(recipe);
+                
+                return (
+                  <div
+                    key={recipe.id}
+                    className={`p-2 bg-stone-800 rounded-lg border-2 ${
+                      canCraft ? 'border-green-600' : 'border-stone-700'
+                    } transition cursor-pointer hover:border-amber-600`}
+                    onClick={() => setSelectedRecipe(recipe)}
+                  >
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <div className="relative w-16 h-16 bg-stone-900 rounded flex items-center justify-center">
+                        {getItemImage(recipe.resultItem.spriteId, recipe.resultItem.type) ? (
+                          <img 
+                            src={getItemImage(recipe.resultItem.spriteId, recipe.resultItem.type)!} 
+                            alt={recipe.resultItem.name}
+                            className="max-w-[48px] max-h-[48px] object-contain"
+                            style={{ imageRendering: 'pixelated' }}
+                          />
+                        ) : (
+                          <span className="text-2xl">⚒️</span>
+                        )}
+                        <img 
+                          src={getRecipeIcon(recipe.resultItem.rarity)} 
+                          alt="Recipe" 
+                          className="absolute -top-1 -right-1 w-4 h-4" 
+                          style={{ imageRendering: 'pixelated' }}
+                        />
+                        {/* Craftable Check Badge */}
+                        {canCraft && (
+                          <div className="absolute -bottom-1 -left-1 bg-green-600 rounded-full p-0.5 border-2 border-stone-900">
+                            <Check size={12} className="text-white" strokeWidth={3} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="w-full">
+                        <h3 className={`font-bold text-xs ${getRarityColor(recipe.resultItem.rarity)} truncate`}>
+                          {recipe.resultItem.name}
+                        </h3>
+                        <p className="text-xs text-gray-400">{recipe.resultItem.type}</p>
+                        {canCraft && (
+                          <p className="text-xs text-green-400 font-bold mt-1">✓ Can Craft</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
         {/* Crafting Modal */}
         {selectedRecipe && (
@@ -509,7 +614,7 @@ export default function CraftingTab() {
           </div>
         </div>
         )}
-        </div>
+        </>
       )}
 
       {/* Fuse Tab Content */}

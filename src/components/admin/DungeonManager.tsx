@@ -397,7 +397,26 @@ function DungeonCard({ dungeon, onEdit, onDelete }: any) {
 
   return (
     <div className="bg-stone-800 border-2 border-stone-700 rounded-lg p-4 hover:border-orange-500 transition">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start gap-4">
+        {/* Dungeon Icon */}
+        <div className="w-20 h-20 bg-gray-900 rounded-lg flex items-center justify-center flex-shrink-0 border-2 border-orange-600/30">
+          {dungeon.dungeonIcon ? (
+            <img
+              src={`/assets/dungeons/${dungeon.dungeonIcon}.png`}
+              alt={dungeon.name}
+              className="w-16 h-16 object-contain"
+              style={{ imageRendering: "pixelated" }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <span className={`text-gray-600 text-xs text-center ${dungeon.dungeonIcon ? 'hidden' : ''}`}>
+            {dungeon.dungeonIcon || 'No Icon'}
+          </span>
+        </div>
+
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
             <h3 className="text-xl font-bold text-white">{dungeon.name}</h3>
