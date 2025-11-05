@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   ArrowLeft, User, Shield, Swords, Package, Activity, 
-  Trash2, Plus, Edit, Ban, CheckCircle
+  Trash2, Plus, Edit, Ban, CheckCircle, Search, X, ShoppingCart
 } from 'lucide-react';
 import axios from 'axios';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -287,12 +287,20 @@ export default function PlayerDetailView({ playerId, onBack }: PlayerDetailViewP
   );
 }
 
+interface SelectedItem {
+  id: string;
+  name: string;
+  type: string;
+  quantity: number;
+}
+
 function GiveItemModal({ playerId, onClose }: { playerId: string; onClose: () => void }) {
   const queryClient = useQueryClient();
-  const [itemId, setItemId] = useState('');
-  const [quantity, setQuantity] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const [filterType, setFilterType] = useState<string>('all');
 
-  const { data: items } = useQuery({
+  const { data: items, isLoading } = useQuery({
     queryKey: ['admin', 'items'],
     queryFn: async () => {
       const token = localStorage.getItem('accessToken');
@@ -303,66 +311,211 @@ function GiveItemModal({ playerId, onClose }: { playerId: string; onClose: () =>
     },
   });
 
-  const giveItemMutation = useMutation({
+  // Get unique item types for filtering
+  const itemTypes = useMemo(() => {
+    if (!items) return [];
+    const types = [...new Set(items.map((item: any) => item.type))];
+    return types.sort();
+  }, [items]);
+
+  // Filter items based on search and type
+  const filteredItems = useMemo(() => {
+    if (!items) return [];
+    return items.filter((item: any) => {
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.type.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = filterType === 'all' || item.type === filterType;
+      return matchesSearch && matchesType;
+    });
+  }, [items, searchTerm, filterType]);
+
+  const toggleItemSelection = (item: any) => {
+    const isSelected = selectedItems.find(i => i.id === item.id);
+    if (isSelected) {
+      setSelectedItems(selectedItems.filter(i => i.id !== item.id));
+    } else {
+      setSelectedItems([...selectedItems, { 
+        id: item.id, 
+        name: item.name, 
+        type: item.type, 
+        quantity: 1 
+      }]);
+    }
+  };
+
+  const updateQuantity = (itemId: string, quantity: number) => {
+    setSelectedItems(selectedItems.map(item => 
+      item.id === itemId ? { ...item, quantity: Math.max(1, quantity) } : item
+    ));
+  };
+
+  const giveItemsMutation = useMutation({
     mutationFn: async () => {
       const token = localStorage.getItem('accessToken');
-      await axios.post(
-        `${API_URL}/api/admin/players/${playerId}/give-item`,
-        { itemId, quantity },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Give items one by one
+      for (const item of selectedItems) {
+        await axios.post(
+          `${API_URL}/api/admin/players/${playerId}/give-item`,
+          { itemId: item.id, quantity: item.quantity },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
     },
     onSuccess: () => {
-      toast.success('Item given successfully');
+      toast.success(`Successfully gave ${selectedItems.length} item(s)`);
       queryClient.invalidateQueries({ queryKey: ['admin', 'player', playerId] });
       onClose();
+    },
+    onError: () => {
+      toast.error('Failed to give items');
     },
   });
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-gray-800 border-4 border-yellow-600 p-6 max-w-md w-full">
-        <h3 className="text-yellow-400 font-bold text-xl mb-4">Give Item</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="text-white block mb-2">Item</label>
-            <select
-              value={itemId}
-              onChange={(e) => setItemId(e.target.value)}
-              className="w-full bg-gray-900 text-white p-2 border-2 border-gray-700"
-            >
-              <option value="">Select item...</option>
-              {items?.map((item: any) => (
-                <option key={item.id} value={item.id}>
-                  {item.name} ({item.type})
-                </option>
-              ))}
-            </select>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-yellow-500/50 rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-yellow-600 to-orange-600 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <ShoppingCart size={24} className="text-white" />
+            <h3 className="text-white font-bold text-xl">Give Items to Player</h3>
           </div>
-          <div>
-            <label className="text-white block mb-2">Quantity</label>
-            <input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value))}
-              min="1"
-              className="w-full bg-gray-900 text-white p-2 border-2 border-gray-700"
-            />
+          <button
+            onClick={onClose}
+            className="text-white hover:text-gray-200 transition"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="flex h-[calc(90vh-180px)]">
+          {/* Left Panel - Item Browser */}
+          <div className="flex-1 p-4 border-r border-gray-700 overflow-hidden flex flex-col">
+            {/* Search and Filter */}
+            <div className="mb-4 space-y-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search items..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-gray-800 text-white pl-10 pr-4 py-2 rounded-lg border border-gray-700 focus:border-yellow-500 focus:outline-none"
+                />
+              </div>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:border-yellow-500 focus:outline-none"
+              >
+                <option value="all">All Types</option>
+                {(itemTypes as string[]).map((type: string) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Items Grid */}
+            <div className="flex-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="text-gray-400 text-center py-8">Loading items...</div>
+              ) : filteredItems.length === 0 ? (
+                <div className="text-gray-400 text-center py-8">No items found</div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2">
+                  {filteredItems.map((item: any) => {
+                    const isSelected = selectedItems.find(i => i.id === item.id);
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => toggleItemSelection(item)}
+                        className={`p-3 rounded-lg border-2 cursor-pointer transition ${
+                          isSelected
+                            ? 'bg-yellow-900/30 border-yellow-500'
+                            : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={!!isSelected}
+                            onChange={() => {}}
+                            className="w-4 h-4 text-yellow-500"
+                          />
+                          <div className="flex-1">
+                            <div className="text-white font-bold">{item.name}</div>
+                            <div className="text-gray-400 text-sm">{item.type}</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => giveItemMutation.mutate()}
-              disabled={!itemId}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 disabled:opacity-50"
-            >
-              Give Item
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2"
-            >
-              Cancel
-            </button>
+
+          {/* Right Panel - Selected Items Cart */}
+          <div className="w-96 p-4 bg-gray-800/50 flex flex-col">
+            <h4 className="text-yellow-400 font-bold mb-3 flex items-center gap-2">
+              <ShoppingCart size={18} />
+              Selected Items ({selectedItems.length})
+            </h4>
+
+            <div className="flex-1 overflow-y-auto space-y-2 mb-4">
+              {selectedItems.length === 0 ? (
+                <div className="text-gray-500 text-center py-8 text-sm">
+                  No items selected.<br />Click items on the left to add them.
+                </div>
+              ) : (
+                selectedItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-gray-900 border border-gray-700 rounded-lg p-3"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="text-white font-bold text-sm">{item.name}</div>
+                        <div className="text-gray-400 text-xs">{item.type}</div>
+                      </div>
+                      <button
+                        onClick={() => setSelectedItems(selectedItems.filter(i => i.id !== item.id))}
+                        className="text-red-400 hover:text-red-300 transition"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400 text-xs">Qty:</span>
+                      <input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
+                        min="1"
+                        className="flex-1 bg-gray-800 text-white px-2 py-1 text-sm rounded border border-gray-700 focus:border-yellow-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-2">
+              <button
+                onClick={() => giveItemsMutation.mutate()}
+                disabled={selectedItems.length === 0 || giveItemsMutation.isPending}
+                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 rounded-lg font-bold disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg"
+              >
+                {giveItemsMutation.isPending ? 'Giving Items...' : `Give ${selectedItems.length} Item(s)`}
+              </button>
+              <button
+                onClick={onClose}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       </div>

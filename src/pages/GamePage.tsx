@@ -5,6 +5,7 @@ import { useGameStore } from '@/store/gameStore';
 import { authApi } from '@/lib/api';
 import { onIdleComplete, onDungeonComplete, onLevelUp, getSocket } from '@/lib/socket';
 import { useElectron, useTraySync, useEnergyTracking } from '@/hooks/useElectron';
+import { notificationService } from '@/services/notificationService';
 import LoadingScreen from '@/components/LoadingScreen';
 import ElectronTitleBar from '@/components/ElectronTitleBar';
 import TopBar from '@/components/TopBar';
@@ -169,6 +170,9 @@ export default function GamePage() {
       
       // Electron notification
       sendIdleComplete(data.goldEarned, data.expEarned);
+      
+      // Mobile/Web notification
+      notificationService.notifyIdleFarmingComplete(data.goldEarned, data.expEarned);
       
       loadPlayerData();
     });

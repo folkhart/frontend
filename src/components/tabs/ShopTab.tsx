@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { shopApi, chestApi, dailyRewardApi } from "@/lib/api";
 import { RefreshCw, Coins, Gem } from "lucide-react";
 import { getRarityColor, getRarityBorder } from "@/utils/format";
+import { getItemImage } from "@/utils/itemSprites";
 import ChestOpening from "@/components/ChestOpening";
 import DailyLoginCalendar from "@/components/DailyLoginCalendar";
 
@@ -169,61 +170,6 @@ export default function ShopTab() {
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [dailyGemsStatus, queryClient]);
-
-  const getItemImage = (spriteId: string, itemType?: string) => {
-    if (!spriteId) return null;
-    try {
-      const images = import.meta.glob("../../assets/items/**/*.png", {
-        eager: true,
-        as: "url",
-      });
-      
-      // Handle numeric sprite IDs (potions)
-      if (/^\d+$/.test(spriteId)) {
-        const num = parseInt(spriteId);
-        if (num >= 985 && num <= 992)
-          return images[`../../assets/items/potions/hp/${spriteId}.png`] || null;
-        if (num >= 1001 && num <= 1008)
-          return images[`../../assets/items/potions/mp/${spriteId}.png`] || null;
-        if (num >= 1033 && num <= 1040)
-          return images[`../../assets/items/potions/attack/${spriteId}.png`] || null;
-        if (num >= 1065 && num <= 1072)
-          return images[`../../assets/items/potions/energy/${spriteId}.png`] || null;
-      }
-      
-      // If spriteId includes "/" it already has the full path
-      if (spriteId.includes("/")) {
-        // If it already starts with weapons/, armors/, accessories/, or craft/, use as-is
-        // Otherwise, for bare set names (woodenSet, ironSet, steelSet, dungeonDrops), prepend accessories/
-        let fullPath = spriteId;
-        if (
-          !spriteId.startsWith("weapons/") &&
-          !spriteId.startsWith("armors/") &&
-          !spriteId.startsWith("accessories/") &&
-          !spriteId.startsWith("craft/") &&
-          (spriteId.startsWith("woodenSet/") ||
-            spriteId.startsWith("ironSet/") ||
-            spriteId.startsWith("steelSet/") ||
-            spriteId.startsWith("dungeonDrops/"))
-        ) {
-          fullPath = `accessories/${spriteId}`;
-        }
-        return images[`../../assets/items/${fullPath}.png`] || null;
-      }
-      
-      // Otherwise, determine folder based on item type
-      let folder = "weapons";
-      if (itemType === "Armor") folder = "armors";
-      else if (itemType === "Accessory") folder = "accessories";
-      else if (itemType === "Consumable") folder = "consumables";
-      else if (itemType === "Material" || itemType === "Gem") folder = "craft/gems";
-      
-      return images[`../../assets/items/${folder}/${spriteId}.png`] || null;
-    } catch (e) {
-      console.error("Error loading item image:", e);
-      return null;
-    }
-  };
 
   const handleBuy = (item: any) => {
     buyMutation.mutate({

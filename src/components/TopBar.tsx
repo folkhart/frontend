@@ -6,6 +6,7 @@ import {
   getRarityColor,
   getRarityBorder,
 } from "@/utils/format";
+import { getItemImage } from "@/utils/itemSprites";
 import { X, Circle } from "lucide-react";
 import FramedAvatar from "@/components/FramedAvatar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -227,112 +228,6 @@ export default function TopBar() {
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [player?.energy, player?.energyUpdatedAt, player?.maxEnergy]);
-
-  // Helper to get item images
-  const getItemImage = (spriteId: string, itemType?: string) => {
-    if (!spriteId) return null;
-    try {
-      const images = import.meta.glob("../assets/items/**/*.png", {
-        eager: true,
-        as: "url",
-      });
-
-      if (/^\d+$/.test(spriteId)) {
-        const num = parseInt(spriteId);
-        if (num >= 985 && num <= 992) {
-          const potsPath = `../assets/items/consumables/${spriteId}.png`;
-          return images[potsPath] || null;
-        }
-      }
-
-      if (
-        spriteId.startsWith("guild_") ||
-        spriteId.startsWith("Chest") ||
-        spriteId.startsWith("key")
-      ) {
-        return `/assets/items/guildshop_items/${getGuildItemPath(
-          spriteId,
-          itemType
-        )}`;
-      }
-
-      if (spriteId.includes("/")) {
-        // If it already starts with weapons/, armors/, accessories/, or craft/, use as-is
-        // Otherwise, for bare set names (woodenSet, ironSet, steelSet, dungeonDrops), prepend accessories/
-        let fullPath = spriteId;
-        if (
-          !spriteId.startsWith("weapons/") &&
-          !spriteId.startsWith("armors/") &&
-          !spriteId.startsWith("accessories/") &&
-          !spriteId.startsWith("craft/") &&
-          (spriteId.startsWith("woodenSet/") ||
-            spriteId.startsWith("ironSet/") ||
-            spriteId.startsWith("steelSet/") ||
-            spriteId.startsWith("dungeonDrops/"))
-        ) {
-          fullPath = `accessories/${spriteId}`;
-        }
-        const path = `../assets/items/${fullPath}.png`;
-        return images[path] || null;
-      }
-
-      let folder = "weapons";
-      if (itemType === "Armor") folder = "armors";
-      else if (itemType === "Accessory") folder = "accessories";
-      else if (itemType === "Consumable") folder = "consumables";
-      else if (itemType === "Material" || itemType === "Gem") {
-        const path = `../assets/items/craft/gems/${spriteId}.png`;
-        return images[path] || null;
-      }
-
-      const path = `../assets/items/${folder}/${spriteId}.png`;
-      return images[path] || null;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  const getGuildItemPath = (spriteId: string, itemType?: string) => {
-    let fileName = spriteId;
-    const tierMap: { [key: string]: string } = {
-      bronze: "1",
-      silver: "2",
-      gold: "3",
-      diamond: "4",
-    };
-    for (const [tier, number] of Object.entries(tierMap)) {
-      if (fileName.includes(`_${tier}`)) {
-        fileName = fileName.replace(`_${tier}`, number);
-        break;
-      }
-    }
-    if (spriteId === "guild_key") return `chests_and_keys/key1.png`;
-    if (fileName.startsWith("guild_chest"))
-      return `chests_and_keys/Chest${fileName.replace("guild_chest", "")}.png`;
-    if (fileName.startsWith("guild_sword"))
-      return `weapons/guild_sword/${fileName.replace(
-        "guild_sword",
-        "guildsword"
-      )}.png`;
-    if (fileName.startsWith("guild_bow"))
-      return `weapons/guild_bow/${fileName}.png`;
-    if (fileName.startsWith("guild_dagger"))
-      return `weapons/guild_dagger/${fileName}.png`;
-    if (fileName.startsWith("guild_shield"))
-      return `weapons/guild_shield/${fileName}.png`;
-    if (fileName.startsWith("guild_staff"))
-      return `weapons/guild_staff/${fileName}.png`;
-    if (fileName.startsWith("guild_armor"))
-      return `armors/warrior_armors/${fileName}.png`;
-    if (fileName.includes("glove"))
-      return `guild_armor_pieces/gloves/${fileName}.png`;
-    if (fileName.includes("boot") || fileName.includes("shoe")) {
-      return `guild_armor_pieces/shoes/${fileName
-        .replace("guild_boot", "guild_shoes")
-        .replace("guild_shoe", "guild_shoes")}.png`;
-    }
-    return `${fileName}.png`;
-  };
 
   // Get item from slot
   const getSlotItem = (slotType: string) => {

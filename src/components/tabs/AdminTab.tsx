@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3, Calendar, LogOut } from 'lucide-react';
+import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3, Calendar, LogOut, Swords, Hammer } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
 import AdminNewsTab from './AdminNewsTab';
@@ -8,6 +8,9 @@ import AnalyticsDashboard from '../admin/AnalyticsDashboard';
 import PlayersList from '../admin/PlayersList';
 import PlayerDetailView from '../admin/PlayerDetailView';
 import DailyLoginRewardsEditor from '../admin/DailyLoginRewardsEditor';
+import DungeonManager from '../admin/DungeonManager';
+import ItemManager from '../admin/ItemManager';
+import CraftingRecipeManager from '../admin/CraftingRecipeManager';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -107,7 +110,7 @@ const adminApi = {
 export default function AdminTab() {
   const queryClient = useQueryClient();
   const { player } = useGameStore();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'players' | 'items' | 'shop' | 'news' | 'backups' | 'rewards'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'players' | 'items' | 'shop' | 'news' | 'backups' | 'rewards' | 'dungeons' | 'crafting'>('analytics');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -165,8 +168,8 @@ export default function AdminTab() {
         🛡️ Admin Dashboard
       </h2>
 
-      {/* Tab Switcher */}
-      <div className="flex gap-2 mb-4">
+      {/* Tab Switcher - 3x3 Grid */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
         <button
           onClick={() => {
             setActiveTab('analytics');
@@ -299,6 +302,42 @@ export default function AdminTab() {
           <Calendar size={16} className="inline mr-1" />
           Daily Rewards
         </button>
+        <button
+          onClick={() => setActiveTab('dungeons')}
+          className={`flex-1 py-2 font-bold transition relative overflow-hidden ${
+            activeTab === 'dungeons'
+              ? 'bg-orange-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #c2410c',
+            borderRadius: '0',
+            boxShadow: activeTab === 'dungeons' ? '0 2px 0 #ea580c, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeTab === 'dungeons' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <Swords size={16} className="inline mr-1" />
+          Dungeons
+        </button>
+        <button
+          onClick={() => setActiveTab('crafting')}
+          className={`flex-1 py-2 font-bold transition relative overflow-hidden ${
+            activeTab === 'crafting'
+              ? 'bg-teal-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #0f766e',
+            borderRadius: '0',
+            boxShadow: activeTab === 'crafting' ? '0 2px 0 #0d9488, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeTab === 'crafting' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <Hammer size={16} className="inline mr-1" />
+          Crafting
+        </button>
       </div>
 
       {/* Analytics Dashboard */}
@@ -323,26 +362,7 @@ export default function AdminTab() {
       )}
 
       {/* Items Tab */}
-      {activeTab === 'items' && (
-        <div className="space-y-2">
-          <p className="text-sm text-gray-400 mb-2">Total Items: {items?.length || 0}</p>
-          <div className="grid grid-cols-2 gap-2">
-            {items?.map((item: any) => (
-              <div key={item.id} className="bg-stone-800 border-2 border-stone-700 p-2" style={{ borderRadius: '0' }}>
-                <p className={`font-bold text-xs truncate ${getRarityColor(item.rarity)}`}>
-                  {item.name}
-                </p>
-                <p className="text-xs text-gray-400">{item.type}</p>
-                <div className="text-xs mt-1">
-                  {item.attackBonus > 0 && <span className="text-orange-400">ATK +{item.attackBonus} </span>}
-                  {item.defenseBonus > 0 && <span className="text-blue-400">DEF +{item.defenseBonus} </span>}
-                  {item.healthBonus > 0 && <span className="text-red-400">HP +{item.healthBonus}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {activeTab === 'items' && <ItemManager />}
 
       {/* Shop Management Tab */}
       {activeTab === 'shop' && (
@@ -470,6 +490,12 @@ export default function AdminTab() {
 
       {/* Daily Login Rewards Tab */}
       {activeTab === 'rewards' && <DailyLoginRewardsEditor />}
+
+      {/* Dungeons Tab */}
+      {activeTab === 'dungeons' && <DungeonManager />}
+
+      {/* Crafting Recipes Tab */}
+      {activeTab === 'crafting' && <CraftingRecipeManager />}
     </div>
   );
 }

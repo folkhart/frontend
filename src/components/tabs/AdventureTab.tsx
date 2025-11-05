@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useGameStore } from "@/store/gameStore";
 import { dungeonApi, idleApi, authApi, characterApi } from "@/lib/api";
 import { useElectron } from "@/hooks/useElectron";
+import { notificationService } from "@/services/notificationService";
 import { formatGold, getRarityColor, getDifficultyColor } from "@/utils/format";
 import { Clock, Zap, Trophy, ChevronDown, ChevronUp } from "lucide-react";
 import energyIcon from "@/assets/ui/energy.png";
@@ -105,7 +106,23 @@ const getCompanionDrops = (dungeonLevel: number) => {
 };
 
 // Helper function to get dungeon icon based on name
-const getDungeonIcon = (dungeonName: string) => {
+const getDungeonIcon = (dungeonNameOrIcon: string, dungeonIconField?: string) => {
+  // If dungeonIcon field is provided, use it dynamically
+  if (dungeonIconField) {
+    try {
+      const images = import.meta.glob("../../assets/ui/dungeonIcons/*.png", {
+        eager: true,
+        as: "url",
+      });
+      const iconPath = `../../assets/ui/dungeonIcons/${dungeonIconField}.png`;
+      return images[iconPath] || ratCellarIcon;
+    } catch (e) {
+      console.error("Failed to load dungeon icon:", dungeonIconField, e);
+      return ratCellarIcon;
+    }
+  }
+  
+  // Fallback to old name-based mapping for backwards compatibility
   const iconMap: Record<string, string> = {
     "Rat Cellar": ratCellarIcon,
     "Goblin Cave": goblinCaveIcon,
@@ -120,7 +137,7 @@ const getDungeonIcon = (dungeonName: string) => {
     "The Abyssal Spire": theAbyssalSpireIcon,
     "The Ecliptic Throne": eclipticThroneIcon,
   };
-  return iconMap[dungeonName] || ratCellarIcon; // Default to rat cellar if not found
+  return iconMap[dungeonNameOrIcon] || ratCellarIcon; // Default to rat cellar if not found
 };
 
 // Calculate recommended CP based on dungeon level
@@ -545,13 +562,20 @@ export default function AdventureTab() {
         JSON.stringify(rewardData)
       );
 
-      // Send Electron notification for fast finish
+      // Send notification for fast finish (Electron + Android)
       if (result.success) {
-        sendDungeonComplete(
-          activeDungeonRun?.dungeon?.name || "Dungeon",
+        const dungeonName = activeDungeonRun?.dungeon?.name || "Dungeon";
+        const itemNames = result.itemsDropped?.map((item: any) => item.name);
+        
+        // Electron notification
+        sendDungeonComplete(dungeonName, result.goldEarned, result.expEarned, itemNames);
+        
+        // Mobile/Web notification
+        notificationService.notifyDungeonComplete(
+          dungeonName,
           result.goldEarned,
           result.expEarned,
-          result.itemsDropped?.map((item: any) => item.name)
+          itemNames
         );
       }
 
@@ -679,18 +703,14 @@ export default function AdventureTab() {
             const { data: updatedChar } = await characterApi.get();
             setCharacter(updatedChar);
 
-            // Send browser notification
-            if (
-              "Notification" in window &&
-              Notification.permission === "granted"
-            ) {
-              new Notification("Dungeon Complete!", {
-                body: `${activeDungeonRun.dungeon.name} completed! ${
-                  result.data.success ? "✅ Victory!" : "❌ Defeated"
-                }`,
-                icon: "/icon.png",
-                badge: "/icon.png",
-              });
+            // Send notification (works on Electron, Android, and Web)
+            if (result.data.success) {
+              notificationService.notifyDungeonComplete(
+                activeDungeonRun.dungeon.name,
+                result.data.goldEarned || 0,
+                result.data.expEarned || 0,
+                result.data.itemsDropped?.map((item: any) => item.name)
+              );
             }
 
             // Show toast
@@ -785,7 +805,7 @@ export default function AdventureTab() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <img
-                src={getDungeonIcon(activeDungeonRun.dungeon.name)}
+                src={getDungeonIcon(activeDungeonRun.dungeon.name, (activeDungeonRun.dungeon as any).dungeonIcon)}
                 alt={activeDungeonRun.dungeon.name}
                 className="w-10 h-10 rounded border-2 border-amber-500"
                 style={{ imageRendering: "pixelated" }}
@@ -1591,7 +1611,7 @@ export default function AdventureTab() {
                     // Compact View
                     <div className="flex items-center gap-2">
                       <img
-                        src={getDungeonIcon(dungeon.name)}
+                        src={getDungeonIcon(dungeon.name, (dungeon as any).dungeonIcon)}
                         alt={dungeon.name}
                         className="w-10 h-10 border-2 border-stone-500"
                         style={{
@@ -1659,7 +1679,7 @@ export default function AdventureTab() {
                     <>
                       <div className="flex items-start gap-3 mb-3">
                         <img
-                          src={getDungeonIcon(dungeon.name)}
+                          src={getDungeonIcon(dungeon.name, (dungeon as any).dungeonIcon)}
                           alt={dungeon.name}
                           className="w-14 h-14 border-2 border-stone-500"
                           style={{
@@ -1772,7 +1792,7 @@ export default function AdventureTab() {
                           <div className="flex items-center gap-2">
                             <div className="relative">
                               <img
-                                src={getDungeonIcon(dungeon.name)}
+                                src={getDungeonIcon(dungeon.name, (dungeon as any).dungeonIcon)}
                                 alt="Avatar"
                                 className="w-8 h-8 border-2 border-amber-500"
                                 style={{
@@ -1996,7 +2016,7 @@ export default function AdventureTab() {
               >
                 <div className="flex items-start gap-3 mb-2">
                   <img
-                    src={getDungeonIcon(run.dungeon.name)}
+                    src={getDungeonIcon(run.dungeon.name, (run.dungeon as any).dungeonIcon)}
                     alt={run.dungeon.name}
                     className="w-12 h-12 rounded border-2 border-stone-600"
                     style={{ imageRendering: "pixelated" }}
@@ -2109,7 +2129,7 @@ export default function AdventureTab() {
             {/* Header with Dungeon Icon */}
             <div className="flex items-start gap-4 mb-4 pb-4 border-b-2 border-stone-700">
               <img
-                src={getDungeonIcon(selectedDungeon.name)}
+                src={getDungeonIcon(selectedDungeon.name, (selectedDungeon as any).dungeonIcon)}
                 alt={selectedDungeon.name}
                 className="w-20 h-20 border-3 border-amber-600"
                 style={{
@@ -2580,9 +2600,10 @@ export default function AdventureTab() {
               {/* BOSS FIGHT - Epic PixiJS Battle! */}
               <button
                 onClick={async () => {
+                  // Check if dungeon has boss stats
                   if (
-                    !selectedDungeon.description ||
-                    !selectedDungeon.description.includes("Boss:")
+                    !(selectedDungeon as any).bossHealth ||
+                    (selectedDungeon as any).bossHealth <= 0
                   ) {
                     (window as any).showToast?.(
                       "This dungeon has no boss!",
@@ -2685,7 +2706,7 @@ export default function AdventureTab() {
           bossHealth={(selectedDungeon as any).bossHealth || 1000}
           bossAttack={(selectedDungeon as any).bossAttack || 50}
           bossDefense={(selectedDungeon as any).bossDefense || 30}
-          dungeonIcon={getDungeonIcon(selectedDungeon.name)}
+          dungeonIcon={getDungeonIcon(selectedDungeon.name, (selectedDungeon as any).dungeonIcon)}
           playerClass={character.class}
           playerHP={character.health}
           playerMaxHP={character.maxHealth}

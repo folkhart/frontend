@@ -51,3 +51,8 @@ docker-compose.override.yml
 .cache/
 temp/
 tmp/
+
+# Capacitor / Android
+android/
+ios/
+.capacitor/

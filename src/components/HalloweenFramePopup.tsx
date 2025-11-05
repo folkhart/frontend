@@ -3,12 +3,22 @@ import { X } from "lucide-react";
 
 export default function HalloweenFramePopup() {
   const [isOpen, setIsOpen] = useState(false);
+  const [hasChecked, setHasChecked] = useState(false);
 
   useEffect(() => {
+    // Prevent re-showing during the same session
+    if (hasChecked) return;
+    
     // Check if user has already seen this popup
     const hasSeen = localStorage.getItem('folkhart_halloween_frame_popup_seen');
+    const hasSeenThisSession = sessionStorage.getItem('folkhart_halloween_frame_popup_session');
     
-    if (!hasSeen) {
+    setHasChecked(true);
+    
+    if (!hasSeen && !hasSeenThisSession) {
+      // Mark as seen this session immediately to prevent duplicates
+      sessionStorage.setItem('folkhart_halloween_frame_popup_session', 'true');
+      
       // Show popup after a delay (wait for daily login popup to show first)
       const timer = setTimeout(() => {
         setIsOpen(true);
@@ -16,10 +26,10 @@ export default function HalloweenFramePopup() {
 
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [hasChecked]);
 
   const handleClose = () => {
-    // Mark as seen permanently
+    // Mark as seen permanently in localStorage
     localStorage.setItem('folkhart_halloween_frame_popup_seen', 'true');
     setIsOpen(false);
   };
