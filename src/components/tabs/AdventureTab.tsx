@@ -2377,7 +2377,16 @@ export default function AdventureTab() {
                       className="mt-2 bg-stone-950 border-2 border-stone-700 p-3"
                       style={{ borderRadius: "6px" }}
                     >
-                      <div className="grid grid-cols-4 gap-2">
+                      {/* Horizontal Scrollable Container */}
+                      <div
+                        className="flex gap-2 overflow-x-auto overflow-y-hidden pb-2"
+                        style={{
+                          scrollbarWidth: "thin",
+                          scrollbarColor: "#78350f #1c1917",
+                          scrollBehavior: "smooth",
+                          WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
+                        }}
+                      >
                         {selectedDungeon.lootTable
                           .filter(
                             (entry: any) =>
@@ -2387,12 +2396,13 @@ export default function AdventureTab() {
                           .map((entry: any, idx: number) => (
                             <div
                               key={idx}
-                              className="bg-stone-900 p-2 relative"
+                              className="bg-stone-900 p-2 relative flex-shrink-0"
                               style={{
                                 border: "2px solid #78350f",
                                 borderRadius: "6px",
                                 boxShadow:
                                   "inset 0 1px 0 rgba(255,255,255,0.1)",
+                                width: "90px", // Fixed width for consistency
                               }}
                             >
                               <div className="w-full aspect-square bg-stone-800 rounded mb-1 flex items-center justify-center">
@@ -2431,6 +2441,10 @@ export default function AdventureTab() {
                             </div>
                           ))}
                       </div>
+                      {/* Scroll Indicator */}
+                      <p className="text-[10px] text-gray-400 text-center mt-1">
+                        ← Swipe to see more rewards →
+                      </p>
                     </div>
                   )}
                 </div>
