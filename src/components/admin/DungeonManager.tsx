@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Edit, Trash2, Save, X, Upload, ChevronDown } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Save, X, Upload, ChevronDown, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -594,6 +594,24 @@ function DungeonModal({ dungeon, items, onClose, calculateStats }: any) {
     }));
   };
 
+  const moveItemUp = (index: number) => {
+    if (index === 0) return;
+    setFormData((prev) => {
+      const newItems = [...prev.lootItems];
+      [newItems[index - 1], newItems[index]] = [newItems[index], newItems[index - 1]];
+      return { ...prev, lootItems: newItems };
+    });
+  };
+
+  const moveItemDown = (index: number) => {
+    setFormData((prev) => {
+      if (index === prev.lootItems.length - 1) return prev;
+      const newItems = [...prev.lootItems];
+      [newItems[index], newItems[index + 1]] = [newItems[index + 1], newItems[index]];
+      return { ...prev, lootItems: newItems };
+    });
+  };
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-orange-500 rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
@@ -795,7 +813,7 @@ function DungeonModal({ dungeon, items, onClose, calculateStats }: any) {
                     Selected Items ({formData.lootItems.length})
                   </h5>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {formData.lootItems.map((lootItem) => {
+                  {formData.lootItems.map((lootItem, index) => {
                     const item = items?.find((i: any) => i.id === lootItem.itemId);
                     if (!item) return null;
                     return (
@@ -803,7 +821,28 @@ function DungeonModal({ dungeon, items, onClose, calculateStats }: any) {
                         key={lootItem.itemId}
                         className="bg-gray-800 border border-gray-700 rounded p-2"
                       >
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => moveItemUp(index)}
+                              disabled={index === 0}
+                              className="text-blue-400 hover:text-blue-300 disabled:text-gray-600 disabled:cursor-not-allowed transition"
+                              title="Move up"
+                            >
+                              <ArrowUp size={14} />
+                            </button>
+                            <button
+                              onClick={() => moveItemDown(index)}
+                              disabled={index === formData.lootItems.length - 1}
+                              className="text-blue-400 hover:text-blue-300 disabled:text-gray-600 disabled:cursor-not-allowed transition"
+                              title="Move down"
+                            >
+                              <ArrowDown size={14} />
+                            </button>
+                          </div>
+                          <div className="text-orange-400 font-bold text-sm w-6">
+                            {index + 1}.
+                          </div>
                           <div className="flex-1">
                             <div className="text-white font-bold text-sm">{item.name}</div>
                             <div className="text-gray-400 text-xs">{item.type} - {item.rarity}</div>
