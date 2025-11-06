@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { LogOut, Info, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { LogOut, Info, ChevronDown, ChevronUp, Bell, BellOff } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, messageApi } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { useGameStore } from "@/store/gameStore";
 import { disconnectSocket } from "@/lib/socket";
+import { Capacitor } from '@capacitor/core';
 import leaderboardIcon from "@/assets/ui/leaderboard.png";
 import settingsIcon from "@/assets/ui/settings.png";
 import achievementIcon from "@/assets/ui/achievement.png";
@@ -43,6 +44,32 @@ export default function SettingsTab() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [newCharacterName, setNewCharacterName] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState({
+    idleFarming: true,
+    levelUp: true,
+    energyRefill: true,
+    dungeonComplete: true,
+    guildInvite: true,
+    friendRequest: true,
+  });
+
+  // Check if running on mobile platform
+  useEffect(() => {
+    setIsMobile(Capacitor.isNativePlatform());
+    // Load notification settings from localStorage
+    const saved = localStorage.getItem('notificationSettings');
+    if (saved) {
+      setNotificationSettings(JSON.parse(saved));
+    }
+  }, []);
+
+  const toggleNotification = (key: keyof typeof notificationSettings) => {
+    const updated = { ...notificationSettings, [key]: !notificationSettings[key] };
+    setNotificationSettings(updated);
+    localStorage.setItem('notificationSettings', JSON.stringify(updated));
+    (window as any).showToast?.(`${key} notifications ${updated[key] ? 'enabled' : 'disabled'}`, 'info');
+  };
 
   // Query for unread friend messages count
   const { data: unreadCount } = useQuery({
@@ -676,6 +703,135 @@ export default function SettingsTab() {
         <span className="relative z-10">DOCUMENTATION</span>
         <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>
       </button>
+
+      {/* Notification Settings - Mobile Only */}
+      {isMobile && (
+        <div
+          className="bg-gradient-to-b from-stone-700 to-stone-800 p-4 mb-4"
+          style={{
+            border: "4px solid #57534e",
+            borderRadius: "0",
+            boxShadow:
+              "0 4px 0 #292524, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-stone-600">
+            <Bell className="text-amber-400" size={20} />
+            <h3
+              className="font-bold text-amber-400 text-lg"
+              style={{
+                fontFamily: "monospace",
+                textShadow: "2px 2px 0 #000",
+                letterSpacing: "1px",
+              }}
+            >
+              NOTIFICATIONS
+            </h3>
+          </div>
+
+          <div className="space-y-2">
+            {/* Idle Farming */}
+            <button
+              onClick={() => toggleNotification('idleFarming')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                ⚔️ Idle Farming Complete
+              </span>
+              {notificationSettings.idleFarming ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Level Up */}
+            <button
+              onClick={() => toggleNotification('levelUp')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                🎉 Level Up
+              </span>
+              {notificationSettings.levelUp ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Energy Refill */}
+            <button
+              onClick={() => toggleNotification('energyRefill')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                ⚡ Energy Full
+              </span>
+              {notificationSettings.energyRefill ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Dungeon Complete */}
+            <button
+              onClick={() => toggleNotification('dungeonComplete')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                🏰 Dungeon Complete
+              </span>
+              {notificationSettings.dungeonComplete ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Guild Invite */}
+            <button
+              onClick={() => toggleNotification('guildInvite')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                🏛️ Guild Invite
+              </span>
+              {notificationSettings.guildInvite ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Friend Request */}
+            <button
+              onClick={() => toggleNotification('friendRequest')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                👥 Friend Request
+              </span>
+              {notificationSettings.friendRequest ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-3 text-center" style={{ fontFamily: "monospace" }}>
+            💡 Toggle notifications for game events
+          </p>
+        </div>
+      )}
 
       {/* Restart Onboarding Button */}
       <button

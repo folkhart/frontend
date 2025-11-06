@@ -4,6 +4,7 @@ import { useGameStore } from "@/store/gameStore";
 import { dungeonApi, idleApi, authApi, characterApi } from "@/lib/api";
 import { useElectron } from "@/hooks/useElectron";
 import { notificationService } from "@/services/notificationService";
+import { sendGameNotification } from "@/services/notifications";
 import { formatGold, getRarityColor, getDifficultyColor } from "@/utils/format";
 import { Clock, Zap, Trophy, ChevronDown, ChevronUp } from "lucide-react";
 import energyIcon from "@/assets/ui/energy.png";
@@ -106,7 +107,10 @@ const getCompanionDrops = (dungeonLevel: number) => {
 };
 
 // Helper function to get dungeon icon based on name
-const getDungeonIcon = (dungeonNameOrIcon: string, dungeonIconField?: string) => {
+const getDungeonIcon = (
+  dungeonNameOrIcon: string,
+  dungeonIconField?: string
+) => {
   // If dungeonIcon field is provided, use it dynamically
   if (dungeonIconField) {
     try {
@@ -121,7 +125,7 @@ const getDungeonIcon = (dungeonNameOrIcon: string, dungeonIconField?: string) =>
       return ratCellarIcon;
     }
   }
-  
+
   // Fallback to old name-based mapping for backwards compatibility
   const iconMap: Record<string, string> = {
     "Rat Cellar": ratCellarIcon,
@@ -566,10 +570,15 @@ export default function AdventureTab() {
       if (result.success) {
         const dungeonName = activeDungeonRun?.dungeon?.name || "Dungeon";
         const itemNames = result.itemsDropped?.map((item: any) => item.name);
-        
+
         // Electron notification
-        sendDungeonComplete(dungeonName, result.goldEarned, result.expEarned, itemNames);
-        
+        sendDungeonComplete(
+          dungeonName,
+          result.goldEarned,
+          result.expEarned,
+          itemNames
+        );
+
         // Mobile/Web notification
         notificationService.notifyDungeonComplete(
           dungeonName,
@@ -636,6 +645,13 @@ export default function AdventureTab() {
       setUnclaimedIdleReward(rewardData);
       localStorage.setItem("unclaimedIdleReward", JSON.stringify(rewardData));
 
+      // Send notification for idle farming complete
+      sendGameNotification(
+        'idleFarming',
+        'Idle Farming Complete!',
+        `Earned ${response.data.goldEarned}g and ${response.data.expEarned} EXP!`
+      );
+
       refetchIdle();
       queryClient.invalidateQueries({ queryKey: ["character"] });
     },
@@ -698,6 +714,15 @@ export default function AdventureTab() {
               "unclaimedDungeonReward",
               JSON.stringify(rewardData)
             );
+
+            // Send dungeon complete notification
+            if (result.data.success) {
+              sendGameNotification(
+                'dungeonComplete',
+                'Dungeon Cleared!',
+                `${activeDungeonRun.dungeon.name} completed! Earned ${result.data.goldEarned || 0}g`
+              );
+            }
 
             // Update character state immediately for HP/stats
             const { data: updatedChar } = await characterApi.get();
@@ -805,7 +830,10 @@ export default function AdventureTab() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <img
-                src={getDungeonIcon(activeDungeonRun.dungeon.name, (activeDungeonRun.dungeon as any).dungeonIcon)}
+                src={getDungeonIcon(
+                  activeDungeonRun.dungeon.name,
+                  (activeDungeonRun.dungeon as any).dungeonIcon
+                )}
                 alt={activeDungeonRun.dungeon.name}
                 className="w-10 h-10 rounded border-2 border-amber-500"
                 style={{ imageRendering: "pixelated" }}
@@ -1611,7 +1639,10 @@ export default function AdventureTab() {
                     // Compact View
                     <div className="flex items-center gap-2">
                       <img
-                        src={getDungeonIcon(dungeon.name, (dungeon as any).dungeonIcon)}
+                        src={getDungeonIcon(
+                          dungeon.name,
+                          (dungeon as any).dungeonIcon
+                        )}
                         alt={dungeon.name}
                         className="w-10 h-10 border-2 border-stone-500"
                         style={{
@@ -1679,7 +1710,10 @@ export default function AdventureTab() {
                     <>
                       <div className="flex items-start gap-3 mb-3">
                         <img
-                          src={getDungeonIcon(dungeon.name, (dungeon as any).dungeonIcon)}
+                          src={getDungeonIcon(
+                            dungeon.name,
+                            (dungeon as any).dungeonIcon
+                          )}
                           alt={dungeon.name}
                           className="w-14 h-14 border-2 border-stone-500"
                           style={{
@@ -1792,7 +1826,10 @@ export default function AdventureTab() {
                           <div className="flex items-center gap-2">
                             <div className="relative">
                               <img
-                                src={getDungeonIcon(dungeon.name, (dungeon as any).dungeonIcon)}
+                                src={getDungeonIcon(
+                                  dungeon.name,
+                                  (dungeon as any).dungeonIcon
+                                )}
                                 alt="Avatar"
                                 className="w-8 h-8 border-2 border-amber-500"
                                 style={{
@@ -2016,7 +2053,10 @@ export default function AdventureTab() {
               >
                 <div className="flex items-start gap-3 mb-2">
                   <img
-                    src={getDungeonIcon(run.dungeon.name, (run.dungeon as any).dungeonIcon)}
+                    src={getDungeonIcon(
+                      run.dungeon.name,
+                      (run.dungeon as any).dungeonIcon
+                    )}
                     alt={run.dungeon.name}
                     className="w-12 h-12 rounded border-2 border-stone-600"
                     style={{ imageRendering: "pixelated" }}
@@ -2129,7 +2169,10 @@ export default function AdventureTab() {
             {/* Header with Dungeon Icon */}
             <div className="flex items-start gap-4 mb-4 pb-4 border-b-2 border-stone-700">
               <img
-                src={getDungeonIcon(selectedDungeon.name, (selectedDungeon as any).dungeonIcon)}
+                src={getDungeonIcon(
+                  selectedDungeon.name,
+                  (selectedDungeon as any).dungeonIcon
+                )}
                 alt={selectedDungeon.name}
                 className="w-20 h-20 border-3 border-amber-600"
                 style={{
@@ -2706,7 +2749,10 @@ export default function AdventureTab() {
           bossHealth={(selectedDungeon as any).bossHealth || 1000}
           bossAttack={(selectedDungeon as any).bossAttack || 50}
           bossDefense={(selectedDungeon as any).bossDefense || 30}
-          dungeonIcon={getDungeonIcon(selectedDungeon.name, (selectedDungeon as any).dungeonIcon)}
+          dungeonIcon={getDungeonIcon(
+            selectedDungeon.name,
+            (selectedDungeon as any).dungeonIcon
+          )}
           playerClass={character.class}
           playerHP={character.health}
           playerMaxHP={character.maxHealth}

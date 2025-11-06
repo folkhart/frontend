@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from 'react';
 import { useGameStore } from "@/store/gameStore";
+import { sendGameNotification } from '@/services/notifications';
 import {
   formatGold,
   getClassIcon,
@@ -205,10 +206,25 @@ export default function TopBar() {
     },
   });
 
+  // Track energy full notification
+  const energyWasFullRef = useRef(false);
+
   useEffect(() => {
     if (!player || player.energy >= player.maxEnergy) {
       setTimeUntilNextEnergy("Full");
+      
+      // Send notification when energy becomes full
+      if (player && player.energy === player.maxEnergy && !energyWasFullRef.current) {
+        energyWasFullRef.current = true;
+        sendGameNotification(
+          'energyRefill',
+          'Energy Full!',
+          'Your energy is fully recharged. Time to adventure!'
+        );
+      }
       return;
+    } else {
+      energyWasFullRef.current = false;
     }
 
     const updateTimer = () => {
@@ -228,6 +244,24 @@ export default function TopBar() {
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
   }, [player?.energy, player?.energyUpdatedAt, player?.maxEnergy]);
+
+  // Track level ups
+  const previousLevelRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (character) {
+      if (previousLevelRef.current !== null && character.level > previousLevelRef.current) {
+        // Level up detected!
+        sendGameNotification(
+          'levelUp',
+          'Level Up!',
+          `Congratulations! You reached Level ${character.level}!`,
+          { level: character.level }
+        );
+      }
+      previousLevelRef.current = character.level;
+    }
+  }, [character?.level]);
 
   // Get item from slot
   const getSlotItem = (slotType: string) => {

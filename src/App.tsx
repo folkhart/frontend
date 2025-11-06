@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useGameStore } from './store/gameStore';
 import { connectSocket, disconnectSocket } from './lib/socket';
+import { notificationService } from './services/notifications';
 import LandingPage from './pages/LandingPage';
 import CharacterCreationPage from './pages/CharacterCreationPage';
 import GamePage from './pages/GamePage';
@@ -34,6 +35,14 @@ function App() {
   useEffect(() => {
     if (isAuthenticated && accessToken) {
       connectSocket(accessToken);
+      // Initialize push notifications (with error handling)
+      try {
+        notificationService.initialize().catch((err) => {
+          console.log('Notification service initialization failed (non-critical):', err);
+        });
+      } catch (err) {
+        console.log('Notification service initialization failed (non-critical):', err);
+      }
     }
 
     return () => {
