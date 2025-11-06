@@ -2359,8 +2359,8 @@ export default function AdventureTab() {
                       {
                         selectedDungeon.lootTable.filter(
                           (e: any) =>
-                            !e.classRestriction ||
-                            e.classRestriction === character.class
+                            !e.item?.classRestriction ||
+                            e.item.classRestriction === character.class
                         ).length
                       }
                       )
@@ -2381,8 +2381,8 @@ export default function AdventureTab() {
                         {selectedDungeon.lootTable
                           .filter(
                             (entry: any) =>
-                              !entry.classRestriction ||
-                              entry.classRestriction === character.class
+                              !entry.item?.classRestriction ||
+                              entry.item.classRestriction === character.class
                           )
                           .map((entry: any, idx: number) => (
                             <div
