@@ -20,6 +20,7 @@ interface ItemFormData {
   defenseBonus?: number;
   healthBonus?: number;
   speedBonus?: number;
+  stackable?: boolean;
 }
 
 export default function ItemManager() {
@@ -464,6 +465,12 @@ function ItemCard({ item, onEdit, onDelete }: any) {
                 <div className="text-green-400 font-bold">+{item.healthBonus}</div>
               </div>
             )}
+            {item.stackable && (
+              <div className="bg-gray-900 p-2 rounded">
+                <div className="text-gray-400">Stackable</div>
+                <div className="text-cyan-400 font-bold">✓ Yes</div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -504,6 +511,7 @@ function ItemModal({ item, onClose }: any) {
     defenseBonus: item?.defenseBonus || 0,
     healthBonus: item?.healthBonus || 0,
     speedBonus: item?.speedBonus || 0,
+    stackable: item?.stackable ?? false,
   });
 
   const createItemMutation = useMutation({
@@ -567,6 +575,7 @@ function ItemModal({ item, onClose }: any) {
     if (formData.defenseBonus && formData.defenseBonus > 0) itemData.defenseBonus = formData.defenseBonus;
     if (formData.healthBonus && formData.healthBonus > 0) itemData.healthBonus = formData.healthBonus;
     if (formData.speedBonus && formData.speedBonus > 0) itemData.speedBonus = formData.speedBonus;
+    itemData.stackable = formData.stackable ?? false;
 
     if (item?.id) {
       updateItemMutation.mutate({ id: item.id, data: itemData });
@@ -806,6 +815,27 @@ function ItemModal({ item, onClose }: any) {
                   min="0"
                   className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:border-purple-500 focus:outline-none"
                 />
+              </div>
+
+              {/* Stackable Checkbox */}
+              <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.stackable ?? false}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        stackable: e.target.checked,
+                      })
+                    }
+                    className="w-5 h-5 rounded border-gray-600 bg-gray-700 text-purple-600 focus:ring-2 focus:ring-purple-500"
+                  />
+                  <div>
+                    <div className="text-gray-300 font-bold">Stackable Item</div>
+                    <div className="text-xs text-gray-400">Allow multiple items in one inventory slot</div>
+                  </div>
+                </label>
               </div>
 
             </div>
