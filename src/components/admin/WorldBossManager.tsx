@@ -557,6 +557,7 @@ function BossFormModal({
     rewardGems: boss?.rewardGems || 100,
     lootTable: boss?.lootTable || [],
     isActive: boss?.isActive ?? true,
+    autoSpawn: boss?.autoSpawn ?? false,
     phases: boss?.phases || [
       { phase: 1, name: 'Fire Phase', hp: 100000, attack: 100, defense: 50, element: 'fire' },
       { phase: 2, name: 'Ice Phase', hp: 150000, attack: 120, defense: 60, element: 'ice' },
@@ -775,6 +776,23 @@ function BossFormModal({
               className="w-4 h-4"
             />
             <label className="text-sm text-gray-400">Boss is active (can spawn)</label>
+          </div>
+
+          {/* Auto-Spawn Toggle */}
+          <div className="bg-stone-900 border-2 border-yellow-600 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="checkbox"
+                checked={formData.autoSpawn}
+                onChange={(e) => setFormData({ ...formData, autoSpawn: e.target.checked })}
+                className="w-4 h-4"
+              />
+              <label className="text-sm font-bold text-yellow-400">⏰ Auto-Spawn Enabled</label>
+            </div>
+            <p className="text-xs text-gray-400 ml-6">
+              Boss will automatically spawn every <strong>{formData.spawnIntervalHours} hours</strong> after being defeated or timing out.
+              {!formData.autoSpawn && " (Currently disabled - spawn manually from admin panel)"}
+            </p>
           </div>
             </>
           )}

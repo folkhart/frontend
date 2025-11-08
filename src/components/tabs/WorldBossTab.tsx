@@ -86,9 +86,12 @@ export default function WorldBossTab() {
   useEffect(() => {
     if (!pixiContainerRef.current || pixiAppRef.current || !activeBoss?.boss) return;
 
+    const containerWidth = pixiContainerRef.current.clientWidth;
+    const containerHeight = pixiContainerRef.current.clientHeight;
+
     const app = new PIXI.Application({
-      width: window.innerWidth,
-      height: window.innerHeight - 200,
+      width: containerWidth,
+      height: containerHeight,
       backgroundColor: 0x1a1a1a,
       antialias: true,
     });
@@ -256,7 +259,7 @@ export default function WorldBossTab() {
   const lootTable = boss.lootTable as any[];
 
   return (
-    <div className="relative w-full h-screen bg-stone-900 overflow-hidden">
+    <div className="relative w-full h-full bg-stone-900 overflow-hidden">
       {/* PixiJS Canvas */}
       <div ref={pixiContainerRef} className="absolute inset-0" style={{ filter: 'brightness(0.7)' }} />
 

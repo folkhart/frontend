@@ -23,8 +23,10 @@ import searchIcon from "@/assets/ui/search.png";
 import expandedIcon from "@/assets/ui/expanded.png";
 import compactIcon from "@/assets/ui/compact.png";
 import petIcon from "@/assets/ui/pet.png";
+import bossIcon from "@/assets/ui/boss.png";
 import ServerChat from "@/components/ServerChat";
 import BossFight from "@/components/BossFight";
+import WorldBossTab from "@/components/tabs/WorldBossTab";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
@@ -307,11 +309,12 @@ export default function AdventureTab() {
   const { character, player, setPlayer, setCharacter, hasUnreadServerMessages } = useGameStore();
   const fastFinishCost = 10; // gems
   const [view, setView] = useState<
-    "dungeons" | "idle" | "history" | "serverchat"
+    "dungeons" | "idle" | "history" | "serverchat" | "worldboss"
   >("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showRewards, setShowRewards] = useState(false);
   const [showCompanionDrops, setShowCompanionDrops] = useState(false);
+  const [showDungeonMenu, setShowDungeonMenu] = useState(false);
   const [collapsedView, setCollapsedView] = useState(() => {
     // Restore view preference from localStorage
     const saved = localStorage.getItem("dungeonViewCollapsed");
@@ -1471,66 +1474,108 @@ export default function AdventureTab() {
         </div>
       )}
 
-      {/* Mode Toggle */}
-      <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setView("dungeons")}
-          className={`flex-1 py-2 font-bold transition flex items-center justify-center gap-2 relative overflow-hidden ${
-            view === "dungeons"
-              ? "bg-amber-700 text-white"
-              : "bg-stone-800 text-gray-400 hover:bg-stone-700"
-          }`}
-          style={{
-            border: "2px solid #92400e",
-            borderRadius: "0",
-            boxShadow:
-              view === "dungeons"
-                ? "0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)"
-                : "none",
-            textShadow: view === "dungeons" ? "1px 1px 0 #000" : "none",
-            fontFamily: "monospace",
-          }}
-        >
-          <img
-            src={dungeonsIcon}
-            alt="Dungeons"
-            className="w-5 h-5"
-            style={{ imageRendering: "pixelated" }}
-          />
-          <span className="relative z-10">Dungeons</span>
-          {view === "dungeons" && (
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+      {/* Mode Toggle - Hidden when World Boss is active */}
+      {view !== "worldboss" && (
+      <div className="flex gap-2 mb-4 relative">
+        {/* Dungeon Button with Dropdown */}
+        <div className="relative flex-1">
+          <button
+            onClick={() => setShowDungeonMenu(!showDungeonMenu)}
+            className={`w-full py-2 font-bold transition flex items-center justify-center gap-2 relative overflow-hidden ${
+              view === "dungeons" || view === "worldboss" || view === "history"
+                ? "bg-amber-700 text-white"
+                : "bg-stone-800 text-gray-400 hover:bg-stone-700"
+            }`}
+            style={{
+              border: "2px solid #92400e",
+              borderRadius: "0",
+              boxShadow:
+                view === "dungeons" || view === "worldboss" || view === "history"
+                  ? "0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)"
+                  : "none",
+              textShadow: (view === "dungeons" || view === "worldboss" || view === "history") ? "1px 1px 0 #000" : "none",
+              fontFamily: "monospace",
+            }}
+          >
+            <img
+              src={dungeonsIcon}
+              alt="Dungeons"
+              className="w-5 h-5"
+              style={{ imageRendering: "pixelated" }}
+            />
+            <span className="relative z-10">Dungeon</span>
+            <ChevronDown className="w-4 h-4" />
+            {(view === "dungeons" || view === "worldboss" || view === "history") && (
+              <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+            )}
+          </button>
+
+          {/* Dropdown Menu */}
+          {showDungeonMenu && (
+            <div
+              className="absolute top-full left-0 right-0 mt-1 bg-stone-800 border-2 border-amber-600 z-50"
+              style={{
+                borderRadius: "0",
+                boxShadow: "0 4px 0 #92400e, 0 8px 0 rgba(0,0,0,0.3)",
+              }}
+            >
+              <button
+                onClick={() => {
+                  setView("dungeons");
+                  setShowDungeonMenu(false);
+                }}
+                className={`w-full px-4 py-3 text-left flex items-center gap-2 hover:bg-stone-700 transition ${
+                  view === "dungeons" ? "bg-amber-700 text-white" : "text-gray-300"
+                }`}
+                style={{ fontFamily: "monospace", borderRadius: "0" }}
+              >
+                <img
+                  src={dungeonsIcon}
+                  alt="Dungeons"
+                  className="w-5 h-5"
+                  style={{ imageRendering: "pixelated" }}
+                />
+                <span className="font-bold">Dungeons</span>
+              </button>
+              <button
+                onClick={() => {
+                  setView("worldboss");
+                  setShowDungeonMenu(false);
+                }}
+                className={`w-full px-4 py-3 text-left flex items-center gap-2 hover:bg-stone-700 transition ${
+                  view === "worldboss" ? "bg-red-700 text-white" : "text-gray-300"
+                }`}
+                style={{ fontFamily: "monospace", borderRadius: "0" }}
+              >
+                <img
+                  src={bossIcon}
+                  alt="World Boss"
+                  className="w-5 h-5"
+                  style={{ imageRendering: "pixelated" }}
+                />
+                <span className="font-bold">World Boss</span>
+              </button>
+              <button
+                onClick={() => {
+                  setView("history");
+                  setShowDungeonMenu(false);
+                }}
+                className={`w-full px-4 py-3 text-left flex items-center gap-2 hover:bg-stone-700 transition ${
+                  view === "history" ? "bg-amber-700 text-white" : "text-gray-300"
+                }`}
+                style={{ fontFamily: "monospace", borderRadius: "0" }}
+              >
+                <img
+                  src={historyIcon}
+                  alt="History"
+                  className="w-5 h-5"
+                  style={{ imageRendering: "pixelated" }}
+                />
+                <span className="font-bold">History</span>
+              </button>
+            </div>
           )}
-        </button>
-        <button
-          onClick={() => setView("history")}
-          className={`flex-1 py-2 font-bold transition flex items-center justify-center gap-2 relative overflow-hidden ${
-            view === "history"
-              ? "bg-amber-700 text-white"
-              : "bg-stone-800 text-gray-400 hover:bg-stone-700"
-          }`}
-          style={{
-            border: "2px solid #92400e",
-            borderRadius: "0",
-            boxShadow:
-              view === "history"
-                ? "0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)"
-                : "none",
-            textShadow: view === "history" ? "1px 1px 0 #000" : "none",
-            fontFamily: "monospace",
-          }}
-        >
-          <img
-            src={historyIcon}
-            alt="History"
-            className="w-5 h-5"
-            style={{ imageRendering: "pixelated" }}
-          />
-          <span className="relative z-10">History</span>
-          {view === "history" && (
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
-          )}
-        </button>
+        </div>
 
         {/* Server Chat Button */}
         <button
@@ -1566,6 +1611,7 @@ export default function AdventureTab() {
           )}
         </button>
       </div>
+      )}
 
       {/* Dungeons List */}
       {view === "dungeons" && (
@@ -2747,6 +2793,13 @@ export default function AdventureTab() {
       {view === "serverchat" && (
         <div className="h-[600px]">
           <ServerChat />
+        </div>
+      )}
+
+      {/* World Boss View */}
+      {view === "worldboss" && (
+        <div className="fixed inset-0 z-30" style={{ paddingTop: '80px', paddingBottom: '80px' }}>
+          <WorldBossTab />
         </div>
       )}
 
