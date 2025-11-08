@@ -28,11 +28,43 @@ let patcher = null;
 
 // Create tray icon
 function createTray() {
-  const iconPath = path.join(__dirname, '../favicon.ico');
+  // Use different icon path for dev vs production
+  const iconPath = isDev 
+    ? path.join(__dirname, '../favicon.ico')
+    : path.join(process.resourcesPath, 'favicon.ico');
   
   try {
+    logger.info('TRAY', 'Creating tray icon', { iconPath, isDev, resourcesPath: process.resourcesPath });
     const icon = nativeImage.createFromPath(iconPath);
-    tray = new Tray(icon.resize({ width: 16, height: 16 }));
+    
+    if (icon.isEmpty()) {
+      // Fallback: try alternate paths
+      const fallbackPaths = [
+        path.join(__dirname, '../favicon.ico'),
+        path.join(process.resourcesPath, 'app.asar.unpacked', 'favicon.ico'),
+        path.join(app.getAppPath(), 'favicon.ico')
+      ];
+      
+      logger.warn('TRAY', 'Icon empty, trying fallbacks', { fallbackPaths });
+      
+      for (const fallbackPath of fallbackPaths) {
+        const fallbackIcon = nativeImage.createFromPath(fallbackPath);
+        if (!fallbackIcon.isEmpty()) {
+          logger.info('TRAY', 'Fallback icon loaded', { path: fallbackPath });
+          tray = new Tray(fallbackIcon.resize({ width: 16, height: 16 }));
+          break;
+        }
+      }
+      
+      if (!tray) {
+        logger.error('TRAY', 'Could not load any icon, creating empty tray');
+        tray = new Tray(nativeImage.createEmpty());
+      }
+    } else {
+      logger.info('TRAY', 'Icon loaded successfully');
+      tray = new Tray(icon.resize({ width: 16, height: 16 }));
+    }
+    
     tray.setToolTip('Folkhart - Cozy Fantasy RPG');
     
     updateTrayMenu({

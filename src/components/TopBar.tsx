@@ -3,7 +3,6 @@ import { useGameStore } from "@/store/gameStore";
 import { sendGameNotification } from '@/services/notifications';
 import {
   formatGold,
-  getClassIcon,
   getRarityColor,
   getRarityBorder,
 } from "@/utils/format";
@@ -70,7 +69,6 @@ export default function TopBar() {
   const [selectedItemDetails, setSelectedItemDetails] = useState<any>(null);
   const [showTitleChooser, setShowTitleChooser] = useState(false);
   const [showAvatarChooser, setShowAvatarChooser] = useState(false);
-  const [showFrameChooser, setShowFrameChooser] = useState(false);
 
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],

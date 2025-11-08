@@ -292,20 +292,12 @@ export default function ShopTab() {
           )}
         </button>
         <button
-          onClick={() => setView("chests")}
-          className={`py-3 font-bold text-sm transition relative overflow-hidden flex items-center justify-center gap-2 ${
-            view === "chests"
-              ? "bg-amber-600 hover:bg-amber-500 text-white"
-              : "bg-stone-700 hover:bg-stone-600 text-gray-300"
-          }`}
+          disabled
+          className="py-3 font-bold text-sm relative overflow-hidden flex items-center justify-center gap-2 bg-stone-800 text-gray-500 cursor-not-allowed opacity-75"
           style={{
-            border:
-              view === "chests" ? "3px solid #d97706" : "3px solid #44403c",
+            border: "3px solid #292524",
             borderRadius: "0",
-            boxShadow:
-              view === "chests"
-                ? "0 3px 0 #b45309, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)"
-                : "0 3px 0 #292524, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+            boxShadow: "0 3px 0 #1c1917, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
             textShadow: "1px 1px 0 #000",
             fontFamily: "monospace",
             letterSpacing: "1px",
@@ -314,13 +306,20 @@ export default function ShopTab() {
           <img
             src="/assets/ui/shop/chests.png"
             alt="Chests"
-            className="w-4 h-4"
+            className="w-4 h-4 opacity-50"
             style={{ imageRendering: "pixelated" }}
           />
           <span className="relative z-10">CHESTS</span>
-          {view === "chests" && (
-            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
-          )}
+          <span 
+            className="ml-2 px-2 py-0.5 bg-yellow-600 text-black text-[10px] font-bold animate-pulse"
+            style={{
+              border: "2px solid #fbbf24",
+              boxShadow: "0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.3)",
+              textShadow: "none",
+            }}
+          >
+            SOON
+          </span>
         </button>
       </div>
 

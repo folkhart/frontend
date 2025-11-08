@@ -3,7 +3,7 @@
  * Professional launcher with real news integration
  */
 
-const { app, BrowserWindow, ipcMain, shell } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Tray, Menu } = require("electron");
 const { autoUpdater } = require("electron-updater");
 const path = require("path");
 const https = require("https");
@@ -13,6 +13,7 @@ const { initializeAntiCheat } = require("./antiCheat.cjs");
 const logger = getLogger();
 let patcherWindow = null;
 let gameWindow = null;
+let tray = null;
 
 // Export getter for game window
 function getGameWindow() {
@@ -474,12 +475,6 @@ class PremiumPatcher {
                 isMinimized: gameWindow ? gameWindow.isMinimized() : null,
                 isFocused: gameWindow ? gameWindow.isFocused() : null
               });
-              
-              // Open DevTools for debugging in production
-              if (gameWindow && !gameWindow.isDestroyed()) {
-                gameWindow.webContents.openDevTools();
-                logger.info("GAME", "DevTools opened for debugging");
-              }
             }, 100);
           } else {
             logger.error("GAME", "Cannot show window - window doesn't exist or is destroyed");

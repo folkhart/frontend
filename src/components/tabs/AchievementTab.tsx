@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Trophy, Award, Star, Lock, Check, Gift } from 'lucide-react';
+import { Trophy, Award, Star, Lock, Check, Gift, RefreshCw } from 'lucide-react';
 import { achievementApi, authApi } from '@/lib/api';
 import { useGameStore } from '@/store/gameStore';
 import achievementIcon from '@/assets/ui/achievement.png';
@@ -61,25 +61,31 @@ export default function AchievementTab() {
   const { player, setPlayer, setCharacter } = useGameStore();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-  const { data: achievements = [] } = useQuery<Achievement[]>({
+  const { data: achievements = [], refetch: refetchAchievements } = useQuery<Achievement[]>({
     queryKey: ['achievements'],
     queryFn: async () => {
       const { data } = await achievementApi.getAll();
       return data;
     },
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
     refetchOnWindowFocus: true,
   });
 
-  const { data: stats } = useQuery<AchievementStats>({
+  const { data: stats, refetch: refetchStats } = useQuery<AchievementStats>({
     queryKey: ['achievement-stats'],
     queryFn: async () => {
       const { data } = await achievementApi.getStats();
       return data;
     },
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
     refetchOnWindowFocus: true,
   });
+
+  const handleRefresh = () => {
+    refetchAchievements();
+    refetchStats();
+    (window as any).showToast?.('Achievements refreshed!', 'success');
+  };
 
   const equipTitleMutation = useMutation({
     mutationFn: async (achievementId: string) => {
@@ -187,10 +193,19 @@ export default function AchievementTab() {
 
   return (
     <div className="p-3 pb-20">
-      <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-        <Trophy size={20} className="text-amber-400" />
-        ACHIEVEMENTS & TITLES
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <Trophy size={20} className="text-amber-400" />
+          ACHIEVEMENTS & TITLES
+        </h2>
+        <button
+          onClick={handleRefresh}
+          className="p-2 bg-stone-700 hover:bg-stone-600 border-2 border-amber-600 rounded transition-colors"
+          title="Refresh achievements"
+        >
+          <RefreshCw size={16} className="text-amber-400" />
+        </button>
+      </div>
 
       {/* Stats Overview */}
       {stats && (

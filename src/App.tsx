@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useGameStore } from './store/gameStore';
 import { connectSocket, disconnectSocket } from './lib/socket';
 import { notificationService } from './services/notifications';
@@ -51,14 +51,14 @@ function App() {
   }, [isAuthenticated, accessToken]);
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route path="/" element={!isAuthenticated ? <LandingPage /> : <Navigate to="/game" />} />
         <Route path="/docs" element={<DocsPage />} />
         <Route path="/create-character" element={isAuthenticated ? <CharacterCreationPage /> : <Navigate to="/" />} />
         <Route path="/game" element={isAuthenticated ? <GamePage /> : <Navigate to="/" />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

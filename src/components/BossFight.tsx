@@ -897,10 +897,11 @@ export default function BossFight({
               <button
                 onClick={handleFireAttack}
                 disabled={turn !== 'player' || actionInProgress}
-                className="py-2 sm:py-3 md:py-4 bg-orange-700 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-orange-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="py-2 sm:py-3 md:py-4 bg-orange-700 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-orange-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #c2410c', textShadow: '1px 1px 0 #000' }}
               >
-                <img src={fireIcon} alt="Fire" className="inline w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                <img src={fireIcon} alt="Fire" className="w-5 h-5 sm:w-6 sm:h-6" style={{ imageRendering: 'pixelated' }} />
+                <span className="text-[10px] sm:text-xs">FIRE</span>
               </button>
             )}
 
@@ -908,10 +909,11 @@ export default function BossFight({
               <button
                 onClick={handleIceAttack}
                 disabled={turn !== 'player' || actionInProgress}
-                className="py-2 sm:py-3 md:py-4 bg-cyan-700 hover:bg-cyan-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-cyan-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="py-2 sm:py-3 md:py-4 bg-cyan-700 hover:bg-cyan-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-cyan-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #0e7490', textShadow: '1px 1px 0 #000' }}
               >
-                <img src={iceIcon} alt="Ice" className="inline w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                <img src={iceIcon} alt="Ice" className="w-5 h-5 sm:w-6 sm:h-6" style={{ imageRendering: 'pixelated' }} />
+                <span className="text-[10px] sm:text-xs">ICE</span>
               </button>
             )}
 
@@ -919,10 +921,11 @@ export default function BossFight({
               <button
                 onClick={handleLightningAttack}
                 disabled={turn !== 'player' || actionInProgress}
-                className="py-2 sm:py-3 md:py-4 bg-yellow-700 hover:bg-yellow-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="py-2 sm:py-3 md:py-4 bg-yellow-700 hover:bg-yellow-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #a16207', textShadow: '1px 1px 0 #000' }}
               >
-                <img src={lightningIcon} alt="Lightning" className="inline w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                <img src={lightningIcon} alt="Lightning" className="w-5 h-5 sm:w-6 sm:h-6" style={{ imageRendering: 'pixelated' }} />
+                <span className="text-[10px] sm:text-xs">LIGHTNING</span>
               </button>
             )}
 
@@ -930,10 +933,11 @@ export default function BossFight({
               <button
                 onClick={handlePoisonAttack}
                 disabled={turn !== 'player' || actionInProgress}
-                className="py-2 sm:py-3 md:py-4 bg-purple-700 hover:bg-purple-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="py-2 sm:py-3 md:py-4 bg-purple-700 hover:bg-purple-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #6b21a8', textShadow: '1px 1px 0 #000' }}
               >
-                <img src={poisonIcon} alt="Poison" className="inline w-4 h-4" style={{ imageRendering: 'pixelated' }} />
+                <img src={poisonIcon} alt="Poison" className="w-5 h-5 sm:w-6 sm:h-6" style={{ imageRendering: 'pixelated' }} />
+                <span className="text-[10px] sm:text-xs">POISON</span>
               </button>
             )}
           </div>
