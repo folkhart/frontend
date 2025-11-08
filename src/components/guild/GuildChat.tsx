@@ -180,7 +180,7 @@ export default function GuildChat({
     return () => {
       socket.off("guild_chat_message", handleNewMessage);
     };
-  }, [socket]);
+  }, [socket, character, setHasUnreadGuildMessages]);
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();

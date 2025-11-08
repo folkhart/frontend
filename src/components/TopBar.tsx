@@ -1783,10 +1783,14 @@ export default function TopBar() {
                       >
                         {isUnlocked ? (
                           <img
-                            src={getDungeonIconByName(dungeon.name)}
+                            src={`/assets/ui/dungeonIcons/${dungeon.dungeonIcon}.png`}
                             alt={dungeon.name}
                             className="w-full h-full object-cover"
                             style={{ imageRendering: "pixelated" }}
+                            onError={(e) => {
+                              // Fallback to ratCellar if image not found
+                              e.currentTarget.src = ratCellarIcon;
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">

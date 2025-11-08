@@ -249,3 +249,22 @@ export const companionApi = {
   fuse: (companionName: string, tier: number) => 
     api.post('/companions/fuse', { companionName, tier }),
 };
+
+// World Boss API
+export const worldBossApi = {
+  // Public endpoints
+  getActive: () => api.get('/world-boss/active'),
+  attack: (instanceId: string) => api.post(`/world-boss/attack/${instanceId}`),
+  getRewards: () => api.get('/world-boss/rewards'),
+  claimReward: (rewardId: string) => api.post(`/world-boss/rewards/${rewardId}/claim`),
+  getHistory: (limit?: number) => api.get('/world-boss/history', { params: { limit } }),
+  
+  // Admin endpoints
+  admin: {
+    getAll: () => api.get('/world-boss/admin/all'),
+    create: (data: any) => api.post('/world-boss/admin/create', data),
+    update: (bossId: string, data: any) => api.put(`/world-boss/admin/${bossId}`, data),
+    delete: (bossId: string) => api.delete(`/world-boss/admin/${bossId}`),
+    spawn: (bossId: string) => api.post(`/world-boss/admin/${bossId}/spawn`),
+  },
+};

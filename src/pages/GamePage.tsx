@@ -19,6 +19,7 @@ import FriendsTab from '@/components/tabs/FriendsTab';
 import NewsTab from '@/components/tabs/NewsTab';
 import AdminTab from '@/components/tabs/AdminTab';
 import SettingsTab from '@/components/tabs/SettingsTab';
+import WorldBossTab from '@/components/tabs/WorldBossTab';
 import NotificationToast from '@/components/NotificationToast';
 import Toast from '@/components/Toast';
 import Onboarding from '@/components/Onboarding';
@@ -320,6 +321,7 @@ export default function GamePage() {
       <div className="overflow-y-auto" style={{ paddingTop: contentPaddingTop, paddingBottom: '80px', height: '100vh' }}>
         {activeTab === 'village' && <VillageTab />}
         {activeTab === 'adventure' && <AdventureTab />}
+        {activeTab === 'worldboss' && <WorldBossTab />}
         {activeTab === 'guild' && <GuildTab />}
         {activeTab === 'shop' && <ShopTab />}
         {activeTab === 'leaderboard' && <LeaderboardTab />}

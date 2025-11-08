@@ -60,7 +60,7 @@ interface GameState {
   character: Character | null;
   
   // UI State
-  activeTab: 'village' | 'adventure' | 'guild' | 'shop' | 'leaderboard' | 'friends' | 'news' | 'admin' | 'settings';
+  activeTab: 'village' | 'adventure' | 'guild' | 'shop' | 'leaderboard' | 'friends' | 'news' | 'admin' | 'settings' | 'worldboss';
   isLoading: boolean;
   hasUnreadServerMessages: boolean;
   hasUnreadGuildMessages: boolean;
@@ -72,7 +72,7 @@ interface GameState {
   clearAuth: () => void;
   setPlayer: (player: Player) => void;
   setCharacter: (character: Character) => void;
-  setActiveTab: (tab: 'village' | 'adventure' | 'guild' | 'shop' | 'leaderboard' | 'friends' | 'news' | 'admin' | 'settings') => void;
+  setActiveTab: (tab: 'village' | 'adventure' | 'guild' | 'shop' | 'leaderboard' | 'friends' | 'news' | 'admin' | 'settings' | 'worldboss') => void;
   setLoading: (loading: boolean) => void;
   updatePlayerGold: (amount: number) => void;
   updatePlayerEnergy: (amount: number) => void;

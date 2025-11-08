@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3, Calendar, LogOut, Swords, Hammer, Bot } from 'lucide-react';
+import { Users, Package, ShoppingBag, Plus, Trash2, Newspaper, Database, Download, Upload, RefreshCw, BarChart3, Calendar, LogOut, Swords, Hammer, Bot, Skull } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { getRarityColor } from '@/utils/format';
 import AdminNewsTab from './AdminNewsTab';
@@ -12,6 +12,7 @@ import DungeonManager from '../admin/DungeonManager';
 import ItemManager from '../admin/ItemManager';
 import CraftingRecipeManager from '../admin/CraftingRecipeManager';
 import BotManager from '../admin/BotManager';
+import WorldBossManager from '../admin/WorldBossManager';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -111,7 +112,7 @@ const adminApi = {
 export default function AdminTab() {
   const queryClient = useQueryClient();
   const { player } = useGameStore();
-  const [activeTab, setActiveTab] = useState<'analytics' | 'players' | 'items' | 'shop' | 'news' | 'backups' | 'rewards' | 'dungeons' | 'crafting' | 'bots'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'players' | 'items' | 'shop' | 'news' | 'backups' | 'rewards' | 'dungeons' | 'crafting' | 'bots' | 'worldboss'>('analytics');
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [showAddItem, setShowAddItem] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -169,7 +170,7 @@ export default function AdminTab() {
         🛡️ Admin Dashboard
       </h2>
 
-      {/* Tab Switcher - 3x3 Grid */}
+      {/* Tab Switcher - 4x3 Grid */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         <button
           onClick={() => {
@@ -357,6 +358,24 @@ export default function AdminTab() {
           <Bot size={16} className="inline mr-1" />
           Bots
         </button>
+        <button
+          onClick={() => setActiveTab('worldboss')}
+          className={`flex-1 py-2 font-bold transition relative overflow-hidden ${
+            activeTab === 'worldboss'
+              ? 'bg-red-700 text-white'
+              : 'bg-stone-800 text-gray-400 hover:bg-stone-700'
+          }`}
+          style={{
+            border: '2px solid #991b1b',
+            borderRadius: '0',
+            boxShadow: activeTab === 'worldboss' ? '0 2px 0 #b91c1c, inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
+            textShadow: activeTab === 'worldboss' ? '1px 1px 0 #000' : 'none',
+            fontFamily: 'monospace',
+          }}
+        >
+          <Skull size={16} className="inline mr-1" />
+          World Boss
+        </button>
       </div>
 
       {/* Analytics Dashboard */}
@@ -518,6 +537,9 @@ export default function AdminTab() {
 
       {/* Bot Manager Tab */}
       {activeTab === 'bots' && <BotManager />}
+
+      {/* World Boss Manager Tab */}
+      {activeTab === 'worldboss' && <WorldBossManager />}
     </div>
   );
 }

@@ -341,7 +341,7 @@ export default function ServerChat() {
     return () => {
       socket.off("server_chat_message");
     };
-  }, [socket, character, sendServerChatMention]);
+  }, [socket, character, sendServerChatMention, setHasUnreadServerMessages]);
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();

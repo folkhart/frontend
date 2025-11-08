@@ -402,13 +402,13 @@ function DungeonCard({ dungeon, onEdit, onDelete }: any) {
         <div className="w-20 h-20 bg-gray-900 rounded-lg flex items-center justify-center flex-shrink-0 border-2 border-orange-600/30">
           {dungeon.dungeonIcon ? (
             <img
-              src={`/assets/dungeons/${dungeon.dungeonIcon}.png`}
+              src={`/assets/ui/dungeonIcons/${dungeon.dungeonIcon}.png`}
               alt={dungeon.name}
               className="w-16 h-16 object-contain"
               style={{ imageRendering: "pixelated" }}
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none';
-                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                e.currentTarget.nextSibling && ((e.currentTarget.nextSibling as HTMLElement).style.display = 'block');
               }}
             />
           ) : null}
