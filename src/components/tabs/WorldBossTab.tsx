@@ -11,6 +11,10 @@ export default function WorldBossTab() {
   const queryClient = useQueryClient();
   const { player } = useGameStore();
   const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [showPhasesModal, setShowPhasesModal] = useState(false);
+  const [showLootModal, setShowLootModal] = useState(false);
+  const [showRewardsModal, setShowRewardsModal] = useState(false);
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
 
   // Fetch active boss
   const { data: activeBoss, isLoading: loadingBoss } = useQuery({
@@ -78,9 +82,9 @@ export default function WorldBossTab() {
     },
   });
 
-  // Initialize PixiJS
+  // Initialize PixiJS with boss sprite
   useEffect(() => {
-    if (!pixiContainerRef.current || pixiAppRef.current) return;
+    if (!pixiContainerRef.current || pixiAppRef.current || !activeBoss?.boss) return;
 
     const app = new PIXI.Application({
       width: window.innerWidth,
@@ -107,24 +111,37 @@ export default function WorldBossTab() {
       spotlight.endFill();
       app.stage.addChild(spotlight);
 
-      // Boss placeholder (will be replaced with actual boss sprite)
+      // Load and display boss sprite
       const bossContainer = new PIXI.Container();
-      bossContainer.position.set(app.screen.width / 2, app.screen.height / 2 - 100);
-      
-      const bossCircle = new PIXI.Graphics();
-      bossCircle.lineStyle(4, 0xffaa00);
-      bossCircle.beginFill(0xff0000, 0.8);
-      bossCircle.drawCircle(0, 0, 80);
-      bossCircle.endFill();
-      bossContainer.addChild(bossCircle);
+      bossContainer.position.set(app.screen.width / 2, app.screen.height / 2 - 50);
 
-      // Boss icon/text
-      const bossText = new PIXI.Text('🐉', {
-        fontSize: 80,
-        fill: 0xffffff,
-      });
-      bossText.anchor.set(0.5);
-      bossContainer.addChild(bossText);
+      // Try to load boss sprite from assets
+      const spriteId = activeBoss.boss.spriteId;
+      const spritePath = `/src/assets/ui/bossIcons/${spriteId}.png`;
+      
+      PIXI.Assets.load(spritePath)
+        .then((texture) => {
+          const bossSprite = new PIXI.Sprite(texture);
+          bossSprite.anchor.set(0.5);
+          bossSprite.scale.set(0.8); // Adjust size as needed
+          bossContainer.addChild(bossSprite);
+        })
+        .catch(() => {
+          // Fallback: show circle with emoji if sprite not found
+          const bossCircle = new PIXI.Graphics();
+          bossCircle.lineStyle(4, 0xffaa00);
+          bossCircle.beginFill(0xff0000, 0.8);
+          bossCircle.drawCircle(0, 0, 80);
+          bossCircle.endFill();
+          bossContainer.addChild(bossCircle);
+
+          const bossText = new PIXI.Text('🐉', {
+            fontSize: 80,
+            fill: 0xffffff,
+          });
+          bossText.anchor.set(0.5);
+          bossContainer.addChild(bossText);
+        });
 
       app.stage.addChild(bossContainer);
 
@@ -144,7 +161,7 @@ export default function WorldBossTab() {
         pixiAppRef.current = null;
       }
     };
-  }, []);
+  }, [activeBoss]);
 
   // Update timer
   useEffect(() => {
@@ -236,11 +253,12 @@ export default function WorldBossTab() {
   const phases = boss.phases as any[];
   const currentPhase = phases[instance.currentPhase - 1];
   const healthPercent = (Number(instance.currentHealth) / Number(instance.maxHealth)) * 100;
+  const lootTable = boss.lootTable as any[];
 
   return (
     <div className="relative w-full h-screen bg-stone-900 overflow-hidden">
       {/* PixiJS Canvas */}
-      <div ref={pixiContainerRef} className="absolute inset-0" />
+      <div ref={pixiContainerRef} className="absolute inset-0" style={{ filter: 'brightness(0.7)' }} />
 
       {/* UI Overlay */}
       <div className="absolute inset-0 pointer-events-none">
@@ -262,7 +280,7 @@ export default function WorldBossTab() {
                 </div>
                 <div className="text-sm text-gray-400 flex items-center gap-1">
                   <Users size={14} />
-                  {instance.participantCount} fighters
+                  {leaderboard.length} fighters
                 </div>
               </div>
             </div>
@@ -287,11 +305,174 @@ export default function WorldBossTab() {
           </div>
         </div>
 
+
+        {/* Modals */}
+        {showPhasesModal && (
+          <div className="pointer-events-auto fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowPhasesModal(false)}>
+            <div className="bg-stone-900 border-4 border-red-600 p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-bold text-red-400 mb-4">📊 BOSS PHASES</h2>
+              <div className="space-y-2">
+                {phases.map((phase: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className={`p-3 ${
+                      idx + 1 === instance.currentPhase
+                        ? 'bg-red-900/50 border-2 border-red-500'
+                        : idx + 1 < instance.currentPhase
+                        ? 'bg-gray-800 opacity-50'
+                        : 'bg-stone-800 border border-stone-700'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <span className={`font-bold ${idx + 1 === instance.currentPhase ? 'text-yellow-400' : 'text-gray-400'}`}>
+                        {phase.name}
+                      </span>
+                      {idx + 1 === instance.currentPhase && <span className="text-green-400 text-xl">●</span>}
+                      {idx + 1 < instance.currentPhase && <span className="text-gray-600 text-xl">✓</span>}
+                    </div>
+                    <div className="text-gray-300 text-sm">
+                      HP: {phase.hp.toLocaleString()} | ATK: {phase.attack} | DEF: {phase.defense}
+                    </div>
+                    {phase.element && <div className="text-blue-400 text-xs mt-1">Element: {phase.element}</div>}
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setShowPhasesModal(false)} className="mt-4 w-full py-2 bg-red-700 hover:bg-red-600 text-white font-bold">
+                CLOSE
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showLootModal && (
+          <div className="pointer-events-auto fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowLootModal(false)}>
+            <div className="bg-stone-900 border-4 border-yellow-600 p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-bold text-yellow-400 mb-4">💎 POSSIBLE LOOT</h2>
+              {lootTable && lootTable.length > 0 ? (
+                <div className="space-y-2">
+                  {lootTable.map((item: any, idx: number) => (
+                    <div key={idx} className="bg-stone-800 p-3 border border-yellow-700">
+                      <span className="text-white font-bold">{item.name || 'Unknown Item'}</span>
+                      <div className="text-gray-400 text-sm mt-1">Drop Rate: {item.dropRate || 25}%</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500">No loot configured for this boss</p>
+              )}
+              <button onClick={() => setShowLootModal(false)} className="mt-4 w-full py-2 bg-yellow-700 hover:bg-yellow-600 text-white font-bold">
+                CLOSE
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showRewardsModal && (
+          <div className="pointer-events-auto fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowRewardsModal(false)}>
+            <div className="bg-stone-900 border-4 border-green-600 p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-bold text-green-400 mb-4">🏆 REWARDS</h2>
+              <div className="space-y-3">
+                <div className="p-4 bg-yellow-900/30 border-2 border-yellow-600">
+                  <div className="font-bold text-yellow-400 text-lg">Top 10 Players</div>
+                  <div className="text-white mt-2">{(boss.rewardGold * 2).toLocaleString()}g • {(boss.rewardExp * 2).toLocaleString()} XP • {boss.rewardGems * 2} gems</div>
+                  <div className="text-green-400 mt-1 font-bold">✅ Guaranteed 1-2 items</div>
+                </div>
+                <div className="p-4 bg-stone-800 border border-gray-600">
+                  <div className="font-bold text-gray-300 text-lg">Top 11-50 Players</div>
+                  <div className="text-white mt-2">{Math.floor(boss.rewardGold * 1.5).toLocaleString()}g • {Math.floor(boss.rewardExp * 1.5).toLocaleString()} XP • {Math.floor(boss.rewardGems * 1.5)} gems</div>
+                  <div className="text-blue-400 mt-1">🎲 50% chance for item</div>
+                </div>
+                <div className="p-4 bg-stone-800 border border-gray-700">
+                  <div className="font-bold text-gray-400 text-lg">Top 51-100 Players</div>
+                  <div className="text-white mt-2">{boss.rewardGold.toLocaleString()}g • {boss.rewardExp.toLocaleString()} XP • {boss.rewardGems} gems</div>
+                </div>
+              </div>
+              <button onClick={() => setShowRewardsModal(false)} className="mt-4 w-full py-2 bg-green-700 hover:bg-green-600 text-white font-bold">
+                CLOSE
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showLeaderboardModal && (
+          <div className="pointer-events-auto fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowLeaderboardModal(false)}>
+            <div className="bg-stone-900 border-4 border-purple-600 p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <h2 className="text-2xl font-bold text-purple-400 mb-4 flex items-center gap-2">
+                <Trophy /> TOP DAMAGE DEALERS
+              </h2>
+              <div className="space-y-2">
+                {leaderboard.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">Be the first to attack!</p>
+                ) : (
+                  leaderboard.slice(0, 10).map((entry: any, index: number) => (
+                    <div
+                      key={entry.characterName}
+                      className={`flex justify-between items-center p-3 ${
+                        index < 3 ? 'bg-yellow-900/30 border-2 border-yellow-600' : 'bg-stone-800 border border-stone-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className={`font-bold text-xl ${
+                          index === 0 ? 'text-yellow-400' :
+                          index === 1 ? 'text-gray-300' :
+                          index === 2 ? 'text-amber-600' :
+                          'text-gray-400'
+                        }`}>
+                          #{index + 1}
+                        </span>
+                        <span className="text-white font-bold">{entry.characterName}</span>
+                      </div>
+                      <span className="text-red-400 font-bold">
+                        {Number(entry.totalDamage).toLocaleString()}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+              <button onClick={() => setShowLeaderboardModal(false)} className="mt-4 w-full py-2 bg-purple-700 hover:bg-purple-600 text-white font-bold">
+                CLOSE
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Bottom Bar - Attack & Leaderboard */}
         <div className="pointer-events-auto absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-4">
           <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Attack Button */}
             <div className="md:col-span-2">
+              {/* Retro Info Buttons */}
+              <div className="grid grid-cols-4 gap-2 mb-3">
+                <button
+                  onClick={() => setShowPhasesModal(true)}
+                  className="py-2 bg-stone-800 hover:bg-stone-700 border-2 border-red-600 text-white font-bold text-xs uppercase"
+                  style={{ borderRadius: '0', imageRendering: 'pixelated' }}
+                >
+                  📊<br/>PHASES
+                </button>
+                <button
+                  onClick={() => setShowLootModal(true)}
+                  className="py-2 bg-stone-800 hover:bg-stone-700 border-2 border-yellow-600 text-white font-bold text-xs uppercase"
+                  style={{ borderRadius: '0', imageRendering: 'pixelated' }}
+                >
+                  💎<br/>LOOT
+                </button>
+                <button
+                  onClick={() => setShowRewardsModal(true)}
+                  className="py-2 bg-stone-800 hover:bg-stone-700 border-2 border-green-600 text-white font-bold text-xs uppercase"
+                  style={{ borderRadius: '0', imageRendering: 'pixelated' }}
+                >
+                  🏆<br/>REWARDS
+                </button>
+                <button
+                  onClick={() => setShowLeaderboardModal(true)}
+                  className="py-2 bg-stone-800 hover:bg-stone-700 border-2 border-purple-600 text-white font-bold text-xs uppercase"
+                  style={{ borderRadius: '0', imageRendering: 'pixelated' }}
+                >
+                  👑<br/>TOP 10
+                </button>
+              </div>
+
               <button
                 onClick={() => attackMutation.mutate(instance.id)}
                 disabled={attackMutation.isPending || !player}

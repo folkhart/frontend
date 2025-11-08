@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Skull, Play, Trash2, Edit, Clock, Users, Upload, Download } from 'lucide-react';
 import { worldBossApi } from '@/lib/api';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export default function WorldBossManager() {
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -17,6 +19,18 @@ export default function WorldBossManager() {
     queryFn: async () => {
       const response = await worldBossApi.admin.getAll();
       return response.data;
+    },
+  });
+
+  // Fetch items for loot table
+  const { data: items } = useQuery({
+    queryKey: ['admin', 'items'],
+    queryFn: async () => {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(`${API_URL}/api/admin/items`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.json();
     },
   });
 
@@ -235,6 +249,7 @@ export default function WorldBossManager() {
       {(showCreateModal || editingBoss) && (
         <BossFormModal
           boss={editingBoss}
+          items={items || []}
           onClose={() => {
             setShowCreateModal(false);
             setEditingBoss(null);
@@ -393,7 +408,21 @@ function BossCard({
       } p-4`}
       style={{ borderRadius: '0' }}
     >
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex gap-4 mb-3">
+        {/* Boss Sprite */}
+        <div className="flex-shrink-0">
+          <img
+            src={`/src/assets/ui/bossIcons/${boss.spriteId}.png`}
+            alt={boss.name}
+            className="w-20 h-20 object-contain border-2 border-red-600 bg-stone-900 p-1"
+            style={{ imageRendering: 'pixelated' }}
+            onError={(e) => {
+              // Fallback to skull icon if sprite not found
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="text-lg font-bold text-white">{boss.name}</h4>
@@ -501,15 +530,19 @@ function BossCard({
 // Boss Form Modal Component
 function BossFormModal({
   boss,
+  items,
   onClose,
   onSubmit,
   isSubmitting,
 }: {
   boss?: any;
+  items: any[];
   onClose: () => void;
   onSubmit: (data: any) => void;
   isSubmitting: boolean;
 }) {
+  const [activeTab, setActiveTab] = useState<'basic' | 'rewards' | 'phases'>('basic');
+  const [itemSearch, setItemSearch] = useState('');
   const [formData, setFormData] = useState({
     name: boss?.name || '',
     description: boss?.description || '',
@@ -522,6 +555,7 @@ function BossFormModal({
     rewardGold: boss?.rewardGold || 10000,
     rewardExp: boss?.rewardExp || 5000,
     rewardGems: boss?.rewardGems || 100,
+    lootTable: boss?.lootTable || [],
     isActive: boss?.isActive ?? true,
     phases: boss?.phases || [
       { phase: 1, name: 'Fire Phase', hp: 100000, attack: 100, defense: 50, element: 'fire' },
@@ -529,6 +563,35 @@ function BossFormModal({
       { phase: 3, name: 'Lightning Phase', hp: 200000, attack: 150, defense: 70, element: 'lightning' },
     ],
   });
+
+  const toggleLootItem = (itemId: string) => {
+    const existing = formData.lootTable.find((l: any) => l.itemId === itemId);
+    if (existing) {
+      setFormData({
+        ...formData,
+        lootTable: formData.lootTable.filter((l: any) => l.itemId !== itemId),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        lootTable: [...formData.lootTable, { itemId, dropRate: 25 }],
+      });
+    }
+  };
+
+  const updateDropRate = (itemId: string, dropRate: number) => {
+    setFormData({
+      ...formData,
+      lootTable: formData.lootTable.map((l: any) =>
+        l.itemId === itemId ? { ...l, dropRate } : l
+      ),
+    });
+  };
+
+  const filteredItems = items.filter((item: any) =>
+    item.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
+    item.type.toLowerCase().includes(itemSearch.toLowerCase())
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -574,7 +637,50 @@ function BossFormModal({
           {boss ? 'Edit World Boss' : 'Create World Boss'}
         </h3>
 
+        {/* Tab Navigation */}
+        <div className="flex gap-2 mb-4 border-b-2 border-stone-700">
+          <button
+            type="button"
+            onClick={() => setActiveTab('basic')}
+            className={`px-4 py-2 font-bold text-sm ${
+              activeTab === 'basic'
+                ? 'bg-red-700 text-white border-t-2 border-x-2 border-red-600'
+                : 'bg-stone-900 text-gray-400 hover:text-white'
+            }`}
+            style={{ borderRadius: '0', borderBottom: activeTab === 'basic' ? '2px solid #1c1917' : 'none' }}
+          >
+            📝 BASIC INFO
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('rewards')}
+            className={`px-4 py-2 font-bold text-sm ${
+              activeTab === 'rewards'
+                ? 'bg-red-700 text-white border-t-2 border-x-2 border-red-600'
+                : 'bg-stone-900 text-gray-400 hover:text-white'
+            }`}
+            style={{ borderRadius: '0', borderBottom: activeTab === 'rewards' ? '2px solid #1c1917' : 'none' }}
+          >
+            💰 REWARDS & LOOT
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('phases')}
+            className={`px-4 py-2 font-bold text-sm ${
+              activeTab === 'phases'
+                ? 'bg-red-700 text-white border-t-2 border-x-2 border-red-600'
+                : 'bg-stone-900 text-gray-400 hover:text-white'
+            }`}
+            style={{ borderRadius: '0', borderBottom: activeTab === 'phases' ? '2px solid #1c1917' : 'none' }}
+          >
+            🔥 BOSS PHASES
+          </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* BASIC INFO TAB */}
+          {activeTab === 'basic' && (
+            <>
           {/* Basic Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -660,6 +766,22 @@ function BossFormModal({
             </div>
           </div>
 
+          {/* Active Toggle */}
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={formData.isActive}
+              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+              className="w-4 h-4"
+            />
+            <label className="text-sm text-gray-400">Boss is active (can spawn)</label>
+          </div>
+            </>
+          )}
+
+          {/* REWARDS & LOOT TAB */}
+          {activeTab === 'rewards' && (
+            <>
           {/* Rewards */}
           <div className="grid grid-cols-3 gap-3">
             <div>
@@ -694,17 +816,89 @@ function BossFormModal({
             </div>
           </div>
 
-          {/* Active Toggle */}
-          <div className="flex items-center gap-2">
+          {/* Loot Table */}
+          <div className="border-t border-stone-700 pt-4 mt-4">
+            <h4 className="text-md font-bold text-white mb-2">💎 Loot Table</h4>
+            <p className="text-xs text-gray-500 mb-3">Select items that can drop from this boss</p>
+            
+            {/* Selected Items */}
+            {formData.lootTable.length > 0 && (
+              <div className="mb-3 p-3 bg-stone-900 border border-yellow-600">
+                <p className="text-sm text-yellow-400 mb-2">Selected Items ({formData.lootTable.length})</p>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {formData.lootTable.map((loot: any) => {
+                    const item = items.find((i: any) => i.id === loot.itemId);
+                    return item ? (
+                      <div key={loot.itemId} className="flex items-center justify-between gap-2 p-2 bg-stone-800">
+                        <span className="text-white text-sm">{item.name}</span>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            max="100"
+                            value={loot.dropRate}
+                            onChange={(e) => updateDropRate(loot.itemId, parseInt(e.target.value))}
+                            className="w-16 p-1 bg-stone-900 text-white border border-stone-700 text-xs"
+                            style={{ borderRadius: '0' }}
+                          />
+                          <span className="text-gray-400 text-xs">%</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleLootItem(loot.itemId)}
+                            className="px-2 py-1 bg-red-700 hover:bg-red-600 text-white text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Search & Select Items */}
             <input
-              type="checkbox"
-              checked={formData.isActive}
-              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              className="w-4 h-4"
+              type="text"
+              placeholder="Search items..."
+              value={itemSearch}
+              onChange={(e) => setItemSearch(e.target.value)}
+              className="w-full p-2 bg-stone-900 text-white border-2 border-stone-700 mb-2"
+              style={{ borderRadius: '0' }}
             />
-            <label className="text-sm text-gray-400">Boss is active (can spawn)</label>
+            
+            <div className="max-h-48 overflow-y-auto bg-stone-900 border border-stone-700">
+              {filteredItems.length > 0 ? (
+                filteredItems.map((item: any) => {
+                  const isSelected = formData.lootTable.some((l: any) => l.itemId === item.id);
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => toggleLootItem(item.id)}
+                      className={`p-2 cursor-pointer hover:bg-stone-800 flex items-center justify-between ${
+                        isSelected ? 'bg-yellow-900/30 border-l-4 border-yellow-600' : ''
+                      }`}
+                    >
+                      <span className="text-white text-sm">
+                        {isSelected && '✓ '}
+                        {item.name}
+                      </span>
+                      <span className="text-gray-400 text-xs">{item.type} | {item.rarity}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-center text-gray-500 py-4 text-sm">No items found</p>
+              )}
+            </div>
           </div>
 
+            </>
+          )}
+
+          {/* BOSS PHASES TAB */}
+          {activeTab === 'phases' && (
+            <>
           {/* Phases */}
           <div className="border-t border-stone-700 pt-4">
             <div className="flex justify-between items-center mb-3">
@@ -786,6 +980,9 @@ function BossFormModal({
               ))}
             </div>
           </div>
+
+            </>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t border-stone-700">
