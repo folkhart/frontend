@@ -137,12 +137,17 @@ const EMOJIS = [
 ];
 
 export default function ServerChat() {
-  const { player, character } = useGameStore();
+  const { player, character, setHasUnreadServerMessages } = useGameStore();
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const { sendServerChatMention } = useElectron();
+
+  // Mark server chat as read when component mounts
+  useEffect(() => {
+    setHasUnreadServerMessages(false);
+  }, [setHasUnreadServerMessages]);
 
   // Fetch all dungeons for avatar icon mapping
   const { data: allDungeons } = useQuery({
@@ -316,6 +321,11 @@ export default function ServerChat() {
     // Listen for server chat messages
     socket.on("server_chat_message", (message: ChatMessage) => {
       setMessages((prev) => [...prev, message]);
+
+      // Mark as unread if message is from another player (not yourself)
+      if (message.player.username !== character.name) {
+        setHasUnreadServerMessages(true);
+      }
 
       // Check if this message mentions the current user
       const mentionPattern = new RegExp(`@${character.name}\\b`, "i");

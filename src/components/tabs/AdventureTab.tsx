@@ -304,7 +304,7 @@ const getItemImage = (spriteId: string, itemType?: string) => {
 
 export default function AdventureTab() {
   const queryClient = useQueryClient();
-  const { character, player, setPlayer, setCharacter } = useGameStore();
+  const { character, player, setPlayer, setCharacter, hasUnreadServerMessages } = useGameStore();
   const fastFinishCost = 10; // gems
   const [view, setView] = useState<
     "dungeons" | "idle" | "history" | "serverchat"
@@ -1551,6 +1551,9 @@ export default function AdventureTab() {
             fontFamily: "monospace",
           }}
         >
+          {hasUnreadServerMessages && view !== "serverchat" && (
+            <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-stone-800 animate-pulse z-20" />
+          )}
           <img
             src={serverchatIcon}
             alt="Server Chat"

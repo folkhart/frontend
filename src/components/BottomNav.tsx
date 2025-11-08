@@ -6,7 +6,7 @@ import shopIcon from "@/assets/ui/shop.png";
 import settingsIcon from "@/assets/ui/settings.png";
 
 export default function BottomNav() {
-  const { activeTab, setActiveTab, hasUnreadGuildMessages, hasUnreadFriendMessages, hasGuildInvitations } = useGameStore();
+  const { activeTab, setActiveTab, hasUnreadServerMessages, hasUnreadGuildMessages, hasUnreadFriendMessages, hasGuildInvitations } = useGameStore();
 
   const tabs = [
     { id: "village" as const, icon: villageIcon, label: "Village" },
@@ -20,7 +20,8 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-stone-800 border-t-2 border-stone-700 flex justify-around py-2">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
-        const showNotification = (tab.id === 'guild' && (hasUnreadGuildMessages || hasGuildInvitations) && !isActive) ||
+        const showNotification = (tab.id === 'adventure' && hasUnreadServerMessages && !isActive) ||
+                                 (tab.id === 'guild' && (hasUnreadGuildMessages || hasGuildInvitations) && !isActive) ||
                                  (tab.id === 'settings' && hasUnreadFriendMessages && !isActive);
         
         return (

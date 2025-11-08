@@ -3,6 +3,7 @@ import { Send, Smile, X, Circle } from "lucide-react";
 import { useSocket } from "@/lib/socket";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { useGameStore } from "@/store/gameStore";
 import { dungeonApi, friendApi } from "@/lib/api";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
@@ -81,6 +82,7 @@ export default function GuildChat({
   initialMessages = [],
   guildName,
 }: GuildChatProps) {
+  const { character, setHasUnreadGuildMessages } = useGameStore();
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [inputMessage, setInputMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -91,6 +93,11 @@ export default function GuildChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const socket = useSocket();
+
+  // Mark guild chat as read when component mounts
+  useEffect(() => {
+    setHasUnreadGuildMessages(false);
+  }, [setHasUnreadGuildMessages]);
 
   // Fetch all dungeons for avatar icon mapping
   const { data: allDungeons } = useQuery({
@@ -161,6 +168,11 @@ export default function GuildChat({
         }
         return [...prev, message];
       });
+      
+      // Mark as unread if message is from another player (not yourself)
+      if (character && message.player.username !== character.name) {
+        setHasUnreadGuildMessages(true);
+      }
     };
 
     socket.on("guild_chat_message", handleNewMessage);
