@@ -556,6 +556,13 @@ function BossFormModal({
     rewardExp: boss?.rewardExp || 5000,
     rewardGems: boss?.rewardGems || 100,
     lootTable: boss?.lootTable || [],
+    rankingRewards: boss?.rankingRewards || [
+      { rank: 1, dropRateBonus: 100 }, // 1st place: 100% bonus (guaranteed)
+      { rank: 2, dropRateBonus: 75 },  // 2nd place: 75% bonus
+      { rank: 3, dropRateBonus: 50 },  // 3rd place: 50% bonus
+      { rank: 4, dropRateBonus: 25 },  // 4th place: 25% bonus
+      { rank: 5, dropRateBonus: 10 },  // 5th place: 10% bonus
+    ],
     isActive: boss?.isActive ?? true,
     autoSpawn: boss?.autoSpawn ?? false,
     phases: boss?.phases || [
@@ -909,6 +916,79 @@ function BossFormModal({
                 <p className="text-center text-gray-500 py-4 text-sm">No items found</p>
               )}
             </div>
+          </div>
+
+          {/* Ranking Rewards */}
+          <div className="border-t border-stone-700 pt-4 mt-4">
+            <h4 className="text-md font-bold text-white mb-2">🏆 Top Damager Rewards</h4>
+            <p className="text-xs text-gray-500 mb-3">
+              Configure drop rate bonuses for top-ranked players. 100% = guaranteed drop from loot table.
+            </p>
+            
+            <div className="space-y-2">
+              {formData.rankingRewards.map((reward: any, index: number) => (
+                <div key={index} className="flex items-center gap-3 bg-stone-900 p-3 border-2 border-stone-700">
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-yellow-400 font-bold text-lg min-w-[60px]">
+                      {reward.rank === 1 && '🥇 1st'}
+                      {reward.rank === 2 && '🥈 2nd'}
+                      {reward.rank === 3 && '🥉 3rd'}
+                      {reward.rank > 3 && `#${reward.rank}`}
+                    </span>
+                    <div className="flex items-center gap-2 flex-1">
+                      <label className="text-sm text-gray-400">Drop Rate Bonus:</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={reward.dropRateBonus}
+                        onChange={(e) => {
+                          const newRankingRewards = [...formData.rankingRewards];
+                          newRankingRewards[index].dropRateBonus = parseInt(e.target.value) || 0;
+                          setFormData({ ...formData, rankingRewards: newRankingRewards });
+                        }}
+                        className="w-20 p-2 bg-stone-800 text-white border-2 border-stone-600 text-center font-bold"
+                        style={{ borderRadius: '0' }}
+                      />
+                      <span className="text-white font-bold">%</span>
+                      {reward.dropRateBonus >= 100 && (
+                        <span className="text-green-400 text-xs font-bold">GUARANTEED</span>
+                      )}
+                    </div>
+                  </div>
+                  {formData.rankingRewards.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          rankingRewards: formData.rankingRewards.filter((_: any, i: number) => i !== index),
+                        });
+                      }}
+                      className="px-2 py-1 bg-red-700 hover:bg-red-600 text-white text-xs font-bold"
+                      style={{ border: '2px solid #991b1b', borderRadius: '0' }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const nextRank = formData.rankingRewards.length + 1;
+                setFormData({
+                  ...formData,
+                  rankingRewards: [...formData.rankingRewards, { rank: nextRank, dropRateBonus: 5 }],
+                });
+              }}
+              className="mt-3 px-4 py-2 bg-green-700 hover:bg-green-600 text-white font-bold text-sm"
+              style={{ border: '2px solid #15803d', borderRadius: '0' }}
+            >
+              + Add Rank Reward
+            </button>
           </div>
 
             </>
