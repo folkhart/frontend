@@ -1571,6 +1571,11 @@ export default function VillageTab() {
                               )}`}
                             >
                               {slot.item.name}
+                              {slot.enhancementLevel > 0 && (
+                                <span className="text-yellow-400 ml-2">
+                                  +{slot.enhancementLevel}
+                                </span>
+                              )}
                             </p>
                             <p className="text-xs text-gray-400">
                               {slot.item.description}
@@ -1586,21 +1591,47 @@ export default function VillageTab() {
                                   : `✗ ${slot.item.classRestriction} only`}
                               </p>
                             )}
-                            <div className="flex gap-2 text-xs mt-1">
+                            <div className="flex flex-wrap gap-2 text-xs mt-1">
+                              {/* Base Stats */}
                               {slot.item.attackBonus > 0 && (
                                 <span className="text-orange-400">
                                   ATK +{slot.item.attackBonus}
+                                  {slot.enhancementLevel > 0 && (
+                                    <span className="text-yellow-400">
+                                      {" "}(+{slot.enhancementLevel * 2})
+                                    </span>
+                                  )}
                                 </span>
                               )}
                               {slot.item.defenseBonus > 0 && (
                                 <span className="text-blue-400">
                                   DEF +{slot.item.defenseBonus}
+                                  {slot.enhancementLevel > 0 && (
+                                    <span className="text-yellow-400">
+                                      {" "}(+{slot.enhancementLevel * 2})
+                                    </span>
+                                  )}
                                 </span>
                               )}
                               {slot.item.healthBonus > 0 && (
                                 <span className="text-red-400">
                                   HP +{slot.item.healthBonus}
+                                  {slot.enhancementLevel > 0 && (
+                                    <span className="text-yellow-400">
+                                      {" "}(+{slot.enhancementLevel * 10})
+                                    </span>
+                                  )}
                                 </span>
+                              )}
+                              {/* Refinement Stats */}
+                              {slot.refineStats && (
+                                <>
+                                  {Object.entries(slot.refineStats).map(([stat, value]: [string, any]) => (
+                                    <span key={stat} className="text-purple-400">
+                                      {stat.replace(/([A-Z])/g, ' $1').trim()}: +{value}
+                                    </span>
+                                  ))}
+                                </>
                               )}
                             </div>
                           </div>
