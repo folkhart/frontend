@@ -18,6 +18,10 @@ import clockworkNecropolisIcon from "@/assets/ui/dungeonIcons/clockworkNecropoli
 import paleCitadelIcon from "@/assets/ui/dungeonIcons/paleCitadel.png";
 import theAbyssalSpireIcon from "@/assets/ui/dungeonIcons/theAbyssalSpire.png";
 import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
+import veiledSanctumIcon from "@/assets/ui/dungeonIcons/icon_veiled_sanctum.png";
+import ironheartForgeIcon from "@/assets/ui/dungeonIcons/icon_ironheart_forge.png";
+import theWrithingDeepIcon from "@/assets/ui/dungeonIcons/icon_writhing_deep.png";
+import astralCatacombsIcon from "@/assets/ui/dungeonIcons/icon_astral_catacombs.png";
 import attackIconCP from "@/assets/ui/character_panel/attack.png";
 import defenseIconCP from "@/assets/ui/character_panel/defense.png";
 import hpIconCP from "@/assets/ui/character_panel/hp.png";
@@ -44,6 +48,10 @@ const getDungeonIconByName = (dungeonName: string) => {
     "The Pale Citadel": paleCitadelIcon,
     "The Abyssal Spire": theAbyssalSpireIcon,
     "The Ecliptic Throne": eclipticThroneIcon,
+    "Veiled Sanctum": veiledSanctumIcon,
+    "Ironheart Forge": ironheartForgeIcon,
+    "The Writhing Deep": theWrithingDeepIcon,
+    "Astral Catacombs": astralCatacombsIcon,
   };
   return iconMap[dungeonName] || ratCellarIcon;
 };
@@ -59,6 +67,7 @@ interface ChatMessage {
     titleIcon?: string;
     isAdmin?: boolean;
     avatarId?: string;
+    avatarFrame?: string;
   };
 }
 
@@ -160,11 +169,13 @@ export default function ServerChat() {
   });
 
   // Helper function to get dungeon icon by dungeon ID
-  const getDungeonIcon = (dungeonId: string) => {
-    if (!allDungeons) return ratCellarIcon;
-    const dungeon = allDungeons.find((d: any) => d.id === dungeonId);
-    if (!dungeon) return ratCellarIcon;
-    return getDungeonIconByName(dungeon.name);
+  const getDungeonIcon = (dungeonIdOrName: string) => {
+    if (!allDungeons) return getDungeonIconByName(dungeonIdOrName);
+    // Try to find by ID first
+    const dungeonById = allDungeons.find((d: any) => d.id === dungeonIdOrName);
+    if (dungeonById) return getDungeonIconByName(dungeonById.name);
+    // If not found by ID, treat it as a name directly
+    return getDungeonIconByName(dungeonIdOrName);
   };
   const [selectedPlayerUsername, setSelectedPlayerUsername] = useState<
     string | null
@@ -599,7 +610,6 @@ export default function ServerChat() {
                           }.png`
                     }
                     alt={msg.player.username}
-                    frame={msg.player.avatarFrame || "default"}
                     size="small"
                     onClick={() => handlePlayerClick(msg.player.username)}
                     borderColor="border-amber-500"

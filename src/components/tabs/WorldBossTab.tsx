@@ -11,6 +11,7 @@ export default function WorldBossTab() {
   const queryClient = useQueryClient();
   const { player } = useGameStore();
   const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [nextSpawnTimer, setNextSpawnTimer] = useState<string>('');
   const [showPhasesModal, setShowPhasesModal] = useState(false);
   const [showLootModal, setShowLootModal] = useState(false);
   const [showRewardsModal, setShowRewardsModal] = useState(false);
@@ -191,6 +192,55 @@ export default function WorldBossTab() {
     return () => clearInterval(interval);
   }, [activeBoss, queryClient]);
 
+  // Update next spawn timer for auto-spawn bosses
+  useEffect(() => {
+    if (!activeBoss?.boss?.autoSpawn) {
+      setNextSpawnTimer('');
+      return;
+    }
+
+    const updateNextSpawnTimer = () => {
+      // If there's an active instance, don't show next spawn timer
+      if (activeBoss.instance?.status === 'active') {
+        setNextSpawnTimer('');
+        return;
+      }
+
+      // Calculate next spawn time based on last instance end time + interval
+      const lastInstance = activeBoss.boss.instances?.[0];
+      if (!lastInstance) {
+        setNextSpawnTimer('Waiting for first spawn...');
+        return;
+      }
+
+      const lastEnded = new Date(lastInstance.endsAt).getTime();
+      const intervalMs = activeBoss.boss.spawnIntervalHours * 60 * 60 * 1000;
+      const nextSpawnTime = lastEnded + intervalMs;
+      const now = new Date().getTime();
+      const diff = nextSpawnTime - now;
+
+      if (diff <= 0) {
+        setNextSpawnTimer('Spawning soon...');
+        queryClient.invalidateQueries({ queryKey: ['world-boss', 'active'] });
+        return;
+      }
+
+      const hours = Math.floor(diff / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      
+      if (hours > 0) {
+        setNextSpawnTimer(`${hours}h ${minutes}m ${seconds}s`);
+      } else {
+        setNextSpawnTimer(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+      }
+    };
+
+    updateNextSpawnTimer();
+    const interval = setInterval(updateNextSpawnTimer, 1000);
+    return () => clearInterval(interval);
+  }, [activeBoss, queryClient]);
+
   // No active boss
   if (loadingBoss) {
     return (
@@ -209,9 +259,22 @@ export default function WorldBossTab() {
         <div className="text-center max-w-md">
           <Skull className="w-24 h-24 mx-auto mb-6 text-gray-600" />
           <h2 className="text-3xl font-bold mb-4">No Active World Boss</h2>
-          <p className="text-gray-400 mb-6">
-            The world boss is currently resting. Check back later or ask an admin to spawn one!
-          </p>
+          
+          {/* Auto-Spawn Timer */}
+          {activeBoss?.boss?.autoSpawn && nextSpawnTimer ? (
+            <div className="mb-6 bg-yellow-900/30 border-2 border-yellow-600 p-4" style={{ borderRadius: '0' }}>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Clock className="w-6 h-6 text-yellow-400" />
+                <span className="text-yellow-400 font-bold text-lg">Auto-Spawn Active</span>
+              </div>
+              <p className="text-gray-300 text-sm mb-2">Next spawn in:</p>
+              <p className="text-white text-3xl font-bold">{nextSpawnTimer}</p>
+            </div>
+          ) : (
+            <p className="text-gray-400 mb-6">
+              The world boss is currently resting. Check back later or ask an admin to spawn one!
+            </p>
+          )}
           
           {/* Unclaimed Rewards */}
           {rewards && rewards.length > 0 && (

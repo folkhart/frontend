@@ -19,6 +19,10 @@ import clockworkNecropolisIcon from "@/assets/ui/dungeonIcons/clockworkNecropoli
 import paleCitadelIcon from "@/assets/ui/dungeonIcons/paleCitadel.png";
 import theAbyssalSpireIcon from "@/assets/ui/dungeonIcons/theAbyssalSpire.png";
 import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
+import veiledSanctumIcon from "@/assets/ui/dungeonIcons/icon_veiled_sanctum.png";
+import ironheartForgeIcon from "@/assets/ui/dungeonIcons/icon_ironheart_forge.png";
+import theWrithingDeepIcon from "@/assets/ui/dungeonIcons/icon_writhing_deep.png";
+import astralCatacombsIcon from "@/assets/ui/dungeonIcons/icon_astral_catacombs.png";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -34,6 +38,10 @@ const getDungeonIconByName = (dungeonName: string) => {
     "The Pale Citadel": paleCitadelIcon,
     "The Abyssal Spire": theAbyssalSpireIcon,
     "The Ecliptic Throne": eclipticThroneIcon,
+    "Veiled Sanctum": veiledSanctumIcon,
+    "Ironheart Forge": ironheartForgeIcon,
+    "The Writhing Deep": theWrithingDeepIcon,
+    "Astral Catacombs": astralCatacombsIcon,
   };
   return iconMap[dungeonName] || ratCellarIcon;
 };
@@ -81,12 +89,14 @@ export default function LeaderboardTab() {
     staleTime: Infinity, // Dungeons don't change, cache forever
   });
 
-  // Helper function to get dungeon icon by dungeon ID
-  const getDungeonIcon = (dungeonId: string) => {
-    if (!allDungeons) return ratCellarIcon;
-    const dungeon = allDungeons.find((d: any) => d.id === dungeonId);
-    if (!dungeon) return ratCellarIcon;
-    return getDungeonIconByName(dungeon.name);
+  // Helper function to get dungeon icon by dungeon ID or name
+  const getDungeonIcon = (dungeonIdOrName: string) => {
+    if (!allDungeons) return getDungeonIconByName(dungeonIdOrName);
+    // Try to find by ID first
+    const dungeonById = allDungeons.find((d: any) => d.id === dungeonIdOrName);
+    if (dungeonById) return getDungeonIconByName(dungeonById.name);
+    // If not found by ID, treat it as a name directly
+    return getDungeonIconByName(dungeonIdOrName);
   };
 
   const getRankColor = (rank: number) => {
@@ -256,10 +266,12 @@ export default function LeaderboardTab() {
                     src={
                       entry.avatarId
                         ? getDungeonIcon(entry.avatarId)
-                        : `/assets/ui/chat/classIcons/${entry.class?.toLowerCase() || "warrior"}.png`
+                        : `/assets/ui/chat/classIcons/${
+                            entry.class?.toLowerCase() || "warrior"
+                          }.png`
                     }
                     alt={entry.characterName}
-                    frame={(entry as any).avatarFrame || 'default'}
+                    frame={(entry as any).avatarFrame || "default"}
                     size="small"
                     borderColor="border-amber-500"
                   />

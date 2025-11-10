@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Send, Smile, X, Circle } from "lucide-react";
+import { Send, Smile, X } from "lucide-react";
 import { useSocket } from "@/lib/socket";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import axios from "axios";
@@ -17,6 +17,10 @@ import clockworkNecropolisIcon from "@/assets/ui/dungeonIcons/clockworkNecropoli
 import paleCitadelIcon from "@/assets/ui/dungeonIcons/paleCitadel.png";
 import theAbyssalSpireIcon from "@/assets/ui/dungeonIcons/theAbyssalSpire.png";
 import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
+import veiledSanctumIcon from "@/assets/ui/dungeonIcons/icon_veiled_sanctum.png";
+import ironheartForgeIcon from "@/assets/ui/dungeonIcons/icon_ironheart_forge.png";
+import theWrithingDeepIcon from "@/assets/ui/dungeonIcons/icon_writhing_deep.png";
+import astralCatacombsIcon from "@/assets/ui/dungeonIcons/icon_astral_catacombs.png";
 import addFriendIcon from "@/assets/ui/add_friend.png";
 
 const getDungeonIconByName = (dungeonName: string) => {
@@ -33,6 +37,10 @@ const getDungeonIconByName = (dungeonName: string) => {
     "The Pale Citadel": paleCitadelIcon,
     "The Abyssal Spire": theAbyssalSpireIcon,
     "The Ecliptic Throne": eclipticThroneIcon,
+    "Veiled Sanctum": veiledSanctumIcon,
+    "Ironheart Forge": ironheartForgeIcon,
+    "The Writhing Deep": theWrithingDeepIcon,
+    "Astral Catacombs": astralCatacombsIcon,
   };
   return iconMap[dungeonName] || ratCellarIcon;
 };
@@ -47,6 +55,7 @@ interface ChatMessage {
     class?: string;
     titleIcon?: string;
     avatarId?: string;
+    avatarFrame?: string;
   };
 }
 
@@ -109,12 +118,14 @@ export default function GuildChat({
     staleTime: Infinity, // Dungeons don't change, cache forever
   });
 
-  // Helper function to get dungeon icon by dungeon ID
-  const getDungeonIcon = (dungeonId: string) => {
-    if (!allDungeons) return ratCellarIcon;
-    const dungeon = allDungeons.find((d: any) => d.id === dungeonId);
-    if (!dungeon) return ratCellarIcon;
-    return getDungeonIconByName(dungeon.name);
+  // Helper function to get dungeon icon by dungeon ID or name
+  const getDungeonIcon = (dungeonIdOrName: string) => {
+    if (!allDungeons) return getDungeonIconByName(dungeonIdOrName);
+    // Try to find by ID first
+    const dungeonById = allDungeons.find((d: any) => d.id === dungeonIdOrName);
+    if (dungeonById) return getDungeonIconByName(dungeonById.name);
+    // If not found by ID, treat it as a name directly
+    return getDungeonIconByName(dungeonIdOrName);
   };
 
   // Fetch player character data when selected
@@ -139,10 +150,13 @@ export default function GuildChat({
       return data;
     },
     onSuccess: () => {
-      (window as any).showToast?.('Friend request sent!', 'success');
+      (window as any).showToast?.("Friend request sent!", "success");
     },
     onError: (error: any) => {
-      (window as any).showToast?.(error.response?.data?.error || 'Failed to send friend request', 'error');
+      (window as any).showToast?.(
+        error.response?.data?.error || "Failed to send friend request",
+        "error"
+      );
     },
   });
 
@@ -168,7 +182,7 @@ export default function GuildChat({
         }
         return [...prev, message];
       });
-      
+
       // Mark as unread if message is from another player (not yourself)
       if (character && message.player.username !== character.name) {
         setHasUnreadGuildMessages(true);
@@ -201,23 +215,6 @@ export default function GuildChat({
       minute: "2-digit",
       hour12: false,
     });
-  };
-
-  const getClassColor = (playerClass?: string) => {
-    switch (playerClass) {
-      case "Mage":
-        return "bg-purple-600 border-purple-800";
-      case "Warrior":
-        return "bg-red-600 border-red-800";
-      case "Rogue":
-        return "bg-green-600 border-green-800";
-      case "Ranger":
-        return "bg-emerald-600 border-emerald-800";
-      case "Cleric":
-        return "bg-blue-600 border-blue-800";
-      default:
-        return "bg-amber-600 border-amber-800";
-    }
   };
 
   const getClassIcon = (playerClass?: string) => {
@@ -263,10 +260,7 @@ export default function GuildChat({
         spriteId.startsWith("Chest") ||
         spriteId.startsWith("key")
       ) {
-        return `/assets/items/guildshop_items/${getGuildItemPath(
-          spriteId,
-          itemType
-        )}`;
+        return `/assets/items/guildshop_items/${getGuildItemPath(spriteId)}`;
       }
 
       if (spriteId.includes("/")) {
@@ -297,7 +291,7 @@ export default function GuildChat({
     }
   };
 
-  const getGuildItemPath = (spriteId: string, itemType?: string) => {
+  const getGuildItemPath = (spriteId: string) => {
     let fileName = spriteId;
     const tierMap: { [key: string]: string } = {
       bronze: "1",
@@ -990,7 +984,8 @@ export default function GuildChat({
                   className="bg-gradient-to-b from-stone-900 to-stone-800 border-2 border-pink-600 p-3 sm:p-4"
                   style={{
                     borderRadius: "8px",
-                    boxShadow: "0 4px 0 #831843, inset 0 2px 0 rgba(255,255,255,0.1)",
+                    boxShadow:
+                      "0 4px 0 #831843, inset 0 2px 0 rgba(255,255,255,0.1)",
                   }}
                 >
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
@@ -1007,11 +1002,14 @@ export default function GuildChat({
                       />
                       <div
                         className={`absolute inset-0 ${
-                          playerCharacter.companionSlot.item.rarity === "Legendary"
+                          playerCharacter.companionSlot.item.rarity ===
+                          "Legendary"
                             ? "border-yellow-500"
-                            : playerCharacter.companionSlot.item.rarity === "Epic"
+                            : playerCharacter.companionSlot.item.rarity ===
+                              "Epic"
                             ? "border-purple-500"
-                            : playerCharacter.companionSlot.item.rarity === "Rare"
+                            : playerCharacter.companionSlot.item.rarity ===
+                              "Rare"
                             ? "border-blue-500"
                             : "border-gray-500"
                         } opacity-50 rounded-lg pointer-events-none`}
@@ -1043,12 +1041,15 @@ export default function GuildChat({
                       >
                         {playerCharacter.companionSlot.item.attackBonus > 0 && (
                           <span className="bg-red-900/30 text-red-400 px-2 py-1 rounded border border-red-700/50">
-                            +{playerCharacter.companionSlot.item.attackBonus} ATK
+                            +{playerCharacter.companionSlot.item.attackBonus}{" "}
+                            ATK
                           </span>
                         )}
-                        {playerCharacter.companionSlot.item.defenseBonus > 0 && (
+                        {playerCharacter.companionSlot.item.defenseBonus >
+                          0 && (
                           <span className="bg-blue-900/30 text-blue-400 px-2 py-1 rounded border border-blue-700/50">
-                            +{playerCharacter.companionSlot.item.defenseBonus} DEF
+                            +{playerCharacter.companionSlot.item.defenseBonus}{" "}
+                            DEF
                           </span>
                         )}
                         {playerCharacter.companionSlot.item.healthBonus > 0 && (
@@ -1071,7 +1072,8 @@ export default function GuildChat({
                             className="text-purple-400 text-xs"
                             style={{ fontFamily: "monospace" }}
                           >
-                            Power: {playerCharacter.companionSlot.item.abilityPower}
+                            Power:{" "}
+                            {playerCharacter.companionSlot.item.abilityPower}
                           </p>
                         </div>
                       )}
@@ -1084,19 +1086,22 @@ export default function GuildChat({
             {/* Action Buttons */}
             <div className="mt-6 pt-6 border-t-2 border-amber-700">
               <button
-                onClick={() => sendFriendRequestMutation.mutate(selectedPlayerUsername!)}
+                onClick={() =>
+                  sendFriendRequestMutation.mutate(selectedPlayerUsername!)
+                }
                 disabled={sendFriendRequestMutation.isPending}
                 className="w-full bg-gradient-to-b from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold py-2 sm:py-3 px-4 border-2 border-blue-400 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   borderRadius: "0",
-                  boxShadow: "0 4px 0 #1e40af, inset 0 2px 0 rgba(255,255,255,0.3)",
+                  boxShadow:
+                    "0 4px 0 #1e40af, inset 0 2px 0 rgba(255,255,255,0.3)",
                   fontFamily: "monospace",
                   textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
                 }}
               >
-                <img 
-                  src={addFriendIcon} 
-                  alt="Add Friend" 
+                <img
+                  src={addFriendIcon}
+                  alt="Add Friend"
                   className="w-5 h-5 sm:w-6 sm:h-6"
                   style={{ imageRendering: "pixelated" }}
                 />

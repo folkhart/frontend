@@ -1,11 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import { useGameStore } from "@/store/gameStore";
-import { sendGameNotification } from '@/services/notifications';
-import {
-  formatGold,
-  getRarityColor,
-  getRarityBorder,
-} from "@/utils/format";
+import { sendGameNotification } from "@/services/notifications";
+import { formatGold, getRarityColor, getRarityBorder } from "@/utils/format";
 import { getItemImage } from "@/utils/itemSprites";
 import { X, Circle } from "lucide-react";
 import FramedAvatar from "@/components/FramedAvatar";
@@ -41,6 +37,10 @@ import clockworkNecropolisIcon from "@/assets/ui/dungeonIcons/clockworkNecropoli
 import paleCitadelIcon from "@/assets/ui/dungeonIcons/paleCitadel.png";
 import theAbyssalSpireIcon from "@/assets/ui/dungeonIcons/theAbyssalSpire.png";
 import eclipticThroneIcon from "@/assets/ui/dungeonIcons/eclipticThrone.png";
+import veiledSanctumIcon from "@/assets/ui/dungeonIcons/icon_veiled_sanctum.png";
+import ironheartForgeIcon from "@/assets/ui/dungeonIcons/icon_ironheart_forge.png";
+import theWrithingDeepIcon from "@/assets/ui/dungeonIcons/icon_writhing_deep.png";
+import astralCatacombsIcon from "@/assets/ui/dungeonIcons/icon_astral_catacombs.png";
 
 const getDungeonIconByName = (dungeonName: string) => {
   const iconMap: Record<string, string> = {
@@ -56,6 +56,10 @@ const getDungeonIconByName = (dungeonName: string) => {
     "The Pale Citadel": paleCitadelIcon,
     "The Abyssal Spire": theAbyssalSpireIcon,
     "The Ecliptic Throne": eclipticThroneIcon,
+    "Veiled Sanctum": veiledSanctumIcon,
+    "Ironheart Forge": ironheartForgeIcon,
+    "The Writhing Deep": theWrithingDeepIcon,
+    "Astral Catacombs": astralCatacombsIcon,
   };
   return iconMap[dungeonName] || ratCellarIcon;
 };
@@ -115,12 +119,14 @@ export default function TopBar() {
     staleTime: Infinity, // Dungeons don't change, cache forever
   });
 
-  // Helper function to get dungeon icon by dungeon ID
-  const getDungeonIcon = (dungeonId: string) => {
-    if (!allDungeons) return ratCellarIcon;
-    const dungeon = allDungeons.find((d: any) => d.id === dungeonId);
-    if (!dungeon) return ratCellarIcon;
-    return getDungeonIconByName(dungeon.name);
+  // Helper function to get dungeon icon by dungeon ID or name
+  const getDungeonIcon = (dungeonIdOrName: string) => {
+    if (!allDungeons) return getDungeonIconByName(dungeonIdOrName);
+    // Try to find by ID first
+    const dungeonById = allDungeons.find((d: any) => d.id === dungeonIdOrName);
+    if (dungeonById) return getDungeonIconByName(dungeonById.name);
+    // If not found by ID, treat it as a name directly
+    return getDungeonIconByName(dungeonIdOrName);
   };
 
   const setAvatarMutation = useMutation({
@@ -210,14 +216,18 @@ export default function TopBar() {
   useEffect(() => {
     if (!player || player.energy >= player.maxEnergy) {
       setTimeUntilNextEnergy("Full");
-      
+
       // Send notification when energy becomes full
-      if (player && player.energy === player.maxEnergy && !energyWasFullRef.current) {
+      if (
+        player &&
+        player.energy === player.maxEnergy &&
+        !energyWasFullRef.current
+      ) {
         energyWasFullRef.current = true;
         sendGameNotification(
-          'energyRefill',
-          'Energy Full!',
-          'Your energy is fully recharged. Time to adventure!'
+          "energyRefill",
+          "Energy Full!",
+          "Your energy is fully recharged. Time to adventure!"
         );
       }
       return;
@@ -248,11 +258,14 @@ export default function TopBar() {
 
   useEffect(() => {
     if (character) {
-      if (previousLevelRef.current !== null && character.level > previousLevelRef.current) {
+      if (
+        previousLevelRef.current !== null &&
+        character.level > previousLevelRef.current
+      ) {
         // Level up detected!
         sendGameNotification(
-          'levelUp',
-          'Level Up!',
+          "levelUp",
+          "Level Up!",
           `Congratulations! You reached Level ${character.level}!`,
           { level: character.level }
         );
