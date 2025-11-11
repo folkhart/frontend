@@ -8,7 +8,7 @@ import { getItemImage } from "@/utils/itemSprites";
 import ChestOpening from "@/components/ChestOpening";
 import DailyLoginCalendar from "@/components/DailyLoginCalendar";
 
-type ShopView = "daily" | "chests";
+type ShopView = "daily" | "chests" | "cosmetics";
 
 const chests = [
   {
@@ -60,6 +60,111 @@ const chests = [
     currency: "gems" as const,
     border: "border-red-600",
     color: "text-red-400",
+  },
+];
+
+const cosmeticItems = [
+  // Chat Bubbles
+  {
+    id: "bubble_fire",
+    name: "Fire Chat Bubble",
+    type: "chatbubble",
+    image: "/assets/ui/cosmetics/chatbubbles/bubble_fire.png",
+    price: 350,
+    description: "Blazing chat messages!",
+    border: "border-orange-600",
+    color: "text-orange-400",
+  },
+  {
+    id: "bubble_ice",
+    name: "Ice Chat Bubble",
+    type: "chatbubble",
+    image: "/assets/ui/cosmetics/chatbubbles/bubble_ice.png",
+    price: 350,
+    description: "Frosty chat messages!",
+    border: "border-cyan-600",
+    color: "text-cyan-400",
+  },
+  {
+    id: "bubble_gold",
+    name: "Gold Chat Bubble",
+    type: "chatbubble",
+    image: "/assets/ui/cosmetics/chatbubbles/bubble_gold.png",
+    price: 500,
+    description: "Premium golden chat!",
+    border: "border-yellow-600",
+    color: "text-yellow-400",
+  },
+  {
+    id: "bubble_shadow",
+    name: "Shadow Chat Bubble",
+    type: "chatbubble",
+    image: "/assets/ui/cosmetics/chatbubbles/bubble_shadow.png",
+    price: 350,
+    description: "Dark mysterious chat!",
+    border: "border-purple-600",
+    color: "text-purple-400",
+  },
+  {
+    id: "bubble_rainbow",
+    name: "Rainbow Chat Bubble",
+    type: "chatbubble",
+    image: "/assets/ui/cosmetics/chatbubbles/bubble_rainbow.png",
+    price: 750,
+    description: "Ultra rare rainbow chat!",
+    border: "border-pink-600",
+    color: "text-pink-400",
+  },
+  // Name Plates
+  {
+    id: "plate_warrior",
+    name: "Warrior Name Plate",
+    type: "nameplate",
+    image: "/assets/ui/cosmetics/nameplates/plate_warrior.png",
+    price: 350,
+    description: "Battle-hardened nameplate!",
+    border: "border-red-600",
+    color: "text-red-400",
+  },
+  {
+    id: "plate_royal",
+    name: "Royal Name Plate",
+    type: "nameplate",
+    image: "/assets/ui/cosmetics/nameplates/plate_royal.png",
+    price: 500,
+    description: "Fit for a king!",
+    border: "border-yellow-600",
+    color: "text-yellow-400",
+  },
+  {
+    id: "plate_demon",
+    name: "Demon Name Plate",
+    type: "nameplate",
+    image: "/assets/ui/cosmetics/nameplates/plate_demon.png",
+    price: 450,
+    description: "Unleash your inner demon!",
+    border: "border-red-800",
+    color: "text-red-300",
+  },
+  {
+    id: "plate_celestial",
+    name: "Celestial Name Plate",
+    type: "nameplate",
+    image: "/assets/ui/cosmetics/nameplates/plate_celestial.png",
+    price: 450,
+    description: "Blessed by the heavens!",
+    border: "border-blue-400",
+    color: "text-blue-300",
+  },
+  {
+    id: "plate_dragon",
+    name: "Dragon Name Plate",
+    type: "nameplate",
+    image: "/assets/ui/cosmetics/nameplates/plate_dragon.png",
+    price: 750,
+    description: "Legendary dragon power!",
+    border: "border-orange-600",
+    color: "text-orange-400",
   },
 ];
 
@@ -259,7 +364,7 @@ export default function ShopTab() {
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-3 gap-2 mb-3">
         <button
           onClick={() => setView("daily")}
           className={`py-3 font-bold text-sm transition relative overflow-hidden flex items-center justify-center gap-2 ${
@@ -286,7 +391,7 @@ export default function ShopTab() {
             className="w-4 h-4"
             style={{ imageRendering: "pixelated" }}
           />
-          <span className="relative z-10">DAILY ITEMS</span>
+          <span className="relative z-10">DAILY</span>
           {view === "daily" && (
             <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
           )}
@@ -320,6 +425,32 @@ export default function ShopTab() {
           >
             SOON
           </span>
+        </button>
+        <button
+          onClick={() => setView("cosmetics")}
+          className={`py-3 font-bold text-sm transition relative overflow-hidden flex items-center justify-center gap-2 ${
+            view === "cosmetics"
+              ? "bg-purple-600 hover:bg-purple-500 text-white"
+              : "bg-stone-700 hover:bg-stone-600 text-gray-300"
+          }`}
+          style={{
+            border:
+              view === "cosmetics" ? "3px solid #9333ea" : "3px solid #44403c",
+            borderRadius: "0",
+            boxShadow:
+              view === "cosmetics"
+                ? "0 3px 0 #7e22ce, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)"
+                : "0 3px 0 #292524, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+            textShadow: "1px 1px 0 #000",
+            fontFamily: "monospace",
+            letterSpacing: "1px",
+          }}
+        >
+          <Gem size={16} className={view === "cosmetics" ? "text-white" : "text-purple-400"} />
+          <span className="relative z-10">COSMETICS</span>
+          {view === "cosmetics" && (
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-400/20 to-transparent"></div>
+          )}
         </button>
       </div>
 
@@ -715,6 +846,122 @@ export default function ShopTab() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cosmetics View */}
+      {view === "cosmetics" && (
+        <div className="space-y-4">
+          <div className="bg-stone-800 border-4 border-purple-700 p-3">
+            <h3 className="text-lg font-bold text-purple-400 mb-2 flex items-center gap-2" style={{ fontFamily: 'monospace' }}>
+              <Gem size={18} className="text-purple-400" />
+              COSMETIC SHOP
+            </h3>
+            <p className="text-sm text-gray-400 mb-3">
+              Customize your chat messages and name display! All items cost gems 💎
+            </p>
+          </div>
+
+          {/* Chat Bubbles Section */}
+          <div className="bg-stone-900 border-2 border-stone-700 p-3">
+            <h4 className="text-md font-bold text-cyan-400 mb-3 flex items-center gap-2" style={{ fontFamily: 'monospace' }}>
+              💬 CHAT BUBBLES
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              {cosmeticItems
+                .filter(item => item.type === "chatbubble")
+                .map(cosmetic => (
+                  <div
+                    key={cosmetic.id}
+                    className={`bg-stone-800 border-3 ${cosmetic.border} p-3 cursor-pointer hover:scale-105 transition`}
+                  >
+                    <div className="aspect-video bg-stone-900 mb-2 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={cosmetic.image}
+                        alt={cosmetic.name}
+                        className="w-full h-full object-cover"
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement!.innerHTML += '<span class="text-gray-500 text-xs">Preview Coming Soon</span>';
+                        }}
+                      />
+                    </div>
+                    <h5 className={`text-sm font-bold ${cosmetic.color} mb-1`} style={{ fontFamily: 'monospace' }}>
+                      {cosmetic.name}
+                    </h5>
+                    <p className="text-xs text-gray-400 mb-2">{cosmetic.description}</p>
+                    <button
+                      disabled
+                      className="w-full py-2 bg-purple-700 hover:bg-purple-600 text-white font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        border: '2px solid #6b21a8',
+                        boxShadow: '0 2px 0 #581c87',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      <Gem size={14} />
+                      {cosmetic.price} GEMS
+                      <span className="ml-1 text-[10px] bg-yellow-600 px-1 py-0.5 text-black">SOON</span>
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Name Plates Section */}
+          <div className="bg-stone-900 border-2 border-stone-700 p-3">
+            <h4 className="text-md font-bold text-yellow-400 mb-3 flex items-center gap-2" style={{ fontFamily: 'monospace' }}>
+              🏷️ NAME PLATES
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              {cosmeticItems
+                .filter(item => item.type === "nameplate")
+                .map(cosmetic => (
+                  <div
+                    key={cosmetic.id}
+                    className={`bg-stone-800 border-3 ${cosmetic.border} p-3 cursor-pointer hover:scale-105 transition`}
+                  >
+                    <div className="aspect-[5/1] bg-stone-900 mb-2 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={cosmetic.image}
+                        alt={cosmetic.name}
+                        className="w-full h-full object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.parentElement!.innerHTML += '<span class="text-gray-500 text-xs">Preview Coming Soon</span>';
+                        }}
+                      />
+                    </div>
+                    <h5 className={`text-sm font-bold ${cosmetic.color} mb-1`} style={{ fontFamily: 'monospace' }}>
+                      {cosmetic.name}
+                    </h5>
+                    <p className="text-xs text-gray-400 mb-2">{cosmetic.description}</p>
+                    <button
+                      disabled
+                      className="w-full py-2 bg-purple-700 hover:bg-purple-600 text-white font-bold text-sm flex items-center justify-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        border: '2px solid #6b21a8',
+                        boxShadow: '0 2px 0 #581c87',
+                        fontFamily: 'monospace',
+                      }}
+                    >
+                      <Gem size={14} />
+                      {cosmetic.price} GEMS
+                      <span className="ml-1 text-[10px] bg-yellow-600 px-1 py-0.5 text-black">SOON</span>
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Info Box */}
+          <div className="bg-stone-800 border-2 border-blue-600 p-3">
+            <p className="text-xs text-blue-400 text-center" style={{ fontFamily: 'monospace' }}>
+              ℹ️ These cosmetics are purely visual and don't affect gameplay. More designs coming soon!
+            </p>
           </div>
         </div>
       )}

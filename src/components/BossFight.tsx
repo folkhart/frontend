@@ -141,6 +141,27 @@ export default function BossFight({
   // Auto-fight mode
   const [autoFight, setAutoFight] = useState(false);
   
+  // Skill cooldowns (in seconds)
+  const [cooldowns, setCooldowns] = useState({
+    fire: 0,
+    ice: 0,
+    lightning: 0,
+    poison: 0,
+  });
+  
+  // Cooldown ticker
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCooldowns(prev => ({
+        fire: Math.max(0, prev.fire - 1),
+        ice: Math.max(0, prev.ice - 1),
+        lightning: Math.max(0, prev.lightning - 1),
+        poison: Math.max(0, prev.poison - 1),
+      }));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  
   // PixiJS refs
   const pixiContainer = useRef<HTMLDivElement>(null);
   const pixiApp = useRef<PIXI.Application | null>(null);
@@ -525,7 +546,10 @@ export default function BossFight({
   };
   
   const handleFireAttack = () => {
-    if (turn !== 'player' || battleEnded || fireAttack === 0) return;
+    if (turn !== 'player' || battleEnded || fireAttack === 0 || cooldowns.fire > 0) return;
+    
+    // Set cooldown
+    setCooldowns(prev => ({ ...prev, fire: 15 }));
     
     setCurrentAction('🔥 FIRE!');
     setBossShake(true);
@@ -571,7 +595,10 @@ export default function BossFight({
   };
   
   const handleIceAttack = () => {
-    if (turn !== 'player' || battleEnded || iceAttack === 0) return;
+    if (turn !== 'player' || battleEnded || iceAttack === 0 || cooldowns.ice > 0) return;
+    
+    // Set cooldown
+    setCooldowns(prev => ({ ...prev, ice: 15 }));
     
     setCurrentAction('❄️ ICE!');
     setBossShake(true);
@@ -600,7 +627,10 @@ export default function BossFight({
   };
   
   const handleLightningAttack = () => {
-    if (turn !== 'player' || battleEnded || lightningAttack === 0) return;
+    if (turn !== 'player' || battleEnded || lightningAttack === 0 || cooldowns.lightning > 0) return;
+    
+    // Set cooldown
+    setCooldowns(prev => ({ ...prev, lightning: 15 }));
     
     setCurrentAction('⚡ LIGHTNING!');
     setBossShake(true);
@@ -622,7 +652,10 @@ export default function BossFight({
   };
   
   const handlePoisonAttack = () => {
-    if (turn !== 'player' || battleEnded || poisonAttack === 0) return;
+    if (turn !== 'player' || battleEnded || poisonAttack === 0 || cooldowns.poison > 0) return;
+    
+    // Set cooldown
+    setCooldowns(prev => ({ ...prev, poison: 15 }));
     
     setCurrentAction('☠️ POISON!');
     setBossShake(true);
@@ -896,48 +929,48 @@ export default function BossFight({
             {fireAttack > 0 && (
               <button
                 onClick={handleFireAttack}
-                disabled={turn !== 'player' || actionInProgress}
-                className="py-2 sm:py-3 md:py-4 bg-orange-700 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-orange-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
+                disabled={turn !== 'player' || actionInProgress || cooldowns.fire > 0}
+                className="py-2 sm:py-3 md:py-4 bg-orange-700 hover:bg-orange-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-orange-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1 relative"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #c2410c', textShadow: '1px 1px 0 #000' }}
               >
                 <img src={fireIcon} alt="Fire" className="w-5 h-5 sm:w-6 sm:h-6" style={{ imageRendering: 'pixelated' }} />
-                <span className="text-[10px] sm:text-xs">FIRE</span>
+                <span className="text-[10px] sm:text-xs">{cooldowns.fire > 0 ? `${cooldowns.fire}s` : 'FIRE'}</span>
               </button>
             )}
 
             {iceAttack > 0 && (
               <button
                 onClick={handleIceAttack}
-                disabled={turn !== 'player' || actionInProgress}
-                className="py-2 sm:py-3 md:py-4 bg-cyan-700 hover:bg-cyan-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-cyan-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
+                disabled={turn !== 'player' || actionInProgress || cooldowns.ice > 0}
+                className="py-2 sm:py-3 md:py-4 bg-cyan-700 hover:bg-cyan-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-cyan-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1 relative"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #0e7490', textShadow: '1px 1px 0 #000' }}
               >
                 <img src={iceIcon} alt="Ice" className="w-5 h-5 sm:w-6 sm:h-6" style={{ imageRendering: 'pixelated' }} />
-                <span className="text-[10px] sm:text-xs">ICE</span>
+                <span className="text-[10px] sm:text-xs">{cooldowns.ice > 0 ? `${cooldowns.ice}s` : 'ICE'}</span>
               </button>
             )}
 
             {lightningAttack > 0 && (
               <button
                 onClick={handleLightningAttack}
-                disabled={turn !== 'player' || actionInProgress}
-                className="py-2 sm:py-3 md:py-4 bg-yellow-700 hover:bg-yellow-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
+                disabled={turn !== 'player' || actionInProgress || cooldowns.lightning > 0}
+                className="py-2 sm:py-3 md:py-4 bg-yellow-700 hover:bg-yellow-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-yellow-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1 relative"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #a16207', textShadow: '1px 1px 0 #000' }}
               >
                 <img src={lightningIcon} alt="Lightning" className="w-5 h-5 sm:w-6 sm:h-6" style={{ imageRendering: 'pixelated' }} />
-                <span className="text-[10px] sm:text-xs">LIGHTNING</span>
+                <span className="text-[10px] sm:text-xs">{cooldowns.lightning > 0 ? `${cooldowns.lightning}s` : 'LIGHTNING'}</span>
               </button>
             )}
 
             {poisonAttack > 0 && (
               <button
                 onClick={handlePoisonAttack}
-                disabled={turn !== 'player' || actionInProgress}
-                className="py-2 sm:py-3 md:py-4 bg-purple-700 hover:bg-purple-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1"
+                disabled={turn !== 'player' || actionInProgress || cooldowns.poison > 0}
+                className="py-2 sm:py-3 md:py-4 bg-purple-700 hover:bg-purple-600 text-white text-xs sm:text-sm font-bold border-2 sm:border-4 border-purple-500 transition disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1 relative"
                 style={{ borderRadius: '0', fontFamily: 'monospace', boxShadow: '0 3px 0 #6b21a8', textShadow: '1px 1px 0 #000' }}
               >
                 <img src={poisonIcon} alt="Poison" className="w-5 h-5 sm:w-6 sm:h-6" style={{ imageRendering: 'pixelated' }} />
-                <span className="text-[10px] sm:text-xs">POISON</span>
+                <span className="text-[10px] sm:text-xs">{cooldowns.poison > 0 ? `${cooldowns.poison}s` : 'POISON'}</span>
               </button>
             )}
           </div>
