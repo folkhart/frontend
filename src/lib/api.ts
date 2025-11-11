@@ -268,3 +268,10 @@ export const worldBossApi = {
     spawn: (bossId: string) => api.post(`/world-boss/admin/${bossId}/spawn`),
   },
 };
+
+// Daily Challenges API
+export const dailyChallengeApi = {
+  getChallenges: () => api.get('/daily-challenges'),
+  claimReward: (challengeId: string) => api.post(`/daily-challenges/${challengeId}/claim`),
+  claimBonus: () => api.post('/daily-challenges/bonus/claim'),
+};

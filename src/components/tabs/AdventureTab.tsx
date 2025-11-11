@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useGameStore } from "@/store/gameStore";
-import { dungeonApi, idleApi, authApi, characterApi } from "@/lib/api";
+import { dungeonApi, idleApi, authApi, characterApi, dailyChallengeApi } from "@/lib/api";
 import { useElectron } from "@/hooks/useElectron";
 import { notificationService } from "@/services/notificationService";
 import { sendGameNotification } from "@/services/notifications";
@@ -24,9 +24,11 @@ import expandedIcon from "@/assets/ui/expanded.png";
 import compactIcon from "@/assets/ui/compact.png";
 import petIcon from "@/assets/ui/pet.png";
 import bossIcon from "@/assets/ui/boss.png";
+import achievementIcon from "@/assets/ui/achievement.png";
 import ServerChat from "@/components/ServerChat";
 import BossFight from "@/components/BossFight";
 import WorldBossTab from "@/components/tabs/WorldBossTab";
+import DailyChallengesTab from "@/components/tabs/DailyChallengesTab";
 import ratCellarIcon from "@/assets/ui/dungeonIcons/ratCellar.png";
 import goblinCaveIcon from "@/assets/ui/dungeonIcons/goblinCave.png";
 import slimeDenIcon from "@/assets/ui/dungeonIcons/slimeDen.png";
@@ -309,7 +311,7 @@ export default function AdventureTab() {
   const { character, player, setPlayer, setCharacter, hasUnreadServerMessages } = useGameStore();
   const fastFinishCost = 10; // gems
   const [view, setView] = useState<
-    "dungeons" | "idle" | "history" | "serverchat" | "worldboss"
+    "dungeons" | "idle" | "history" | "serverchat" | "worldboss" | "quests"
   >("dungeons");
   const [selectedDungeon, setSelectedDungeon] = useState<any>(null);
   const [showRewards, setShowRewards] = useState(false);
@@ -418,6 +420,21 @@ export default function AdventureTab() {
     },
     refetchInterval: 5000,
   });
+
+  // Fetch daily challenges to check for claimable ones
+  const { data: dailyChallenges } = useQuery({
+    queryKey: ["dailyChallenges"],
+    queryFn: async () => {
+      const { data } = await dailyChallengeApi.getChallenges();
+      return data;
+    },
+    refetchInterval: 30000, // Check every 30 seconds
+  });
+
+  // Check if there are any claimable challenges
+  const hasClaimableChallenges = dailyChallenges?.challenges?.some(
+    (c: any) => c.completed && !c.rewardClaimed
+  ) || false;
 
   // Fetch active dungeon run from backend on mount and sync with localStorage
   const { data: backendActiveDungeonRun } = useQuery({
@@ -1474,8 +1491,7 @@ export default function AdventureTab() {
         </div>
       )}
 
-      {/* Mode Toggle - Hidden when World Boss is active */}
-      {view !== "worldboss" && (
+      {/* Mode Toggle */}
       <div className="flex gap-2 mb-4 relative">
         {/* Dungeon Button with Dropdown */}
         <div className="relative flex-1">
@@ -1610,8 +1626,41 @@ export default function AdventureTab() {
             <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
           )}
         </button>
+
+        {/* Quests Button */}
+        <button
+          onClick={() => setView("quests")}
+          className={`flex items-center gap-2 px-4 py-2 font-bold transition relative overflow-hidden ${
+            view === "quests"
+              ? "bg-amber-700 text-white"
+              : "bg-stone-800 text-amber-400 hover:bg-stone-700"
+          }`}
+          style={{
+            border: "2px solid #92400e",
+            borderRadius: "0",
+            boxShadow:
+              view === "quests"
+                ? "0 2px 0 #b45309, inset 0 1px 0 rgba(255,255,255,0.2)"
+                : "none",
+            textShadow: view === "quests" ? "1px 1px 0 #000" : "none",
+            fontFamily: "monospace",
+          }}
+        >
+          {hasClaimableChallenges && view !== "quests" && (
+            <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-stone-800 animate-pulse z-20" />
+          )}
+          <img
+            src={achievementIcon}
+            alt="Quests"
+            className="w-5 h-5"
+            style={{ imageRendering: "pixelated" }}
+          />
+          <span className="relative z-10">Quests</span>
+          {view === "quests" && (
+            <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+          )}
+        </button>
       </div>
-      )}
 
       {/* Dungeons List */}
       {view === "dungeons" && (
@@ -2793,6 +2842,13 @@ export default function AdventureTab() {
       {view === "serverchat" && (
         <div className="h-[600px]">
           <ServerChat />
+        </div>
+      )}
+
+      {/* Quests/Daily Challenges View */}
+      {view === "quests" && (
+        <div className="h-[600px]">
+          <DailyChallengesTab />
         </div>
       )}
 
