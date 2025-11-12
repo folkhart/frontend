@@ -156,3 +156,8 @@ export const useGameStore = create<GameState>((set) => ({
   
   setHasGuildInvitations: (hasInvitations) => set({ hasGuildInvitations: hasInvitations }),
 }));
+
+// Make the store available globally for token refresh interceptor
+if (typeof window !== 'undefined') {
+  (window as any).gameStore = useGameStore.getState();
+}

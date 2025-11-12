@@ -20,6 +20,10 @@ export default function LoginPage() {
     try {
       const { data } = await authApi.login(emailOrUsername, password);
       setAuth(data.accessToken, data.refreshToken);
+      
+      // Store login timestamp for version check
+      localStorage.setItem('lastLoginTime', Date.now().toString());
+      
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed');

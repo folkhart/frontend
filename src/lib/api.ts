@@ -18,13 +18,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle token refresh on 401
+// Handle token refresh on 401 and 403
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle both 401 (unauthorized) and 403 (forbidden/expired token) errors
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
       originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem('refreshToken');
@@ -37,10 +38,31 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
           return api(originalRequest);
         } catch (refreshError) {
+          // Clear all auth-related data
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
+          localStorage.removeItem('lastLoginTime');
+          
+          // Clear the zustand store if available
+          if (window.gameStore?.clearAuth) {
+            window.gameStore.clearAuth();
+          }
+          
+          // Redirect to landing page (not /login which doesn't exist)
+          window.location.href = '/';
+          return Promise.reject(refreshError);
         }
+      } else {
+        // No refresh token available, clear everything and redirect
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('lastLoginTime');
+        
+        if (window.gameStore?.clearAuth) {
+          window.gameStore.clearAuth();
+        }
+        
+        window.location.href = '/';
       }
     }
 

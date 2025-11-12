@@ -6,6 +6,7 @@ import { authApi } from '@/lib/api';
 import { onIdleComplete, onDungeonComplete, onLevelUp, getSocket } from '@/lib/socket';
 import { useElectron, useTraySync, useEnergyTracking } from '@/hooks/useElectron';
 import { notificationService } from '@/services/notificationService';
+import { clearAllAuthData } from '@/utils/authUtils';
 import LoadingScreen from '@/components/LoadingScreen';
 import ElectronTitleBar from '@/components/ElectronTitleBar';
 import TopBar from '@/components/TopBar';
@@ -107,7 +108,7 @@ export default function GamePage() {
   };
 
   const handleVersionLogout = () => {
-    localStorage.clear();
+    clearAllAuthData();
     // Force full page reload to landing page to clear all state
     window.location.href = '/';
   };
