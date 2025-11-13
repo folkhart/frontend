@@ -349,17 +349,43 @@ export default function ServerChat() {
       }
     });
 
+    // Listen for chat errors from server (e.g., muted)
+    socket.on("chat_error", (payload: { message: string }) => {
+      (window as any).showToast?.(payload.message || "Chat error", "error");
+    });
+
     return () => {
       socket.off("server_chat_message");
+      socket.off("chat_error");
     };
   }, [socket, character, sendServerChatMention, setHasUnreadServerMessages]);
 
   const sendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim() || !socket) return;
+    const text = inputMessage.trim();
+    if (!text) return;
+    if (!socket || !socket.connected) {
+      (window as any).showToast?.(
+        "Chat connection not ready. Retrying soon...",
+        "warning"
+      );
+      return;
+    }
 
-    socket.emit("server_chat_message", { message: inputMessage.trim() });
-    setInputMessage("");
+    socket.emit(
+      "server_chat_message",
+      { message: text },
+      (resp?: { ok: boolean; error?: string }) => {
+        if (!resp || !resp.ok) {
+          (window as any).showToast?.(
+            resp?.error || "Failed to send message",
+            "error"
+          );
+          return;
+        }
+        setInputMessage("");
+      }
+    );
   };
 
   const formatTime = (date: Date | string) => {
