@@ -372,6 +372,9 @@ export default function ServerChat() {
       return;
     }
 
+    const originalText = text;
+    setInputMessage("");
+
     socket.emit(
       "server_chat_message",
       { message: text },
@@ -381,9 +384,8 @@ export default function ServerChat() {
             resp?.error || "Failed to send message",
             "error"
           );
-          return;
+          setInputMessage(originalText);
         }
-        setInputMessage("");
       }
     );
   };
