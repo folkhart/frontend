@@ -1,0 +1,132 @@
+; Custom NSIS Installer Script for Folkhart
+; This file customizes the installer appearance and behavior
+
+!include "MUI2.nsh"
+!include "FileFunc.nsh"
+
+; Custom colors - Amber and Dark theme matching the game
+!define MUI_BGCOLOR "1C1917"  ; Dark stone background
+!define MUI_TEXTCOLOR "F59E0B"  ; Amber text
+
+; Custom installer icon and header
+; Uncomment these lines when you create custom BMP images
+; !define MUI_HEADERIMAGE
+; !define MUI_HEADERIMAGE_BITMAP "${BUILD_RESOURCES_DIR}\installer-header.bmp"
+; !define MUI_WELCOMEFINISHPAGE_BITMAP "${BUILD_RESOURCES_DIR}\installer-wizard.bmp"
+
+; Custom welcome page
+!define MUI_WELCOMEPAGE_TITLE "Welcome to Folkhart - Cozy Fantasy RPG"
+!define MUI_WELCOMEPAGE_TEXT "Embark on your adventure!$\r$\n$\r$\nThis wizard will guide you through the installation of Folkhart.$\r$\n$\r$\n⚔️ Explore dangerous dungeons$\r$\n🏰 Join or create guilds$\r$\n⚡ Enhance your equipment$\r$\n🎮 Play with friends$\r$\n$\r$\nClick Next to continue."
+
+; Custom finish page
+!define MUI_FINISHPAGE_TITLE "Installation Complete!"
+!define MUI_FINISHPAGE_TEXT "Folkhart has been installed successfully!$\r$\n$\r$\nYour adventure awaits, brave hero!$\r$\n$\r$\nClick Finish to close this wizard."
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_FILENAME}"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch Folkhart now"
+
+; Add custom checkbox to finish page
+!define MUI_FINISHPAGE_SHOWREADME ""
+!define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
+!define MUI_FINISHPAGE_SHOWREADME_TEXT "Create Desktop Shortcut"
+!define MUI_FINISHPAGE_SHOWREADME_FUNCTION createDesktopShortcut
+
+; Custom link buttons on finish page
+!define MUI_FINISHPAGE_LINK "Visit Folkhart Website"
+!define MUI_FINISHPAGE_LINK_LOCATION "https://folkhart.com"
+
+; Custom messages
+!define MUI_ABORTWARNING_TEXT "Are you sure you want to quit Folkhart installation?"
+
+; Custom directory page
+!define MUI_DIRECTORYPAGE_TEXT_TOP "Setup will install Folkhart in the following folder.$\r$\n$\r$\nTo install in a different folder, click Browse and select another folder."
+
+; Note: electron-builder handles page order automatically
+; We just define customizations above
+
+; Custom function to create desktop shortcut
+Function createDesktopShortcut
+  CreateShortcut "$DESKTOP\Folkhart.lnk" "$INSTDIR\${PRODUCT_FILENAME}" "" "$INSTDIR\${PRODUCT_FILENAME}" 0
+FunctionEnd
+
+; Custom init function - runs before installer starts
+Function .onInit
+  ; Display custom splash screen (optional)
+  ; You can add a splash screen here if you create one
+  
+  ; Check if app is already running
+  System::Call 'kernel32::CreateMutexA(i 0, i 0, t "FolkhartMutex") i .r1 ?e'
+  Pop $R0
+  StrCmp $R0 0 +3
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Folkhart is already running. Please close it before installing." /SD IDOK
+    Abort
+FunctionEnd
+
+; Custom section - runs during installation
+Section "Install"
+  ; Custom installation messages
+  DetailPrint "Installing Folkhart - Cozy Fantasy RPG..."
+  DetailPrint "⚔️ Setting up game files..."
+  
+  ; Add registry keys for better Windows integration
+  WriteRegStr HKLM "Software\Folkhart" "InstallPath" "$INSTDIR"
+  WriteRegStr HKLM "Software\Folkhart" "Version" "${VERSION}"
+  
+  DetailPrint "✅ Installation complete!"
+SectionEnd
+
+; Custom uninstall section
+Section "Uninstall"
+  DetailPrint "Removing Folkhart..."
+  
+  ; Remove registry keys
+  DeleteRegKey HKLM "Software\Folkhart"
+  
+  ; Remove desktop shortcut if it exists
+  Delete "$DESKTOP\Folkhart.lnk"
+  
+  DetailPrint "Farewell, hero. Your adventures will be remembered!"
+SectionEnd
+
+; Custom macros for installer
+!macro customInstall
+  ; This runs during installation
+  DetailPrint "⚡ Configuring Folkhart..."
+  
+  ; Create additional shortcuts
+  CreateShortcut "$SMPROGRAMS\Folkhart\Play Folkhart.lnk" "$INSTDIR\${PRODUCT_FILENAME}"
+  CreateShortcut "$SMPROGRAMS\Folkhart\Uninstall Folkhart.lnk" "$INSTDIR\Uninstall ${PRODUCT_FILENAME}.exe"
+!macroend
+
+!macro customUnInstall
+  ; This runs during uninstallation
+  DetailPrint "🗑️ Cleaning up Folkhart files..."
+  
+  ; Remove start menu folder
+  RMDir /r "$SMPROGRAMS\Folkhart"
+!macroend
+
+; Custom header for installer window
+!macro customHeader
+  ; Set custom installer images
+  !define MUI_HEADERIMAGE
+  !define MUI_HEADERIMAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Header\folkhart-header.bmp"
+  !define MUI_HEADERIMAGE_RIGHT
+  
+  ; Set custom wizard images
+  !define MUI_WELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\folkhart-wizard.bmp"
+  !define MUI_UNWELCOMEFINISHPAGE_BITMAP "${NSISDIR}\Contrib\Graphics\Wizard\folkhart-uninstall-wizard.bmp"
+  
+  ; Custom installer text colors
+  !define MUI_TEXTCOLOR "0x000000"
+  !define MUI_BGCOLOR "FFFFFF"
+  
+  ; Custom welcome page
+  !define MUI_WELCOMEPAGE_TITLE "Welcome to Folkhart!"
+  !define MUI_WELCOMEPAGE_TEXT "Embark on a cozy fantasy adventure! This wizard will guide you through the installation.$\r$\n$\r$\nFolkhart is a charming RPG where you explore dungeons, craft legendary items, and join guilds with friends.$\r$\n$\r$\nClick Next to continue."
+  
+  ; Custom finish page
+  !define MUI_FINISHPAGE_TITLE "Installation Complete!"
+  !define MUI_FINISHPAGE_TEXT "Folkhart has been successfully installed.$\r$\n$\r$\nYour adventure awaits! Click Finish to close this wizard.$\r$\n$\r$\nMay your quests be legendary!"
+  !define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_FILENAME}"
+  !define MUI_FINISHPAGE_RUN_TEXT "Launch Folkhart now"
+!macroend

@@ -1,0 +1,153 @@
+/* Custom MDXEditor Styling for Dark Theme */
+.mdx-editor-wrapper .mdxeditor {
+  background-color: #1c1917 !important;
+  color: #ffffff !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-root-contenteditable {
+  background-color: #1c1917 !important;
+  color: #fefefe !important;
+  min-height: 300px;
+  padding: 1rem;
+}
+
+.mdx-editor-wrapper [contenteditable="true"] {
+  color: #fefefe !important;
+}
+
+.mdx-editor-wrapper [data-lexical-text="true"] {
+  color: #fefefe !important;
+}
+
+.mdx-editor-wrapper ._contentEditable_1e2ox_380,
+.mdx-editor-wrapper [class*="_contentEditable_"] {
+  color: #fefefe !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-toolbar {
+  background-color: #44403c !important;
+  border-bottom: 1px solid #78716c !important;
+  padding: 8px !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-toolbar button {
+  background-color: #292524 !important;
+  color: #ffffff !important;
+  border: 1px solid #57534e !important;
+  padding: 4px 8px !important;
+  margin: 0 2px !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-toolbar button:hover {
+  background-color: #57534e !important;
+  color: #fbbf24 !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-toolbar button svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-toolbar select {
+  background-color: #292524 !important;
+  color: #ffffff !important;
+  border: 1px solid #57534e !important;
+  padding: 4px 8px !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-toolbar select option {
+  background-color: #292524 !important;
+  color: #ffffff !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor {
+  color: #ffffff !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor p,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor h1,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor h2,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor h3,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor h4,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor h5,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor h6,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor li,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor span,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor div {
+  color: #ffffff !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor strong {
+  color: #fbbf24 !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor em {
+  color: #a78bfa !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor a {
+  color: #60a5fa !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor code {
+  background-color: #292524 !important;
+  color: #fbbf24 !important;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor pre {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+  padding: 1em;
+  border-radius: 5px;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor blockquote {
+  border-left: 4px solid #fbbf24;
+  padding-left: 1em;
+  color: #9ca3af !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor table {
+  border-collapse: collapse;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor th,
+.mdx-editor-wrapper .mdxeditor-rich-text-editor td {
+  border: 1px solid #44403c;
+  padding: 0.5em;
+  color: #ffffff !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-rich-text-editor th {
+  background-color: #292524 !important;
+  color: #fbbf24 !important;
+}
+
+/* Dialog/Modal Styling */
+.mdx-editor-wrapper .mdxeditor-dialog {
+  background-color: #1c1917 !important;
+  border: 2px solid #44403c !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-dialog input,
+.mdx-editor-wrapper .mdxeditor-dialog textarea {
+  background-color: #292524 !important;
+  color: #ffffff !important;
+  border: 1px solid #44403c !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-dialog label {
+  color: #d1d5db !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-dialog button {
+  background-color: #292524 !important;
+  color: #ffffff !important;
+  border: 1px solid #44403c !important;
+}
+
+.mdx-editor-wrapper .mdxeditor-dialog button:hover {
+  background-color: #44403c !important;
+}

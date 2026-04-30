@@ -1,0 +1,53 @@
+END-USER LICENSE AGREEMENT (EULA) FOR FOLKHART
+
+PLEASE READ THIS LICENSE AGREEMENT CAREFULLY BEFORE USING THIS SOFTWARE.
+
+By installing, copying, or otherwise using Folkhart ("the Software"), you agree to be bound by the terms of this End-User License Agreement ("Agreement").
+
+1. GRANT OF LICENSE
+   Folkhart grants you a personal, non-exclusive, non-transferable license to use the Software for your personal entertainment purposes.
+
+2. OWNERSHIP
+   The Software is owned by Folkhart and is protected by copyright laws and international treaty provisions. You acknowledge that no title to the intellectual property in the Software is transferred to you.
+
+3. RESTRICTIONS
+   You may not:
+   - Reverse engineer, decompile, or disassemble the Software
+   - Rent, lease, or lend the Software
+   - Use the Software for any commercial purposes without permission
+   - Remove any proprietary notices or labels from the Software
+   - Distribute or make the Software available over a network where it could be used by multiple devices at the same time
+
+4. GAME CONTENT
+   - All game content, characters, items, and gameplay elements remain the property of Folkhart
+   - You may not sell, trade, or exchange in-game items for real-world currency
+   - Folkhart reserves the right to modify game content at any time
+
+5. ONLINE SERVICES
+   - Access to online features requires an active internet connection
+   - Folkhart may suspend or terminate online services at any time
+   - You are responsible for your account security and activities
+
+6. UPDATES AND MODIFICATIONS
+   Folkhart may provide updates, patches, or modifications to improve the Software. You agree to accept such updates as part of your use of the Software.
+
+7. DISCLAIMER OF WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+8. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL FOLKHART BE LIABLE FOR ANY DAMAGES (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION, OR ANY OTHER PECUNIARY LOSS) ARISING OUT OF THE USE OF OR INABILITY TO USE THIS SOFTWARE.
+
+9. TERMINATION
+   This Agreement is effective until terminated. Your rights under this Agreement will terminate automatically without notice if you fail to comply with any term(s) of this Agreement.
+
+10. GOVERNING LAW
+    This Agreement shall be governed by the laws of your country of residence.
+
+11. CONTACT
+    For questions about this Agreement or the Software, please visit: https://folkhart.com
+
+By clicking "I Agree" or by installing the Software, you acknowledge that you have read this Agreement, understand it, and agree to be bound by its terms and conditions.
+
+Copyright © 2025 Folkhart. All rights reserved.
+
+⚔️ Thank you for choosing Folkhart! May your adventures be legendary! ⚔️

@@ -1,0 +1,1066 @@
+import { useState, useEffect } from "react";
+import { LogOut, Info, ChevronDown, ChevronUp, Bell, BellOff, Monitor, Gamepad2, Book } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, messageApi } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
+import { useGameStore } from "@/store/gameStore";
+import { disconnectSocket } from "@/lib/socket";
+import { Capacitor } from '@capacitor/core';
+import { useElectron } from "@/hooks/useElectron";
+import leaderboardIcon from "@/assets/ui/leaderboard.png";
+import settingsIcon from "@/assets/ui/settings.png";
+import achievementIcon from "@/assets/ui/achievement.png";
+import newsIcon from "@/assets/ui/news/news.png";
+import friendsIcon from "@/assets/ui/friends.png";
+import inventoryIcon from "@/assets/ui/inventory.png";
+import documentationIcon from "@/assets/ui/documentation.png";
+import tutorialIcon from "@/assets/ui/tutorial.png";
+import userIcon from "@/assets/ui/settings/user.png";
+import changePasswordIcon from "@/assets/ui/settings/changePassword.png";
+import changeCharacterNameIcon from "@/assets/ui/settings/changeCharacterName.png";
+import AchievementTab from "./AchievementTab";
+import CollectionBook from "./CollectionBook";
+
+export default function SettingsTab() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const {
+    player,
+    character,
+    clearAuth,
+    setActiveTab,
+    setPlayer,
+    setCharacter,
+    hasUnreadFriendMessages,
+    setHasUnreadFriendMessages,
+  } = useGameStore();
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showCollection, setShowCollection] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showChangeName, setShowChangeName] = useState(false);
+  const [profileExpanded, setProfileExpanded] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [newCharacterName, setNewCharacterName] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [discordEnabled, setDiscordEnabled] = useState(true);
+  const { isElectron } = useElectron();
+
+  const [notificationSettings, setNotificationSettings] = useState({
+    idleFarming: true,
+    levelUp: true,
+    energyRefill: true,
+    dungeonComplete: true,
+    guildInvite: true,
+    friendRequest: true,
+  });
+
+  // Check if running on mobile platform
+  useEffect(() => {
+    setIsMobile(Capacitor.isNativePlatform());
+    // Load settings from localStorage
+    const savedNotifications = localStorage.getItem('notificationSettings');
+    if (savedNotifications) setNotificationSettings(JSON.parse(savedNotifications));
+
+    const savedDiscord = localStorage.getItem('discordRPCEnabled');
+    if (savedDiscord !== null) setDiscordEnabled(savedDiscord === 'true');
+
+    // Check actual fullscreen status in Electron
+    if (isElectron && window.electron) {
+      // In a real app, you'd have an IPC to get initial state
+      // For now we'll assume false or track it via events
+    }
+  }, [isElectron]);
+
+  const toggleDiscord = () => {
+    const newVal = !discordEnabled;
+    setDiscordEnabled(newVal);
+    localStorage.setItem('discordRPCEnabled', String(newVal));
+    (window as any).showToast?.(`Discord Rich Presence ${newVal ? 'enabled' : 'disabled'}`, 'info');
+    // Force immediate update of presence if disabling
+    if (!newVal && isElectron && window.electron) {
+      window.electron.clearPresence();
+    }
+  };
+
+  const toggleFullscreen = () => {
+    if (isElectron && window.electron) {
+      window.electron.toggleFullscreen();
+      setIsFullscreen(!isFullscreen);
+    }
+  };
+
+  const toggleNotification = (key: keyof typeof notificationSettings) => {
+    const updated = { ...notificationSettings, [key]: !notificationSettings[key] };
+    setNotificationSettings(updated);
+    localStorage.setItem('notificationSettings', JSON.stringify(updated));
+    (window as any).showToast?.(`${key} notifications ${updated[key] ? 'enabled' : 'disabled'}`, 'info');
+  };
+
+  // Query for unread friend messages count
+  const { data: unreadCount } = useQuery({
+    queryKey: ['unreadFriendMessages'],
+    queryFn: async () => {
+      try {
+        const { data } = await messageApi.getUnreadCount();
+        setHasUnreadFriendMessages(data.count > 0);
+        return data.count;
+      } catch (error) {
+        return 0;
+      }
+    },
+    refetchInterval: 10000, // Check every 10 seconds
+  });
+
+  const handleLogout = () => {
+    disconnectSocket();
+    clearAuth();
+    navigate("/");
+  };
+
+  if (showAchievements) {
+    return (
+      <div className="p-4 pb-20">
+        <button
+          onClick={() => setShowAchievements(false)}
+          className="mb-3 px-4 py-2 bg-stone-700 hover:bg-stone-600 text-white font-bold transition"
+        >
+          ← Back to Settings
+        </button>
+        <AchievementTab />
+      </div>
+    );
+  }
+
+  if (showCollection) {
+    return <CollectionBook onBack={() => setShowCollection(false)} />;
+  }
+
+  return (
+    <div className="p-4 pb-20">
+      <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+        <img
+          src={settingsIcon}
+          alt="Settings"
+          className="w-6 h-6"
+          style={{ imageRendering: "pixelated" }}
+        />
+        Settings
+      </h2>
+
+      {/* Profile Section - Retro Style - Collapsible */}
+      <div
+        className="bg-gradient-to-b from-stone-700 to-stone-800 p-4 mb-4 relative"
+        style={{
+          border: "4px solid #57534e",
+          borderRadius: "0",
+          boxShadow:
+            "0 4px 0 #292524, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
+        }}
+      >
+        <button
+          onClick={() => setProfileExpanded(!profileExpanded)}
+          className="w-full flex items-center justify-between mb-4 pb-3 border-b-2 border-stone-600 hover:opacity-80 transition"
+        >
+          <div className="flex items-center gap-2">
+            <img
+              src={userIcon}
+              alt="Profile"
+              className="w-6 h-6"
+              style={{ imageRendering: "pixelated" }}
+            />
+            <h3
+              className="font-bold text-amber-400 text-lg"
+              style={{
+                fontFamily: "monospace",
+                textShadow: "2px 2px 0 #000",
+                letterSpacing: "1px",
+              }}
+            >
+              PROFILE
+            </h3>
+          </div>
+          {profileExpanded ? (
+            <ChevronUp className="text-amber-400" size={24} />
+          ) : (
+            <ChevronDown className="text-amber-400" size={24} />
+          )}
+        </button>
+
+        {profileExpanded && <div className="space-y-3">
+          {/* Username */}
+          <div
+            className="bg-stone-900 p-3 border-2 border-stone-600"
+            style={{
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="flex justify-between items-center">
+              <span
+                className="text-gray-400 text-xs font-bold"
+                style={{ fontFamily: "monospace", letterSpacing: "0.5px" }}
+              >
+                USERNAME:
+              </span>
+              <span
+                className="text-white font-bold"
+                style={{ fontFamily: "monospace" }}
+              >
+                {player?.username}
+              </span>
+            </div>
+          </div>
+
+          {/* Email */}
+          <div
+            className="bg-stone-900 p-3 border-2 border-stone-600"
+            style={{
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="flex justify-between items-center">
+              <span
+                className="text-gray-400 text-xs font-bold"
+                style={{ fontFamily: "monospace", letterSpacing: "0.5px" }}
+              >
+                EMAIL:
+              </span>
+              <span
+                className="text-white font-bold text-sm"
+                style={{ fontFamily: "monospace" }}
+              >
+                {player?.email}
+              </span>
+            </div>
+          </div>
+
+          {/* Character Level */}
+          {character && (
+            <div
+              className="bg-stone-900 p-3 border-2 border-stone-600"
+              style={{
+                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
+              }}
+            >
+              <div className="flex justify-between items-center">
+                <span
+                  className="text-gray-400 text-xs font-bold"
+                  style={{ fontFamily: "monospace", letterSpacing: "0.5px" }}
+                >
+                  LEVEL:
+                </span>
+                <span
+                  className="text-amber-400 font-bold text-lg"
+                  style={{
+                    fontFamily: "monospace",
+                    textShadow: "1px 1px 0 #000",
+                  }}
+                >
+                  {character.level}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Character Name with Edit Icon */}
+          {character && (
+            <div
+              className="bg-stone-900 p-3 border-2 border-stone-600"
+              style={{
+                boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
+              }}
+            >
+              <div className="flex justify-between items-center">
+                <span
+                  className="text-gray-400 text-xs font-bold"
+                  style={{ fontFamily: "monospace", letterSpacing: "0.5px" }}
+                >
+                  CHARACTER NAME:
+                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="text-white font-bold"
+                    style={{ fontFamily: "monospace" }}
+                  >
+                    {character.name}
+                  </span>
+                  <button
+                    onClick={() => setShowChangeName(true)}
+                    className="hover:scale-110 transition-transform"
+                    title="Change Character Name (100 Gems)"
+                  >
+                    <img
+                      src={changeCharacterNameIcon}
+                      alt="Change Name"
+                      className="w-5 h-5"
+                      style={{ imageRendering: "pixelated" }}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Password Change Icon Button */}
+          <div
+            className="bg-stone-900 p-3 border-2 border-stone-600"
+            style={{
+              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="flex justify-between items-center">
+              <span
+                className="text-gray-400 text-xs font-bold"
+                style={{ fontFamily: "monospace", letterSpacing: "0.5px" }}
+              >
+                PASSWORD:
+              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-white font-bold"
+                  style={{ fontFamily: "monospace" }}
+                >
+                  ••••••••
+                </span>
+                <button
+                  onClick={() => setShowChangePassword(true)}
+                  className="hover:scale-110 transition-transform"
+                  title="Change Password (Free)"
+                >
+                  <img
+                    src={changePasswordIcon}
+                    alt="Change Password"
+                    className="w-5 h-5"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+        {/* Change Password Form - Retro Style */}
+        {showChangePassword && (
+          <div className="mt-4 p-4 bg-stone-900 border-4 border-amber-600" style={{ borderRadius: '0', boxShadow: '0 4px 0 #78350f, inset 0 2px 0 rgba(255,255,255,0.1)' }}>
+            <h4 className="text-base font-bold text-amber-400 mb-3 retro-text" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+              🔐 CHANGE PASSWORD
+            </h4>
+            <div className="space-y-3">
+              {/* Current Password */}
+              <div>
+                <label className="block text-amber-300 text-xs font-bold mb-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  CURRENT PASSWORD:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    placeholder="Enter current password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        currentPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-stone-950 border-2 border-stone-700 text-white text-sm retro-input"
+                    style={{ borderRadius: '0', fontFamily: 'monospace' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-300 text-xs font-bold"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {showCurrentPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label className="block text-amber-300 text-xs font-bold mb-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  NEW PASSWORD:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="Enter new password"
+                    value={passwordData.newPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        newPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-stone-950 border-2 border-stone-700 text-white text-sm retro-input"
+                    style={{ borderRadius: '0', fontFamily: 'monospace' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-300 text-xs font-bold"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {showNewPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className="block text-amber-300 text-xs font-bold mb-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  CONFIRM NEW PASSWORD:
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Re-enter new password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-stone-950 border-2 border-stone-700 text-white text-sm retro-input"
+                    style={{ borderRadius: '0', fontFamily: 'monospace' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-amber-400 hover:text-amber-300 text-xs font-bold"
+                    style={{ fontFamily: 'monospace' }}
+                  >
+                    {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                  </button>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={async () => {
+                    if (
+                      passwordData.newPassword !== passwordData.confirmPassword
+                    ) {
+                      (window as any).showToast?.(
+                        "Passwords do not match",
+                        "error"
+                      );
+                      return;
+                    }
+                    try {
+                      await api.post('/players/change-password', {
+                        currentPassword: passwordData.currentPassword,
+                        newPassword: passwordData.newPassword,
+                      });
+                      (window as any).showToast?.(
+                        "Password changed successfully!",
+                        "success"
+                      );
+                      setPasswordData({
+                        currentPassword: "",
+                        newPassword: "",
+                        confirmPassword: "",
+                      });
+                      setShowChangePassword(false);
+                      setShowCurrentPassword(false);
+                      setShowNewPassword(false);
+                      setShowConfirmPassword(false);
+                    } catch (error: any) {
+                      (window as any).showToast?.(
+                        error.response?.data?.error ||
+                          "Failed to change password",
+                        "error"
+                      );
+                    }
+                  }}
+                  className="flex-1 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-bold border-2 border-green-900 retro-text"
+                  style={{ borderRadius: '0', boxShadow: '0 2px 0 #14532d', fontFamily: 'monospace' }}
+                >
+                  ✓ CONFIRM
+                </button>
+                <button
+                  onClick={() => {
+                    setShowChangePassword(false);
+                    setPasswordData({
+                      currentPassword: "",
+                      newPassword: "",
+                      confirmPassword: "",
+                    });
+                    setShowCurrentPassword(false);
+                    setShowNewPassword(false);
+                    setShowConfirmPassword(false);
+                  }}
+                  className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold border-2 border-red-900 retro-text"
+                  style={{ borderRadius: '0', boxShadow: '0 2px 0 #7f1d1d', fontFamily: 'monospace' }}
+                >
+                  ✕ CANCEL
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Change Character Name Form - Retro Style */}
+        {showChangeName && (
+          <div className="mt-4 p-4 bg-stone-900 border-4 border-purple-600" style={{ borderRadius: '0', boxShadow: '0 4px 0 #6b21a8, inset 0 2px 0 rgba(255,255,255,0.1)' }}>
+            <h4 className="text-base font-bold text-purple-400 mb-2 retro-text" style={{ fontFamily: 'monospace', textShadow: '1px 1px 0 #000' }}>
+              ✏️ CHANGE CHARACTER NAME
+            </h4>
+            <div className="bg-purple-900 border-2 border-purple-700 p-2 mb-3 text-center">
+              <p className="text-purple-300 text-xs font-bold retro-text" style={{ fontFamily: 'monospace' }}>
+                COST: 100 💎 GEMS
+              </p>
+              <p className="text-purple-200 text-xs retro-text mt-1" style={{ fontFamily: 'monospace' }}>
+                Your Gems: {player?.gems || 0} 💎
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-purple-300 text-xs font-bold mb-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  NEW CHARACTER NAME:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter new name (3-20 chars)"
+                  value={newCharacterName}
+                  onChange={(e) => setNewCharacterName(e.target.value)}
+                  maxLength={20}
+                  className="w-full px-3 py-2 bg-stone-950 border-2 border-stone-700 text-white text-sm retro-input"
+                  style={{ borderRadius: '0', fontFamily: 'monospace' }}
+                />
+                <p className="text-purple-400 text-xs mt-1 retro-text" style={{ fontFamily: 'monospace' }}>
+                  ⚠️ Names must be unique across all players!
+                </p>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={async () => {
+                    if (!newCharacterName.trim()) {
+                      (window as any).showToast?.(
+                        "Please enter a name",
+                        "error"
+                      );
+                      return;
+                    }
+                    if (newCharacterName.trim().length < 3) {
+                      (window as any).showToast?.(
+                        "Name must be at least 3 characters",
+                        "error"
+                      );
+                      return;
+                    }
+                    if (player && player.gems < 100) {
+                      (window as any).showToast?.("Not enough gems! Need 100 💎", "error");
+                      return;
+                    }
+                    try {
+                      await api.post('/players/change-character-name', {
+                        newName: newCharacterName,
+                      });
+                      (window as any).showToast?.(
+                        "Character name changed successfully!",
+                        "success"
+                      );
+                      setPlayer({ ...player!, gems: player!.gems - 100 });
+                      setCharacter({ ...character!, name: newCharacterName });
+                      queryClient.invalidateQueries({
+                        queryKey: ["character"],
+                      });
+                      setNewCharacterName("");
+                      setShowChangeName(false);
+                    } catch (error: any) {
+                      (window as any).showToast?.(
+                        error.response?.data?.error || "Failed to change name",
+                        "error"
+                      );
+                    }
+                  }}
+                  disabled={!player || player.gems < 100}
+                  className="flex-1 py-2 bg-green-700 hover:bg-green-600 text-white text-sm font-bold border-2 border-green-900 retro-text disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ borderRadius: '0', boxShadow: '0 2px 0 #14532d', fontFamily: 'monospace' }}
+                >
+                  ✓ CONFIRM (100 💎)
+                </button>
+                <button
+                  onClick={() => {
+                    setShowChangeName(false);
+                    setNewCharacterName("");
+                  }}
+                  className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white text-sm font-bold border-2 border-red-900 retro-text"
+                  style={{ borderRadius: '0', boxShadow: '0 2px 0 #7f1d1d', fontFamily: 'monospace' }}
+                >
+                  ✕ CANCEL
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        </div>}
+      </div>
+
+      {/* Friends Button */}
+      <button
+        onClick={() => {
+          setActiveTab("friends");
+          setHasUnreadFriendMessages(false);
+        }}
+        className="w-full py-3 bg-blue-700 hover:bg-blue-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: "3px solid #1e3a8a",
+          borderRadius: "0",
+          boxShadow:
+            "0 3px 0 #1e40af, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          textShadow: "1px 1px 0 #000",
+          fontFamily: "monospace",
+          letterSpacing: "1px",
+        }}
+      >
+        {hasUnreadFriendMessages && (
+          <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-blue-700 animate-pulse z-20" />
+        )}
+        <img
+          src={friendsIcon}
+          alt="Friends"
+          className="w-5 h-5"
+          style={{ imageRendering: "pixelated" }}
+        />
+        <span className="relative z-10">FRIENDS & MESSAGES</span>
+        {unreadCount && unreadCount > 0 && (
+          <span
+            className="relative z-10 bg-red-600 text-white text-xs px-2 py-0.5 font-bold"
+            style={{
+              border: '2px solid #991b1b',
+              fontFamily: 'monospace',
+            }}
+          >
+            {unreadCount}
+          </span>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-400/20 to-transparent"></div>
+      </button>
+
+      {/* News Button */}
+      <button
+        onClick={() => setActiveTab("news")}
+        className="w-full py-3 bg-purple-700 hover:bg-purple-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: "3px solid #6b21a8",
+          borderRadius: "0",
+          boxShadow:
+            "0 3px 0 #7e22ce, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          textShadow: "1px 1px 0 #000",
+          fontFamily: "monospace",
+          letterSpacing: "1px",
+        }}
+      >
+        <img
+          src={newsIcon}
+          alt="News"
+          className="w-5 h-5"
+          style={{ imageRendering: "pixelated" }}
+        />
+        <span className="relative z-10">NEWS & UPDATES</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-purple-400/20 to-transparent"></div>
+      </button>
+
+      {/* Achievements Button */}
+      <button
+        onClick={() => setShowAchievements(true)}
+        className="w-full py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: "3px solid #92400e",
+          borderRadius: "0",
+          boxShadow:
+            "0 3px 0 #b45309, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          textShadow: "1px 1px 0 #000",
+          fontFamily: "monospace",
+          letterSpacing: "1px",
+        }}
+      >
+        <img
+          src={achievementIcon}
+          alt="Achievements"
+          className="w-5 h-5"
+          style={{ imageRendering: "pixelated" }}
+        />
+        <span className="relative z-10">ACHIEVEMENTS</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+      </button>
+
+      {/* Collection Book Button */}
+      <button
+        onClick={() => setShowCollection(true)}
+        className="w-full py-3 bg-blue-700 hover:bg-blue-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: "3px solid #1e3a8a",
+          borderRadius: "0",
+          boxShadow:
+            "0 3px 0 #1d4ed8, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          textShadow: "1px 1px 0 #000",
+          fontFamily: "monospace",
+          letterSpacing: "1px",
+        }}
+      >
+        <img
+          src={inventoryIcon}
+          alt="Collection Book"
+          className="w-5 h-5"
+          style={{ imageRendering: "pixelated" }}
+        />
+        <span className="relative z-10">COLLECTION BOOK</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-400/20 to-transparent"></div>
+      </button>
+
+      {/* Leaderboard Button */}
+      <button
+        onClick={() => setActiveTab("leaderboard")}
+        className="w-full py-3 bg-amber-700 hover:bg-amber-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: "3px solid #92400e",
+          borderRadius: "0",
+          boxShadow:
+            "0 3px 0 #b45309, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          textShadow: "1px 1px 0 #000",
+          fontFamily: "monospace",
+          letterSpacing: "1px",
+        }}
+      >
+        <img
+          src={leaderboardIcon}
+          alt="Leaderboard"
+          className="w-5 h-5"
+          style={{ imageRendering: "pixelated" }}
+        />
+        <span className="relative z-10">LEADERBOARD</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-amber-400/20 to-transparent"></div>
+      </button>
+
+      {/* Documentation Button */}
+      <button
+        onClick={() => navigate("/docs")}
+        className="w-full py-3 bg-green-700 hover:bg-green-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: "3px solid #15803d",
+          borderRadius: "0",
+          boxShadow:
+            "0 3px 0 #166534, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          textShadow: "1px 1px 0 #000",
+          fontFamily: "monospace",
+          letterSpacing: "1px",
+        }}
+      >
+        <img
+          src={documentationIcon}
+          alt="Documentation"
+          className="w-5 h-5"
+          style={{ imageRendering: "pixelated" }}
+        />
+        <span className="relative z-10">DOCUMENTATION</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-green-400/20 to-transparent"></div>
+      </button>
+
+      {/* Notification Settings - Mobile Only */}
+      {isMobile && (
+        <div
+          className="bg-gradient-to-b from-stone-700 to-stone-800 p-4 mb-4"
+          style={{
+            border: "4px solid #57534e",
+            borderRadius: "0",
+            boxShadow:
+              "0 4px 0 #292524, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-stone-600">
+            <Bell className="text-amber-400" size={20} />
+            <h3
+              className="font-bold text-amber-400 text-lg"
+              style={{
+                fontFamily: "monospace",
+                textShadow: "2px 2px 0 #000",
+                letterSpacing: "1px",
+              }}
+            >
+              NOTIFICATIONS
+            </h3>
+          </div>
+
+          <div className="space-y-2">
+            {/* Idle Farming */}
+            <button
+              onClick={() => toggleNotification('idleFarming')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                ⚔️ Idle Farming Complete
+              </span>
+              {notificationSettings.idleFarming ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Level Up */}
+            <button
+              onClick={() => toggleNotification('levelUp')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                🎉 Level Up
+              </span>
+              {notificationSettings.levelUp ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Energy Refill */}
+            <button
+              onClick={() => toggleNotification('energyRefill')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                ⚡ Energy Full
+              </span>
+              {notificationSettings.energyRefill ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Dungeon Complete */}
+            <button
+              onClick={() => toggleNotification('dungeonComplete')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                🏰 Dungeon Complete
+              </span>
+              {notificationSettings.dungeonComplete ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Guild Invite */}
+            <button
+              onClick={() => toggleNotification('guildInvite')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                🏛️ Guild Invite
+              </span>
+              {notificationSettings.guildInvite ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+
+            {/* Friend Request */}
+            <button
+              onClick={() => toggleNotification('friendRequest')}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                👥 Friend Request
+              </span>
+              {notificationSettings.friendRequest ? (
+                <Bell className="text-green-400" size={18} />
+              ) : (
+                <BellOff className="text-gray-500" size={18} />
+              )}
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-3 text-center" style={{ fontFamily: "monospace" }}>
+            💡 Toggle notifications for game events
+          </p>
+        </div>
+      )}
+
+      {/* Restart Onboarding Button */}
+      <button
+        onClick={() => (window as any).restartOnboarding?.()}
+        className="w-full py-3 bg-blue-700 hover:bg-blue-600 text-white font-bold transition relative overflow-hidden mb-4 flex items-center justify-center gap-2"
+        style={{
+          border: "3px solid #1e3a8a",
+          borderRadius: "0",
+          boxShadow:
+            "0 3px 0 #1e40af, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          textShadow: "1px 1px 0 #000",
+          fontFamily: "monospace",
+          letterSpacing: "1px",
+        }}
+      >
+        <img
+          src={tutorialIcon}
+          alt="Restart tutorial"
+          className="w-5 h-5"
+          style={{ imageRendering: "pixelated" }}
+        />
+        <span className="relative z-10">RESTART TUTORIAL</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-400/20 to-transparent"></div>
+      </button>
+
+      {/* Admin Panel Button - Only show for admins */}
+      {player?.isAdmin && (
+        <button
+          onClick={() => setActiveTab("admin")}
+          className="w-full py-3 bg-red-700 hover:bg-red-600 text-white font-bold transition relative overflow-hidden mb-4"
+          style={{
+            border: "3px solid #7f1d1d",
+            borderRadius: "0",
+            boxShadow:
+              "0 3px 0 #991b1b, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+            textShadow: "1px 1px 0 #000",
+            fontFamily: "monospace",
+            letterSpacing: "1px",
+          }}
+        >
+          <span className="relative z-10">🛡️ ADMIN PANEL</span>
+          <div className="absolute inset-0 bg-gradient-to-b from-red-400/20 to-transparent"></div>
+        </button>
+      )}
+
+      {/* Game Settings - Only for Desktop */}
+      {isElectron && (
+        <div
+          className="bg-gradient-to-b from-stone-700 to-stone-800 p-4 mb-4"
+          style={{
+            border: "4px solid #57534e",
+            borderRadius: "0",
+            boxShadow:
+              "0 4px 0 #292524, 0 8px 0 rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.1)",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b-2 border-stone-600">
+            <Monitor className="text-amber-400" size={20} />
+            <h3
+              className="font-bold text-amber-400 text-lg"
+              style={{
+                fontFamily: "monospace",
+                textShadow: "2px 2px 0 #000",
+                letterSpacing: "1px",
+              }}
+            >
+              GAME SETTINGS
+            </h3>
+          </div>
+
+          <div className="space-y-2">
+            {/* Fullscreen Toggle */}
+            <button
+              onClick={toggleFullscreen}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <div className="flex items-center gap-2">
+                <Monitor className="text-gray-400" size={18} />
+                <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                  FULLSCREEN MODE
+                </span>
+              </div>
+              <div className={`w-10 h-5 flex items-center px-1 rounded-full transition-colors ${isFullscreen ? 'bg-amber-600' : 'bg-stone-700'}`}>
+                <div className={`bg-white w-3 h-3 rounded-full transition-transform ${isFullscreen ? 'translate-x-5' : 'translate-x-0'}`} />
+              </div>
+            </button>
+
+            {/* Discord RPC Toggle */}
+            <button
+              onClick={toggleDiscord}
+              className="w-full flex items-center justify-between p-3 bg-stone-900 border-2 border-stone-600 hover:border-amber-500 transition"
+              style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              <div className="flex items-center gap-2">
+                <Gamepad2 className="text-gray-400" size={18} />
+                <span className="text-white font-bold text-sm" style={{ fontFamily: "monospace" }}>
+                  DISCORD RICH PRESENCE
+                </span>
+              </div>
+              <div className={`w-10 h-5 flex items-center px-1 rounded-full transition-colors ${discordEnabled ? 'bg-amber-600' : 'bg-stone-700'}`}>
+                <div className={`bg-white w-3 h-3 rounded-full transition-transform ${discordEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Game Info */}
+      <div className="bg-stone-800 rounded-lg border-2 border-stone-700 p-4 mb-4">
+        <h3 className="font-bold text-white mb-3 flex items-center gap-2">
+          <Info size={20} />
+          About
+        </h3>
+        <div className="text-sm text-gray-300 space-y-2">
+          <p>
+            <strong className="text-white">Folkhart</strong>
+          </p>
+          <p>Version: 1.0.0 (MVP)</p>
+          <p className="text-xs text-gray-400">
+            A cozy fantasy MMORPG browser game with idle and active gameplay.
+          </p>
+        </div>
+      </div>
+
+      {/* Game Stats */}
+      <div className="bg-stone-800 rounded-lg border-2 border-stone-700 p-4 mb-4">
+        <h3 className="font-bold text-white mb-3">📊 Statistics</h3>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="bg-stone-900 rounded p-3">
+            <p className="text-gray-400 text-xs mb-1">Total Gold</p>
+            <p className="text-yellow-400 font-bold text-lg">
+              {player?.gold || 0}
+            </p>
+          </div>
+          <div className="bg-stone-900 rounded p-3">
+            <p className="text-gray-400 text-xs mb-1">Total Gems</p>
+            <p className="text-blue-400 font-bold text-lg">
+              {player?.gems || 0}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        className="w-full py-3 bg-red-700 hover:bg-red-600 text-white font-bold transition relative overflow-hidden"
+        style={{
+          border: "3px solid #7f1d1d",
+          borderRadius: "0",
+          boxShadow:
+            "0 3px 0 #991b1b, 0 6px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+          textShadow: "1px 1px 0 #000",
+          fontFamily: "monospace",
+          letterSpacing: "1px",
+        }}
+      >
+        <LogOut size={20} className="inline mr-2" />
+        <span className="relative z-10">LOGOUT</span>
+        <div className="absolute inset-0 bg-gradient-to-b from-red-400/20 to-transparent"></div>
+      </button>
+
+      {/* Footer */}
+      <div className="mt-6 text-center text-xs text-gray-500">
+        <p>Made with 💖 for cozy gaming</p>
+        <p className="mt-1">© 2025 Folkhart</p>
+      </div>
+    </div>
+  );
+}

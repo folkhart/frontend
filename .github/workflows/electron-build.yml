@@ -1,0 +1,72 @@
+name: Build Electron App
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        # Only build for Windows for now
+        os: [windows-latest]
+        # Disabled: macos-latest, ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Vite app
+        run: npm run build
+      
+      - name: Build Electron (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm run electron:build:win
+      
+      - name: Build Electron (macOS)
+        if: matrix.os == 'macos-latest'
+        run: npm run electron:build:mac
+      
+      - name: Build Electron (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run electron:build:linux
+      
+      - name: Upload Windows artifacts
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: folkhart-windows
+          path: dist-electron/*.exe
+          retention-days: 7
+      
+      - name: Upload macOS artifacts
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: folkhart-macos
+          path: dist-electron/*.dmg
+          retention-days: 7
+      
+      - name: Upload Linux artifacts
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: folkhart-linux
+          path: dist-electron/*.AppImage
+          retention-days: 7

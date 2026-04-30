@@ -1,0 +1,113 @@
+{
+  "appId": "com.folkhart.app",
+  "productName": "Folkhart",
+  "copyright": "Copyright © 2025 Folkhart",
+  "directories": {
+    "output": "dist-electron",
+    "buildResources": "electron/assets"
+  },
+  "files": [
+    "dist/**/*",
+    "electron/**/*",
+    "package.json"
+  ],
+  "extraMetadata": {
+    "main": "electron/main.cjs"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64", "ia32"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
+    "publisherName": "Folkhart",
+    "verifyUpdateCodeSignature": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "allowElevation": true,
+    "createDesktopShortcut": "always",
+    "createStartMenuShortcut": true,
+    "shortcutName": "Folkhart",
+    "license": "electron/assets/license.txt",
+    "warningsAsErrors": false,
+    "runAfterFinish": true,
+    "menuCategory": "Games",
+    "displayLanguageSelector": false,
+    "deleteAppDataOnUninstall": false,
+    "perMachine": false,
+    "artifactName": "${productName}-Setup-${version}.${ext}"
+  },
+  "portable": {
+    "artifactName": "${productName}-${version}-Portable.${ext}"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "category": "public.app-category.games",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false
+  },
+  "dmg": {
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ],
+    "title": "Install Folkhart"
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      },
+      {
+        "target": "rpm",
+        "arch": ["x64"]
+      }
+    ],
+    "category": "Game",
+    "synopsis": "Cozy Fantasy RPG",
+    "description": "A cozy browser-based fantasy RPG with dungeons, crafting, and guilds.",
+    "desktop": {
+      "Name": "Folkhart",
+      "Comment": "Cozy Fantasy RPG",
+      "Categories": "Game;RolePlaying;",
+      "Keywords": "rpg;fantasy;game;dungeon;"
+    }
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "folkhart",
+    "repo": "desktop"
+  },
+  "compression": "normal",
+  "asar": true
+}

@@ -1,0 +1,164 @@
+{
+  "name": "folkhart-frontend",
+  "version": "0.1.0",
+  "description": "Folkhart - Cozy Fantasy RPG",
+  "author": "Folkhart",
+  "type": "module",
+  "main": "electron/main-patcher.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:check": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && cross-env NODE_ENV=development electron .\"",
+    "electron:build": "npm run build && node build-electron.cjs",
+    "electron:build:win": "npm run build && node build-electron.cjs",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:linux": "npm run build && electron-builder --linux",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "android:init": "npm run build && npx cap add android",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:run": "npm run build && npx cap sync android && npx cap run android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/keyboard": "^7.0.3",
+    "@capacitor/local-notifications": "^7.0.3",
+    "@capacitor/push-notifications": "^7.0.3",
+    "@capacitor/splash-screen": "^7.0.3",
+    "@capacitor/status-bar": "^7.0.3",
+    "@mdxeditor/editor": "^3.48.0",
+    "@pixi/react": "^7.1.2",
+    "@tanstack/react-query": "^5.14.2",
+    "@types/three": "^0.180.0",
+    "@types/uuid": "^11.0.0",
+    "axios": "^1.6.2",
+    "clsx": "^2.0.0",
+    "date-fns": "^3.0.0",
+    "discord-rpc": "^4.0.1",
+    "electron-updater": "^6.6.2",
+    "framer-motion": "^12.38.0",
+    "gsap": "^3.13.0",
+    "lucide-react": "^0.294.0",
+    "pixi.js": "^7.3.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.6.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^6.20.1",
+    "remark-gfm": "^4.0.1",
+    "socket.io-client": "^4.6.1",
+    "steamworks.js": "^0.4.0",
+    "three": "^0.181.0",
+    "uuid": "^13.0.0",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "dotenv": "^17.2.3",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.folkhart.app",
+    "productName": "Folkhart",
+    "copyright": "Copyright © 2024 Folkhart",
+    "directories": {
+      "buildResources": "electron/assets",
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "src/assets/**/*",
+      "favicon.ico",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "favicon.ico",
+        "to": "favicon.ico"
+      }
+    ],
+    "asarUnpack": [
+      "favicon.ico"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "folkhart",
+      "repo": "frontend",
+      "releaseType": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "favicon.ico",
+      "artifactName": "${productName}-${version}-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "installerIcon": "favicon.ico",
+      "uninstallerIcon": "favicon.ico",
+      "installerHeader": "electron/assets/installer-header.bmp",
+      "installerSidebar": "electron/assets/installer-wizard.bmp",
+      "uninstallerSidebar": "electron/assets/uninstaller-wizard.bmp"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon.png",
+      "category": "public.app-category.games",
+      "artifactName": "${productName}-${version}-macOS.${ext}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon.png",
+      "category": "Game",
+      "artifactName": "${productName}-${version}-Linux.${ext}"
+    }
+  }
+}

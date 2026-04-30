@@ -1,0 +1,573 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import logo from '../assets/ui/logo.png';
+import cpIcon from '../assets/ui/cp.png';
+import dungeonIcon from '../assets/ui/dungeons.png';
+import guildIcon from '../assets/ui/guild.png';
+import discordIcon from '../assets/ui/discord.png';
+import redditIcon from '../assets/ui/reddit.png';
+import { useGameStore } from '@/store/gameStore';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+export default function LandingPage() {
+  const navigate = useNavigate();
+  const { setAuth } = useGameStore();
+  const [isLogin, setIsLogin] = useState(true);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [formData, setFormData] = useState({
+    username: '',
+    emailOrUsername: '',
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Load saved credentials on mount
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('folkhart_remembered_username');
+    const savedPassword = localStorage.getItem('folkhart_remembered_password');
+    if (savedUsername && savedPassword) {
+      setFormData(prev => ({
+        ...prev,
+        emailOrUsername: savedUsername,
+        password: savedPassword
+      }));
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Windows detection and desktop app notification
+  const [showDesktopNotif, setShowDesktopNotif] = useState(false);
+
+  useEffect(() => {
+    // Detect Windows OS and show desktop app notification
+    const isWindows = /Windows/.test(navigator.userAgent);
+    
+    if (isWindows) {
+      const dismissed = localStorage.getItem('folkhart_desktop_dismissed');
+      if (!dismissed) {
+        setShowDesktopNotif(true);
+      }
+    }
+  }, []);
+
+  const dismissDesktopNotif = () => {
+    localStorage.setItem('folkhart_desktop_dismissed', 'true');
+    setShowDesktopNotif(false);
+  };
+
+  // Domain notification state
+  const [showDomainNotif, setShowDomainNotif] = useState(() => {
+    const neverShow = localStorage.getItem('folkhart_domain_notif_never');
+    if (neverShow === 'true') return false;
+
+    const firstShown = localStorage.getItem('folkhart_domain_notif_shown');
+    if (!firstShown) {
+      localStorage.setItem('folkhart_domain_notif_shown', Date.now().toString());
+      return true;
+    }
+
+    // Check if 2 days have passed
+    const twoDays = 2 * 24 * 60 * 60 * 1000;
+    const elapsed = Date.now() - parseInt(firstShown);
+    return elapsed < twoDays;
+  });
+
+  const handleNeverShow = () => {
+    localStorage.setItem('folkhart_domain_notif_never', 'true');
+    setShowDomainNotif(false);
+  };
+
+  const handleDismiss = () => {
+    setShowDomainNotif(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      
+      let payload: any;
+      if (isLogin) {
+        // For login, send as emailOrUsername
+        payload = {
+          emailOrUsername: formData.emailOrUsername,
+          password: formData.password
+        };
+      } else {
+        // For register, use all fields
+        payload = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password
+        };
+      }
+
+      const { data } = await axios.post(`${API_URL}${endpoint}`, payload);
+      
+      // Update Zustand store (which also updates localStorage)
+      setAuth(data.accessToken, data.refreshToken);
+      
+      // Store login timestamp for version check
+      localStorage.setItem('lastLoginTime', Date.now().toString());
+      
+      // Save credentials if Remember Me is checked
+      if (isLogin && rememberMe) {
+        localStorage.setItem('folkhart_remembered_username', formData.emailOrUsername);
+        localStorage.setItem('folkhart_remembered_password', formData.password);
+      } else if (isLogin && !rememberMe) {
+        // Clear saved credentials if Remember Me is unchecked
+        localStorage.removeItem('folkhart_remembered_username');
+        localStorage.removeItem('folkhart_remembered_password');
+      }
+      
+      navigate('/game');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Something went wrong!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-stone-900 via-stone-800 to-amber-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Medieval Texture Background */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `
+            linear-gradient(rgba(217, 119, 6, 0.2) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(217, 119, 6, 0.2) 1px, transparent 1px)
+          `,
+          backgroundSize: '50px 50px',
+        }}></div>
+      </div>
+
+      {/* Floating Sparkles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-2 h-2 bg-amber-400 opacity-50 animate-float"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${5 + Math.random() * 10}s`,
+            }}
+          ></div>
+        ))}
+      </div>
+
+      {/* Desktop App Notification */}
+      {showDesktopNotif && (
+        <div className="fixed top-0 left-0 right-0 z-50 animate-slide-down">
+          <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 border-b-4 border-amber-700 shadow-xl">
+            <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-white font-bold text-sm retro-text">
+                    🎮 NEW! Folkhart Desktop App for Windows
+                  </p>
+                  <p className="text-amber-100 text-xs">
+                    Better performance, auto-updates, and play in a dedicated window!
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href="YOUR_DOWNLOAD_LINK_HERE"
+                  className="px-4 py-2 bg-white text-amber-600 font-bold rounded hover:bg-amber-50 transition-colors text-sm retro-text shadow-lg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📥 Download
+                </a>
+                <button
+                  onClick={dismissDesktopNotif}
+                  className="text-white hover:text-amber-200 transition-colors p-2"
+                  aria-label="Dismiss"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Domain Notification Popup */}
+      {showDomainNotif && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-75 animate-fade-in">
+          <div className="relative bg-stone-800 border-4 border-amber-600 shadow-2xl max-w-lg w-full animate-bounce-in">
+            {/* Header */}
+            <div className="bg-amber-600 px-6 py-4 border-b-4 border-amber-700">
+              <h2 className="text-white font-bold retro-text text-lg text-center">
+                🎉 NEW DOMAIN ANNOUNCEMENT! 🎉
+              </h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div className="bg-amber-900 border-2 border-amber-700 p-4 text-center">
+                <p className="text-amber-200 retro-text text-xs sm:text-sm mb-2">
+                  WE MOVED TO A NEW DOMAIN!
+                </p>
+                <p className="text-amber-400 retro-text text-lg sm:text-xl md:text-2xl font-bold tracking-wider break-all">
+                  FOLKHART.COM
+                </p>
+              </div>
+
+              <p className="text-amber-200 retro-text text-xs text-center leading-relaxed">
+                Update your bookmarks and visit us at our new home!
+              </p>
+
+              {/* Buttons */}
+              <div className="space-y-3">
+                <a
+                  href="https://folkhart.com"
+                  className="block w-full py-3 bg-gradient-to-r from-green-700 to-green-600 text-white font-bold border-4 border-green-800 hover:from-green-600 hover:to-green-500 transform hover:scale-105 transition-all text-center retro-text text-sm"
+                >
+                  🌐 VISIT FOLKHART.COM
+                </a>
+
+                <button
+                  onClick={handleDismiss}
+                  className="w-full py-3 bg-gradient-to-r from-blue-700 to-blue-600 text-white font-bold border-4 border-blue-800 hover:from-blue-600 hover:to-blue-500 transform hover:scale-105 transition-all retro-text text-xs"
+                >
+                  ✓ I'M ALREADY ON FOLKHART.COM
+                </button>
+
+                <button
+                  onClick={handleNeverShow}
+                  className="w-full py-2 bg-stone-700 text-amber-300 font-bold border-2 border-stone-600 hover:bg-stone-600 transition-all retro-text text-xs"
+                >
+                  ❌ NEVER SHOW AGAIN
+                </button>
+              </div>
+
+              <p className="text-amber-600 retro-text text-xs text-center">
+                This message will disappear after 2 days
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Container */}
+      <div className="relative z-10 w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8 animate-bounce-slow">
+          <img 
+            src={logo} 
+            alt="Folkhart" 
+            className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-4 pixelated drop-shadow-2xl"
+            style={{ imageRendering: 'pixelated' }}
+          />
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-amber-400 retro-text mb-2 tracking-wider drop-shadow-lg">
+            FOLKHART
+          </h1>
+          <p className="text-amber-200 text-xs sm:text-sm retro-text tracking-widest">
+            ⚔️ COZY FANTASY RPG ⚔️
+          </p>
+        </div>
+
+        {/* Game Window */}
+        <div className="retro-window bg-stone-800 border-4 border-amber-700 shadow-2xl">
+          {/* Window Title Bar */}
+          <div className="bg-amber-700 px-4 py-2 border-b-4 border-amber-800 flex items-center justify-between">
+            <span className="text-white font-bold retro-text text-sm tracking-wider">
+              {isLogin ? '🎮 LOGIN' : '✨ REGISTER'}
+            </span>
+            <div className="flex gap-2">
+              <div className="w-3 h-3 bg-amber-400 border border-amber-600"></div>
+              <div className="w-3 h-3 bg-green-600 border border-green-800"></div>
+              <div className="w-3 h-3 bg-red-700 border border-red-900"></div>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {isLogin ? (
+                <div>
+                  <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
+                    EMAIL OR USERNAME
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.emailOrUsername}
+                    onChange={(e) => setFormData({ ...formData, emailOrUsername: e.target.value })}
+                    className="retro-input w-full px-4 py-3 bg-stone-900 border-2 border-amber-600 text-white focus:border-amber-400 focus:outline-none"
+                    required
+                    placeholder="hero@mail.com or HERO_NAME"
+                  />
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
+                      USERNAME
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      className="retro-input w-full px-4 py-3 bg-stone-900 border-2 border-amber-600 text-white focus:border-amber-400 focus:outline-none"
+                      required
+                      placeholder="HERO_NAME"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
+                      EMAIL
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="retro-input w-full px-4 py-3 bg-stone-900 border-2 border-amber-600 text-white focus:border-amber-400 focus:outline-none"
+                      required
+                      placeholder="hero@folkhart.com"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className="block text-amber-300 text-sm font-bold mb-2 retro-text">
+                  PASSWORD
+                </label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="retro-input w-full px-4 py-3 bg-stone-900 border-2 border-amber-600 text-white focus:border-amber-400 focus:outline-none"
+                  required
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {/* Remember Me - Only show for login */}
+              {isLogin && (
+                <div className="flex items-center gap-3 bg-stone-900 border-4 border-amber-700 px-4 py-3">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      id="rememberMe"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="appearance-none w-6 h-6 border-4 border-amber-600 bg-black cursor-pointer checked:bg-black checked:border-amber-500 focus:outline-none focus:ring-0"
+                    />
+                    {rememberMe && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-amber-500 retro-text" style={{ fontSize: '18px', lineHeight: '1' }}>X</span>
+                      </div>
+                    )}
+                  </div>
+                  <label htmlFor="rememberMe" className="text-amber-300 retro-text text-sm cursor-pointer select-none tracking-wider">
+                    REMEMBER ME
+                  </label>
+                </div>
+              )}
+
+              {error && (
+                <div className="bg-red-900 border-2 border-red-600 text-red-200 px-4 py-2 retro-text text-sm">
+                  ❌ {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="retro-button w-full py-3 bg-gradient-to-r from-amber-700 to-amber-600 text-white font-bold border-4 border-amber-800 hover:from-amber-600 hover:to-amber-500 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                {loading ? '⏳ LOADING...' : isLogin ? '🎮 START GAME' : '✨ CREATE HERO'}
+              </button>
+            </form>
+
+            {/* Toggle Button */}
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                }}
+                className="text-amber-300 hover:text-amber-100 retro-text text-sm underline"
+              >
+                {isLogin ? '✨ CREATE NEW ACCOUNT' : '🎮 ALREADY HAVE ACCOUNT?'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Features */}
+        <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+          <div className="bg-stone-800 border-2 border-amber-700 p-3">
+            <div className="flex justify-center mb-2">
+              <img 
+                src={cpIcon} 
+                alt="Epic Battles" 
+                className="w-8 h-8"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
+            <div className="text-amber-300 text-xs retro-text">EPIC BATTLES</div>
+          </div>
+          <div className="bg-stone-800 border-2 border-amber-700 p-3">
+            <div className="flex justify-center mb-2">
+              <img 
+                src={dungeonIcon} 
+                alt="Dungeons" 
+                className="w-8 h-8"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
+            <div className="text-amber-300 text-xs retro-text">DUNGEONS</div>
+          </div>
+          <div className="bg-stone-800 border-2 border-amber-700 p-3">
+            <div className="flex justify-center mb-2">
+              <img 
+                src={guildIcon} 
+                alt="Guilds" 
+                className="w-8 h-8"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            </div>
+            <div className="text-amber-300 text-xs retro-text">GUILDS</div>
+          </div>
+        </div>
+
+        {/* Community Links */}
+        <div className="mt-8 flex gap-4 justify-center">
+          <a
+            href="https://discord.gg/tzT36qXbWr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-6 py-3 bg-stone-800 border-2 border-amber-700 hover:border-amber-500 hover:bg-stone-700 transition-all transform hover:scale-105"
+          >
+            <img 
+              src={discordIcon} 
+              alt="Discord" 
+              className="w-6 h-6"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <span className="text-amber-300 retro-text text-xs font-bold">JOIN DISCORD</span>
+          </a>
+          
+          <a
+            href="https://www.reddit.com/r/folkhart/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-6 py-3 bg-stone-800 border-2 border-amber-700 hover:border-amber-500 hover:bg-stone-700 transition-all transform hover:scale-105"
+          >
+            <img 
+              src={redditIcon} 
+              alt="Reddit" 
+              className="w-6 h-6"
+              style={{ imageRendering: 'pixelated' }}
+            />
+            <span className="text-amber-300 retro-text text-xs font-bold">r/folkhart</span>
+          </a>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-6 text-center text-amber-400 text-xs retro-text">
+          © 2025 FOLKHART • PRESS START TO PLAY
+        </div>
+      </div>
+
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        .retro-text {
+          font-family: 'Press Start 2P', cursive;
+          text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .retro-window {
+          box-shadow: 
+            0 0 0 4px rgba(217, 119, 6, 0.5),
+            0 0 20px rgba(217, 119, 6, 0.3),
+            0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .retro-input {
+          font-family: 'Press Start 2P', cursive;
+          font-size: 12px;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .retro-button {
+          font-family: 'Press Start 2P', cursive;
+          font-size: 14px;
+          text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+          box-shadow: 
+            0 4px 0 rgba(0, 0, 0, 0.3),
+            0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .retro-button:active {
+          transform: translateY(2px);
+          box-shadow: 
+            0 2px 0 rgba(0, 0, 0, 0.3),
+            0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .pixelated {
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-20px); }
+        }
+
+        .animate-float {
+          animation: float linear infinite;
+        }
+
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+
+        .animate-bounce-slow {
+          animation: bounce-slow 3s ease-in-out infinite;
+        }
+
+        @keyframes bounce-in {
+          0% {
+            opacity: 0;
+            transform: scale(0.5) translateY(-50px);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        .animate-bounce-in {
+          animation: bounce-in 0.5s ease-out;
+        }
+      `}</style>
+    </div>
+  );
+}

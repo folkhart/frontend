@@ -1,0 +1,28 @@
+# Electron Build Outputs
+dist-electron/
+release/
+out/
+
+# Electron Builder Cache
+.cache/
+
+# Platform Specific
+*.dmg
+*.snap
+*.AppImage
+*.deb
+*.rpm
+*.exe
+*.msi
+*.pkg
+
+# Mac specific
+*.app/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Add these lines to your existing .gitignore file

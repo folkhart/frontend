@@ -1,0 +1,299 @@
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+export const api = axios.create({
+  baseURL: `${API_URL}/api`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle token refresh on 401 and 403
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Handle both 401 (unauthorized) and 403 (forbidden/expired token) errors
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (refreshToken) {
+        try {
+          const { data } = await axios.post(`${API_URL}/api/auth/refresh`, {
+            refreshToken,
+          });
+          localStorage.setItem('accessToken', data.accessToken);
+          originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+          return api(originalRequest);
+        } catch (refreshError) {
+          // Clear all auth-related data
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('lastLoginTime');
+          
+          // Clear the zustand store if available
+          if (window.gameStore?.clearAuth) {
+            window.gameStore.clearAuth();
+          }
+          
+          // Redirect to landing page (not /login which doesn't exist)
+          window.location.href = '/';
+          return Promise.reject(refreshError);
+        }
+      } else {
+        // No refresh token available, clear everything and redirect
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('lastLoginTime');
+        
+        if (window.gameStore?.clearAuth) {
+          window.gameStore.clearAuth();
+        }
+        
+        window.location.href = '/';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// Auth API
+export const authApi = {
+  register: (email: string, username: string, password: string) =>
+    api.post('/auth/register', { email, username, password }),
+  
+  login: (emailOrUsername: string, password: string) =>
+    api.post('/auth/login', { emailOrUsername, password }),
+  
+  getProfile: () => api.get('/auth/profile'),
+};
+
+// Character API
+export const characterApi = {
+  getClasses: () => api.get('/character/classes'),
+  create: (name: string, classType: string) =>
+    api.post('/character/create', { name, class: classType }),
+  get: () => api.get('/character'),
+  equip: (slotId: string, slot: string) =>
+    api.post('/character/equip', { slotId, slot }),
+  unequip: (slot: string) =>
+    api.post('/character/unequip', { slot }),
+  updateHP: (hp: number) =>
+    api.post('/character/update-hp', { hp }),
+};
+
+// Idle API
+export const idleApi = {
+  start: (zoneId?: string, durationHours?: number) => api.post('/idle/start', { zoneId, durationHours }),
+  claim: () => api.post('/idle/claim'),
+  getStatus: () => api.get('/idle/status'),
+};
+
+// Dungeon API
+export const dungeonApi = {
+  getAll: () => api.get('/dungeon'),
+  getByZone: (zoneId: string) => api.get(`/dungeon/zone/${zoneId}`),
+  start: (dungeonId: string, mode: 'Idle' | 'Active') =>
+    api.post('/dungeon/start', { dungeonId, mode }),
+  getRun: (runId: string) => api.get(`/dungeon/run/${runId}`),
+  getRuns: (limit?: number) => api.get('/dungeon/runs', { params: { limit } }),
+  getActive: () => api.get('/dungeon/active'),
+  complete: (runId: string) => api.post(`/dungeon/complete/${runId}`),
+  fastFinish: (runId: string) => api.post(`/dungeon/fast-finish/${runId}`),
+  // Boss Fight API
+  checkBossCooldown: () => api.get('/dungeon/boss/cooldown'),
+  startBoss: (dungeonId: string) => api.post('/dungeon/boss/start', { dungeonId }),
+  completeBoss: (victory: boolean, finalHP: number, rewards?: any) =>
+    api.post('/dungeon/boss/complete', { victory, finalHP, rewards }),
+};
+
+// Inventory API
+export const inventoryApi = {
+  get: () => api.get('/inventory'),
+  use: (slotId: string) => api.post('/inventory/use', { slotId }),
+};
+
+// Leaderboard API
+export const leaderboardApi = {
+  getByLevel: (limit = 100) => api.get(`/leaderboard/level?limit=${limit}`),
+  getByCP: (limit = 100) => api.get(`/leaderboard/cp?limit=${limit}`),
+  getGuilds: (limit = 50) => api.get(`/leaderboard/guilds?limit=${limit}`),
+};
+
+// Crafting API
+export const craftingApi = {
+  getRecipes: () => api.get('/crafting/recipes'),
+  craft: (recipeId: string) => api.post('/crafting/craft', { recipeId }),
+  sell: (inventorySlotId: string, quantity: number) => api.post('/crafting/sell', { inventorySlotId, quantity }),
+};
+
+// Shop API
+export const shopApi = {
+  getItems: () => api.get('/shop/items'),
+  refresh: () => api.post('/shop/refresh'),
+  buy: (itemId: string, currency: 'gold' | 'gems', price: number) => api.post('/shop/buy', { itemId, currency, price }),
+};
+
+// Guild API
+export const guildApi = {
+  list: (page?: number, limit?: number) => api.get('/guild/list', { params: { page, limit } }),
+  getMyGuild: () => api.get('/guild/my-guild'),
+  getGuild: (guildId: string) => api.get(`/guild/${guildId}`),
+  create: (name: string, tag: string, description?: string, iconId?: string) =>
+    api.post('/guild/create', { name, tag, description, iconId }),
+  join: (guildId: string, message?: string) => api.post(`/guild/join/${guildId}`, { message }),
+  leave: () => api.post('/guild/leave'),
+  disband: () => api.post('/guild/disband'),
+  kick: (playerId: string) => api.post(`/guild/kick/${playerId}`),
+  updateRank: (playerId: string, rank: string) =>
+    api.post(`/guild/rank/${playerId}`, { rank }),
+  donate: (amount: number) => api.post('/guild/donate', { amount }),
+  sendMessage: (message: string) => api.post('/guild/chat', { message }),
+  // Guild Shop
+  convertGoldToCoins: (amount: number) => api.post('/guild/convert-gold', { amount }),
+  getShopItems: (category?: string) => api.get('/guild/shop', { params: { category } }),
+  purchaseShopItem: (shopItemId: string) => api.post(`/guild/shop/purchase/${shopItemId}`),
+  // Guild Settings
+  updateEmblem: (iconId: string) => api.post('/guild/emblem', { iconId }),
+  upgrade: () => api.post('/guild/upgrade'),
+  toggleApproval: (guildId: string, requiresApproval: boolean) =>
+    api.patch(`/guild/${guildId}/settings`, { requiresApproval }),
+  // Applications
+  getApplications: (guildId: string) => api.get(`/guild/${guildId}/applications`),
+  approveApplication: (applicationId: string) => api.post(`/guild/applications/${applicationId}/approve`),
+  rejectApplication: (applicationId: string) => api.post(`/guild/applications/${applicationId}/reject`),
+  // Guild Invites
+  invitePlayer: (playerId: string) => api.post(`/guild/invite/${playerId}`),
+  getInvitations: () => api.get('/guild/invitations'),
+  acceptInvitation: (invitationId: string) => api.post(`/guild/invitations/${invitationId}/accept`),
+  rejectInvitation: (invitationId: string) => api.post(`/guild/invitations/${invitationId}/reject`),
+};
+
+// Friend API
+export const friendApi = {
+  sendRequest: (username: string) => api.post('/friends/request', { username }),
+  cancelRequest: (username: string) => api.post('/friends/request/cancel', { username }),
+  getRequests: () => api.get('/friends/requests'),
+  acceptRequest: (requestId: string) => api.post(`/friends/request/${requestId}/accept`),
+  rejectRequest: (requestId: string) => api.post(`/friends/request/${requestId}/reject`),
+  getFriends: () => api.get('/friends'),
+  removeFriend: (friendId: string) => api.delete(`/friends/${friendId}`),
+};
+
+// Chest API
+export const chestApi = {
+  open: (tier: number) => api.post(`/chest/open/${tier}`),
+  getRewards: (tier: number) => api.get(`/chest/rewards/${tier}`),
+};
+
+// Message API
+export const messageApi = {
+  send: (receiverId: string, content: string) => api.post('/messages/send', { receiverId, content }),
+  getConversation: (friendId: string, limit?: number) => api.get(`/messages/conversation/${friendId}`, { params: { limit } }),
+  getUnreadCount: () => api.get('/messages/unread/count'),
+  getUnread: () => api.get('/messages/unread'),
+  markAsRead: (senderId: string) => api.post(`/messages/read/${senderId}`),
+};
+
+// News API
+export const newsApi = {
+  getPublished: (limit?: number, offset?: number) => api.get('/news/published', { params: { limit, offset } }),
+  getPost: (postId: string) => api.get(`/news/${postId}`),
+  getAll: (limit?: number, offset?: number) => api.get('/news', { params: { limit, offset } }),
+  create: (data: { title: string; content: string; excerpt?: string; category?: string; imageUrl?: string }) =>
+    api.post('/news', data),
+  update: (postId: string, data: any) => api.put(`/news/${postId}`, data),
+  delete: (postId: string) => api.delete(`/news/${postId}`),
+};
+
+// Blacksmith API
+export const blacksmithApi = {
+  enhance: (inventorySlotId: string, useProtectionScroll: boolean = false) =>
+    api.post('/blacksmith/enhance', { inventorySlotId, useProtectionScroll }),
+  refine: (inventorySlotId: string) =>
+    api.post('/blacksmith/refine', { inventorySlotId }),
+  addSocketSlot: (inventorySlotId: string) =>
+    api.post('/blacksmith/socket/add', { inventorySlotId }),
+  insertGem: (inventorySlotId: string, gemItemId: string) =>
+    api.post('/blacksmith/socket/insert', { inventorySlotId, gemItemId }),
+  removeGem: (inventorySlotId: string, gemIndex: number) =>
+    api.post('/blacksmith/socket/remove', { inventorySlotId, gemIndex }),
+  getHistory: (limit?: number) =>
+    api.get('/blacksmith/history', { params: { limit } }),
+};
+
+// Achievement API
+export const achievementApi = {
+  getAll: () => api.get('/achievements'),
+  getStats: () => api.get('/achievements/stats'),
+  equipTitle: (achievementId: string) => api.post(`/achievements/equip/${achievementId}`),
+  unequipTitle: () => api.post('/achievements/unequip'),
+  claimStep: (achievementId: string, stepIndex: number) => api.post(`/achievements/claim-step/${achievementId}/${stepIndex}`),
+  sync: () => api.post('/achievements/sync'),
+};
+
+// Avatar API
+export const avatarApi = {
+  setAvatar: (avatarId: string | null) => api.post('/avatar/set', { avatarId }),
+  getUnlocked: () => api.get('/avatar/unlocked'),
+  setFrame: (frameId: string) => api.post('/avatar/frame/set', { frameId }),
+  getFrames: () => api.get('/avatar/frames'),
+};
+
+// Daily Reward API
+export const dailyRewardApi = {
+  claimGems: () => api.post('/daily/claim-gems'),
+  checkStatus: () => api.get('/daily/check-daily-gems'),
+};
+
+// Daily Login Reward API
+export const dailyLoginRewardApi = {
+  getRewards: () => api.get('/daily-login/rewards'),
+  claimReward: (day: number) => api.post(`/daily-login/claim/${day}`),
+};
+
+// Companion API
+export const companionApi = {
+  getFusable: () => api.get('/companions/fusable'),
+  fuse: (companionName: string, tier: number) => 
+    api.post('/companions/fuse', { companionName, tier }),
+};
+
+// World Boss API
+export const worldBossApi = {
+  // Public endpoints
+  getActive: () => api.get('/world-boss/active'),
+  attack: (instanceId: string) => api.post(`/world-boss/attack/${instanceId}`),
+  getRewards: () => api.get('/world-boss/rewards'),
+  claimReward: (rewardId: string) => api.post(`/world-boss/rewards/${rewardId}/claim`),
+  getHistory: (limit?: number) => api.get('/world-boss/history', { params: { limit } }),
+  
+  // Admin endpoints
+  admin: {
+    getAll: () => api.get('/world-boss/admin/all'),
+    create: (data: any) => api.post('/world-boss/admin/create', data),
+    update: (bossId: string, data: any) => api.put(`/world-boss/admin/${bossId}`, data),
+    delete: (bossId: string) => api.delete(`/world-boss/admin/${bossId}`),
+    spawn: (bossId: string) => api.post(`/world-boss/admin/${bossId}/spawn`),
+  },
+};
+
+// Daily Challenges API
+export const dailyChallengeApi = {
+  getChallenges: () => api.get('/daily-challenges'),
+  claimReward: (challengeId: string) => api.post(`/daily-challenges/${challengeId}/claim`),
+  claimBonus: () => api.post('/daily-challenges/bonus/claim'),
+};

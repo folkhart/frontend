@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Folkhart Launcher</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Press Start 2P', 'Courier New', monospace;
+      background: linear-gradient(135deg, #292524 0%, #1c1917 100%);
+      color: #fef3c7;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .container {
+      width: 800px;
+      height: 600px;
+      margin: 0;
+      position: relative;
+      background: linear-gradient(180deg, #44403c 0%, #292524 100%);
+      border: 4px solid #d97706;
+      box-shadow: 0 0 30px rgba(217, 119, 6, 0.5);
+    }
+
+    .header {
+      background: linear-gradient(90deg, #b45309 0%, #92400e 100%);
+      padding: 15px;
+      border-bottom: 3px solid #fbbf24;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title {
+      font-size: 24px;
+      color: #fbbf24;
+      text-shadow: 3px 3px 0px #000;
+      letter-spacing: 2px;
+    }
+
+    .close-btn {
+      background: #1c1917;
+      color: #fbbf24;
+      border: 2px solid #fbbf24;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      background: #d97706;
+      color: #fff;
+      transform: scale(1.1);
+    }
+
+    .content {
+      padding: 30px;
+      height: calc(100% - 200px);
+      overflow-y: auto;
+    }
+
+    .status-box {
+      background: rgba(28, 25, 23, 0.8);
+      border: 3px solid #d97706;
+      padding: 20px;
+      margin-bottom: 20px;
+      min-height: 150px;
+    }
+
+    .status-title {
+      font-size: 14px;
+      color: #fbbf24;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+    }
+
+    .status-text {
+      font-size: 10px;
+      color: #fef3c7;
+      line-height: 1.8;
+      margin-bottom: 10px;
+    }
+
+    .news-section {
+      background: rgba(28, 25, 23, 0.8);
+      border: 3px solid #65a30d;
+      padding: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .news-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #65a30d;
+    }
+
+    .news-item:last-child {
+      border-bottom: none;
+    }
+
+    .news-badge {
+      background: #d97706;
+      color: #fff;
+      padding: 3px 10px;
+      font-size: 8px;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+
+    .news-text {
+      font-size: 9px;
+      color: #fef3c7;
+      line-height: 1.6;
+    }
+
+    .news-date {
+      font-size: 8px;
+      color: #84cc16;
+      margin-top: 5px;
+    }
+
+    .progress-section {
+      position: absolute;
+      bottom: 60px;
+      left: 30px;
+      right: 30px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 30px;
+      background: #1c1917;
+      border: 3px solid #d97706;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #d97706 0%, #f59e0b 100%);
+      width: 0%;
+      transition: width 0.3s ease;
+      position: relative;
+    }
+
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 255, 255, 0.1) 10px,
+        rgba(255, 255, 255, 0.1) 20px
+      );
+      animation: progress-animation 1s linear infinite;
+    }
+
+    @keyframes progress-animation {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(20px); }
+    }
+
+    .progress-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 10px;
+      color: #fef3c7;
+      text-shadow: 2px 2px 0px #000;
+      z-index: 10;
+    }
+
+    .button-section {
+      position: absolute;
+      bottom: 15px;
+      left: 30px;
+      right: 30px;
+      display: flex;
+      gap: 15px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 15px;
+      font-family: inherit;
+      font-size: 14px;
+      border: 3px solid #fff;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-play {
+      background: linear-gradient(90deg, #65a30d 0%, #84cc16 100%);
+      color: #fff;
+      text-shadow: 2px 2px 0px #000;
+    }
+
+    .btn-play:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(101, 163, 13, 0.8);
+    }
+
+    .btn-settings {
+      background: linear-gradient(90deg, #b45309 0%, #d97706 100%);
+      color: #fff;
+      text-shadow: 2px 2px 0px #000;
+    }
+
+    .btn-settings:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(217, 119, 6, 0.8);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .version-info {
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
+      font-size: 8px;
+      color: rgba(251, 191, 36, 0.6);
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #1c1917;
+      border: 1px solid #d97706;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #d97706;
+      border: 1px solid #fbbf24;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f59e0b;
+    }
+
+    .blink {
+      animation: blink-animation 1s infinite;
+    }
+
+    @keyframes blink-animation {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title" style="display: flex; align-items: center; gap: 10px;">
+        <img src="../src/assets/ui/titlebar-logo-folkhart.png" alt="Folkhart" style="width: 32px; height: 32px; image-rendering: pixelated;" />
+        FOLKHART
+      </div>
+      <button class="close-btn" onclick="closeWindow()">✕</button>
+    </div>
+
+    <div class="content">
+      <div class="status-box">
+        <div class="status-title">🎮 GAME STATUS</div>
+        <div class="status-text" id="statusText">
+          Checking for updates...
+        </div>
+        <div class="status-text" id="versionText" style="color: #84cc16;">
+          Version: Loading...
+        </div>
+      </div>
+
+      <div class="news-section">
+        <div class="status-title" style="color: #84cc16;">📰 NEWS & UPDATES</div>
+        <div id="newsContent">
+          <div class="news-item">
+            <span class="news-badge">UPDATE</span>
+            <div class="news-text">Loading news...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="progress-section">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-text" id="progressText">READY</div>
+      </div>
+    </div>
+
+    <div class="button-section">
+      <button class="btn btn-play" id="playBtn" onclick="launchGame()" disabled>
+        ▶ PLAY
+      </button>
+      <button class="btn btn-settings" onclick="openSettings()">
+        ⚙ SETTINGS
+      </button>
+    </div>
+
+    <div class="version-info" id="versionInfo">v0.1.0</div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // Update status text
+    ipcRenderer.on('update-status', (event, message) => {
+      document.getElementById('statusText').innerHTML = message;
+    });
+
+    // Update progress
+    ipcRenderer.on('update-progress', (event, percent, text) => {
+      document.getElementById('progressFill').style.width = percent + '%';
+      document.getElementById('progressText').textContent = text || (percent + '%');
+    });
+
+    // Update version
+    ipcRenderer.on('update-version', (event, version) => {
+      document.getElementById('versionText').innerHTML = `Version: ${version}`;
+      document.getElementById('versionInfo').textContent = `v${version}`;
+    });
+
+    // Enable/disable play button
+    ipcRenderer.on('set-play-button', (event, enabled) => {
+      document.getElementById('playBtn').disabled = !enabled;
+    });
+
+    // Update news
+    ipcRenderer.on('update-news', (event, newsItems) => {
+      const newsContent = document.getElementById('newsContent');
+      if (newsItems && newsItems.length > 0) {
+        newsContent.innerHTML = newsItems.map(item => `
+          <div class="news-item">
+            <span class="news-badge">${item.type || 'NEWS'}</span>
+            <div class="news-text">${item.title}</div>
+            <div class="news-date">${item.date}</div>
+          </div>
+        `).join('');
+      }
+    });
+
+    // Launch game
+    function launchGame() {
+      ipcRenderer.send('launch-game');
+    }
+
+    // Open settings
+    function openSettings() {
+      ipcRenderer.send('open-settings');
+    }
+
+    // Close window
+    function closeWindow() {
+      ipcRenderer.send('close-patcher');
+    }
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      ipcRenderer.send('patcher-ready');
+    });
+  </script>
+</body>
+</html>
